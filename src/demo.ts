@@ -95,8 +95,6 @@ export function loadDemo(viewer: Viewer) {
 
     const node = new PointCloudNode(pc, [0, 0, 0, 0], cubeBounds, pc.rootSpacing);
 
-    node.isDemo = true;
-
     node.data = {
         pickIndex: 0,
         pco: new Points(geometry, pointMaterialPool.getMaterial()),

@@ -51,8 +51,6 @@ export class PointCloudNode {
         pickIndex: number;
     };
 
-    isDemo = false;
-
     constructor(parent: PointCloud, name: OctreePath, bounds: Box3, spacing: number) {
         this.parent = parent;
         this.nodeName = name;
@@ -115,7 +113,7 @@ export class PointCloudNode {
                 }
                 throw err();
             case "loading":
-                if (set_to === "visible" || set_to === "error") {
+                if (set_to === "visible" || set_to === "error" || set_to === "unloaded") {
                     return (this.state = set_to);
                 }
                 throw err();
@@ -126,28 +124,43 @@ export class PointCloudNode {
                 throw err();
             case "visible":
                 // TODO: visible nodes should always go to cahce first
-                if (set_to === "cache" || set_to === "unloaded") {
+                if (set_to === "cache") {
                     return (this.state = set_to);
                 }
                 throw err();
             case "cache":
-                if (set_to === "visible" || set_to === "unloaded") {
+                if (set_to === "visible") {
                     return (this.state = set_to);
                 }
                 throw err();
         }
     }
 
-    async load(viewer: Viewer) {
-        if (this.state === "loading" || this.state === "visible") {
-            console.warn("node already loading or loaded");
-            return;
+    show(viewer: Viewer) {
+        this.assertState("loading", "cache");
+
+        if (this.state === "cache") {
+            this.data!.pco.visible = true;
+        } else if (this.state === "loading") {
+            viewer.addNode(this);
         }
+
+        this.debugMesh.visible = false;
+        this.setState("visible");
+    }
+
+    cache() {
+        this.assertState("visible");
+        this.data!.pco.visible = false;
+        this.setState("cache");
+    }
+
+    async load(viewer: Viewer, retry = 2) {
+        this.assertState("unloaded", "error");
 
         this.setState("loading");
 
         try {
-            const bboxWasVisible = this.debugMesh.visible;
             this.debugMesh.visible = true;
             viewer.requestRender();
             const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
@@ -158,32 +171,25 @@ export class PointCloudNode {
                 pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
                 pickIndex: 0,
             };
-
             this.data.pco.matrixAutoUpdate = false;
 
-            this.setState("visible");
-
-            if (!bboxWasVisible) {
-                this.debugMesh.visible = false;
-            }
-
-            viewer.addNode(this);
-
-            return this.data;
+            this.show(viewer);
         } catch (e) {
-            // TODO: retry
-            this.state === "error";
-            this.debugMesh.visible = true;
-            this.debugMesh.material = new MeshBasicMaterial({ color: "red", wireframe: true });
-            throw e;
+            this.setState("error");
+            if (retry > 0) {
+                console.error("RETRY ERROR", retry, e);
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                await this.load(viewer, retry - 1);
+            } else {
+                this.debugMesh.visible = true;
+                this.debugMesh.material = new MeshBasicMaterial({ color: "red", wireframe: true });
+                throw e;
+            }
         }
     }
 
     unload(viewer: Viewer) {
-        if (this.state === "unloaded") {
-            console.warn("node already unloaded");
-            return;
-        }
+        this.assertState("loading", "error", "cache");
 
         if (this.data) {
             viewer.scene.remove(this.data.pco);
@@ -229,5 +235,11 @@ export class PointCloudNode {
         geometry.setAttribute("ptIndex", ptIndexAttribute);
 
         return { geometry: geometry, pointCount: data.pointCount };
+    }
+
+    assertState(...states: NodeState[]) {
+        if (!states.includes(this.state)) {
+            throw new Error(`Node state ${this.state} not in ${states.join(",")}`);
+        }
     }
 }
