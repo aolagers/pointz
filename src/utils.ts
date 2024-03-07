@@ -72,3 +72,24 @@ export function stringifyError(e: unknown) {
         return JSON.stringify(e);
     }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<F extends (...args: any[]) => void>(interval_ms: number, fn: F) {
+    let lastRun = 0;
+    let handle = 0;
+
+    return (...args: Parameters<F>) => {
+        if (lastRun === 0 || performance.now() - lastRun > interval_ms) {
+            // run immediately if first time or long enouth from previous
+            lastRun = performance.now();
+            fn(...args);
+        } else {
+            // run after the interval time has passed since last run
+            clearTimeout(handle);
+            handle = setTimeout(() => {
+                lastRun = performance.now();
+                fn(...args);
+            }, interval_ms - (performance.now() - lastRun));
+        }
+    };
+}
