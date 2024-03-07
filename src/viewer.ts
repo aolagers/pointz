@@ -3,12 +3,11 @@ import {
     Clock,
     Color,
     DepthTexture,
-    Frustum,
     Line,
     LineBasicMaterial,
-    LinearSRGBColorSpace,
     Mesh,
     MeshBasicMaterial,
+    MeshNormalMaterial,
     NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
@@ -28,7 +27,7 @@ import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
-import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
+import { createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
@@ -136,7 +135,7 @@ export class Viewer {
 
         this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
-        this.camera.position.set(0, -100, 50);
+        this.camera.position.set(0, -10, 5);
         this.camera.lookAt(0, 0, 0);
 
         this.controls = new MapControls(this.camera, this.renderer.domElement);
@@ -161,7 +160,7 @@ export class Viewer {
 
         this.marker = new Mesh(
             new SphereGeometry(0.5, 16, 16),
-            new MeshBasicMaterial({ color: "red", opacity: 0.8, transparent: true, wireframe: false }),
+            new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
         );
         this.scene.add(this.marker);
 
@@ -201,8 +200,35 @@ export class Viewer {
             this.requestRender();
         });
 
-        document.addEventListener("mousedown", (ev) => {
+        document.addEventListener("mousedown", (_ev) => {
             this.clicked = true;
+
+            {
+                raycaster.setFromCamera(pointer, this.camera);
+                const ray = raycaster.ray;
+                //ray.origin.add(new Vector3(0,0,-1))
+                line.visible = true;
+                const linePos = line.geometry.attributes.position!;
+                const verts = linePos.array;
+
+                verts[0] = ray.origin.x;
+                verts[1] = ray.origin.y;
+                verts[2] = ray.origin.z;
+
+                const ep = new Vector3()
+                    .copy(ray.origin)
+                    .add(new Vector3().copy(ray.direction).normalize().multiplyScalar(1000.0));
+
+                verts[3] = ep.x;
+                verts[4] = ep.y;
+                verts[5] = ep.z;
+
+                linePos.needsUpdate = true;
+                line.geometry.computeBoundingBox();
+                line.geometry.computeBoundingSphere();
+                line.frustumCulled = false;
+            }
+
             this.requestRender();
         });
 
@@ -267,31 +293,6 @@ export class Viewer {
         this.stats.update();
         const delta = clock.getDelta();
 
-        /*
-        if (this.objects.length > 0) {
-            let hit = false;
-            const intersections = raycaster.intersectObjects(this.objects, false);
-
-            for (const intersection of intersections) {
-                line.visible = true;
-                const pos = line.geometry.attributes.position!;
-                const verts = pos.array;
-
-                verts[3] = intersections[0].point.x;
-                verts[4] = intersections[0].point.y;
-                verts[5] = intersections[0].point.z;
-
-                pos.needsUpdate = true;
-                document.body.style.cursor = "crosshair";
-            }
-
-            if (hit) {
-                document.body.style.cursor = "auto";
-                line.visible = false;
-            }
-        }
-        */
-
         this.controls.update(delta);
 
         this.gpuPanel.startQuery();
@@ -309,34 +310,29 @@ export class Viewer {
         if (this.clicked) {
             raycaster.setFromCamera(pointer, this.camera);
             const ray = raycaster.ray;
-            /*
-            const frustum = new Frustum();
-            frustum.setFromProjectionMatrix(this.camera.projectionMatrix);
-            frustum.planes.forEach((plane) => {
-                plane.applyMatrix4(this.camera.matrixWorld);
-            });
-            */
 
-            let vi = 0;
+            let hits = 0;
             for (const pc of this.pclouds) {
                 for (const node of pc.loadedNodes) {
-                    const bbox = createCubeBoundsBox(pc.octreeInfo.cube, node.nodeName, pc.offset);
-                    const visible = ray.intersectsBox(bbox);
-                    console.log("RAY", ray, bbox.getCenter(new Vector3()), visible, pc.octreeInfo.cube, pc.offset);
-                    const attr = node.geometry.getAttribute("visibleIndex");
+                    const isHit = ray.intersectsBox(node.bounds);
+                    // const attr = node.geometry.getAttribute("visibleIndex");
 
-                    if (visible) {
-                        for (let pidx = 0; pidx < attr.count; pidx++) {
-                            attr.setW(pidx, vi);
-                        }
+                    if (isHit) {
+                        // console.log("RAY", ray, node.bounds);
 
-                        node.visibleIndex = vi;
-                        console.log("SET", node, vi);
-                        vi++;
+                        node.debugMesh.material = new MeshBasicMaterial({ color: "pink", wireframe: true });
+                        // node.visibleIndex = hitIdx;
+                        // for (let pidx = 0; pidx < attr.count; pidx++) {
+                        //     attr.setW(pidx, hitIdx);
+                        // }
+
+                        // console.log("SET", node, vi);
+                        hits++;
+                        // attr.needsUpdate = true;
                     } else {
-                        node.visibleIndex = -1;
+                        node.debugMesh.material = new MeshBasicMaterial({ color: "gray", wireframe: true });
+                        // node.visibleIndex = -1;
                     }
-                    attr.needsUpdate = true;
                 }
             }
 
@@ -395,41 +391,33 @@ export class Viewer {
                     const b = pbuf[best * 4 + 2];
                     const a = pbuf[best * 4 + 3];
                     const idx = r * 256 * 256 + g * 256 + b;
-                    let n = null;
+                    let nodehit = null;
                     let pchit = null;
                     for (const pc of this.pclouds) {
-                        for (const node of pc.loadedNodes) {
+                        for (const lnode of pc.loadedNodes) {
                             // console.log(node.visibleIndex);
-                            if (node.visibleIndex === a) {
-                                n = node;
+                            if (lnode.visibleIndex === a) {
+                                nodehit = lnode;
                                 pchit = pc;
                             }
                         }
                     }
-                    console.log("HIT!!", a, vals.join("/"), "frustum:", vi);
 
-                    if (n && pchit) {
-                        const attrs = n.geometry.getAttribute("position");
+                    if (nodehit && pchit) {
+                        const attrs = nodehit.geometry.getAttribute("position");
 
                         const X = attrs.array[idx * 3 + 0];
                         const Y = attrs.array[idx * 3 + 1];
                         const Z = attrs.array[idx * 3 + 2];
 
-                        // const cent = n.bounds.getCenter(new Vector3());
-                        // cent.sub(pchit.offset);
-                        // console.log("CENTER", cent);
-
                         this.marker.position.set(X, Y, Z);
 
-                        /*
-                        n.bounds.getCenter(this.marker.position);
-
-                        this.marker.position.sub(pchit.offset);
-
-                        console.log("move", this.marker.position);
-                        */
-
-                        console.log("HIT", a, idx, n, attrs, X, Y, Z);
+                        console.log(
+                            `HIT a:${a} c:${vals.join("/")} idx:${idx} n:${nodehit} ` +
+                                `p:${X} ${Y} ${Z} pts:${attrs.count} idx:${idx}`
+                        );
+                    } else {
+                        console.warn("NOPE", a, vals.join("/"), idx, nodehit, "f:", hits);
                     }
                 }
             }
@@ -555,24 +543,6 @@ export class Viewer {
         pointer.x = ((event.clientX - rect.x) / rect.width) * 2 - 1;
         pointer.y = -((event.clientY - rect.y) / rect.height) * 2 + 1;
 
-        /*
-        this.renderer.setScissor(
-            ((pointer.x + 1) / 2) * this.width - W / 2,
-            this.height + (this.height * (pointer.y - 1)) / 2 - W / 2,
-            W,
-            W,
-        );
-        */
-        //this.renderTarget.setSize(W, W)
-        //this.renderer.setSize(W, W)
-        // this.renderer.setViewport(
-        //     ((pointer.x + 1) / 2) * this.width - W / 2,
-        //     this.height + (this.height * (pointer.y - 1)) / 2 - W / 2,
-        //     W,
-        //     W,
-        // );
-        //this.renderer.setScissorTest(true);
-
         debug.mouse = printVec(pointer);
 
         this.requestRender();
@@ -592,9 +562,9 @@ export class Viewer {
 
         console.log("NODES", pc.hierarchy.nodes);
         pc.load();
-        const cube = createTightBounds(pc);
-        this.scene.add(cube);
+        // const cube = createTightBounds(pc);
+        // this.scene.add(cube);
 
-        this.controls.target.copy(cube.position);
+        // this.controls.target.copy(cube.position);
     }
 }

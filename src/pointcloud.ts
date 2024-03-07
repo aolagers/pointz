@@ -5,6 +5,7 @@ import {
     Frustum,
     Int32BufferAttribute,
     IntType,
+    Mesh,
     Points,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
@@ -18,12 +19,11 @@ import type {
     LazSource,
     CopcNodeInfo,
     Hierarchy,
-    OctreeInfo,
 } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import { PointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { createCubeMesh, createCubeBoundsBox } from "./utils";
+import { boxToMesh, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
@@ -41,15 +41,25 @@ export class PointCloudNode {
     pco: Points;
     visibleIndex: number;
 
-    constructor(name: OctreePath, geom: BufferGeometry, bounds: Box3) {
+    debugMesh: Mesh;
+
+    constructor(name: OctreePath, geom: BufferGeometry, bounds: Box3, idx: number) {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
 
-        this.visibleIndex = 0;
-
         this.pco = new Points(this.geometry, PointCloud.material);
         this.pco.matrixAutoUpdate = false;
+
+        const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
+        if (name[0] === 0) {
+            cube.scale.set(1.02, 1.02, 1.02);
+        }
+        if (name[0] === 1) {
+            cube.scale.set(0.99, 0.99, 0.99);
+        }
+        this.debugMesh = cube;
+        this.visibleIndex = idx;
     }
 }
 
@@ -62,6 +72,8 @@ async function getInfo(source: LazSource) {
     const res = await pool.runTask(req);
     return res;
 }
+
+let chunkId = 0;
 
 async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
     const data = await pool.runTask({
@@ -78,10 +90,10 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
     geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
     const vis = new Uint8Array(data.pointCount);
-    const visibleIndex = new Uint8BufferAttribute(vis, 1, true);
-    // visibleIndex.gpuType = IntType;
-
-    geometry.setAttribute("visibleIndex", visibleIndex);
+    const cid = ++chunkId;
+    vis.fill(cid);
+    const visibleIndexAttribute = new Uint8BufferAttribute(vis, 1, true);
+    geometry.setAttribute("visibleIndex", visibleIndexAttribute);
 
     const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
     classificationAttribute.gpuType = IntType;
@@ -91,7 +103,7 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
     ptIndexAttribute.gpuType = IntType;
     geometry.setAttribute("ptIndex", ptIndexAttribute);
 
-    return { geometry: geometry, pointCount: data.pointCount };
+    return { geometry: geometry, pointCount: data.pointCount, chunkId: cid };
 }
 
 export class PointCloud {
@@ -99,10 +111,11 @@ export class PointCloud {
     name: string;
     source: string | File;
     offset: Vector3;
-    bounds: Box3;
+    tightBounds: Box3;
+    octreeBounds: Box3;
     hierarchy: Hierarchy;
     loadedNodes: PointCloudNode[];
-    octreeInfo: OctreeInfo;
+    spacing: number;
     pointsLoaded: number = 0;
 
     static material = new PointMaterial(false);
@@ -112,21 +125,21 @@ export class PointCloud {
         viewer: Viewer,
         name: string,
         source: string | File,
-        bounds: Box3,
+        tightBounds: Box3,
+        octreeBounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        octreeInfo: OctreeInfo
+        spacing: number
     ) {
         this.viewer = viewer;
         this.name = name;
         this.source = source;
         this.offset = offset;
-        this.bounds = bounds;
+        this.tightBounds = tightBounds;
+        this.octreeBounds = octreeBounds;
         this.loadedNodes = [];
         this.hierarchy = hierarchy;
-        this.octreeInfo = octreeInfo;
-
-        console.log({ octreeInfo });
+        this.spacing = spacing;
     }
 
     async loadFake() {
@@ -160,10 +173,10 @@ export class PointCloud {
         });
 
         const pq = new PriorityQueue<OctreePath>((a, b) => {
-            const bboxA = createCubeBoundsBox(this.octreeInfo.cube, a, this.offset);
+            const bboxA = nodeToBox(this.octreeBounds, a);
             const distA = this.viewer.camera.position.distanceTo(bboxA.getCenter(new Vector3()));
 
-            const bboxB = createCubeBoundsBox(this.octreeInfo.cube, b, this.offset);
+            const bboxB = nodeToBox(this.octreeBounds, b);
             const distB = this.viewer.camera.position.distanceTo(bboxB.getCenter(new Vector3()));
 
             return distA - distB;
@@ -171,43 +184,40 @@ export class PointCloud {
 
         let inview = 0;
         for (const nnum of toLoad) {
-            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
+            const bbox = nodeToBox(this.octreeBounds, nnum);
             if (frustum.intersectsBox(bbox)) {
                 inview++;
                 pq.push(nnum);
             }
         }
 
-        while (!pq.isEmpty() && loaded < 64) {
+        const promises = [];
+
+        while (!pq.isEmpty() && promises.length < 128) {
             const n = pq.pop()!;
             const nname = n.join("-");
-            // console.log(this.name, "LOAD", nname);
             const node = this.hierarchy.nodes[nname]!;
 
-            getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
-                const bbox = createCubeBoundsBox(this.octreeInfo.cube, n, this.offset);
-                const pcn = new PointCloudNode(n, pointData.geometry, bbox);
+            const prom = getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
+                const bbox = nodeToBox(this.octreeBounds, n);
+
+                const pcn = new PointCloudNode(n, pointData.geometry, bbox, pointData.chunkId);
 
                 this.loadedNodes.push(pcn);
 
                 this.viewer.addObject(pcn.pco);
-
-                // this.viewer.scene.add(createCubeMesh(this.octreeInfo.cube, n, this.offset));
+                this.viewer.scene.add(pcn.debugMesh);
 
                 this.pointsLoaded += pointData.pointCount;
-                // await new Promise((resolve) => setTimeout(resolve, 100));
+
                 loaded++;
             });
+
+            promises.push(prom);
         }
 
-        console.log(
-            this.name,
-            "load ratio",
-            inview,
-            "/",
-            toLoad.length,
-            ((100 * inview) / toLoad.length).toFixed(1) + "%"
-        );
+        await Promise.all(promises);
+        console.log(this.name, `${loaded} / ${inview} / ${toLoad.length}`);
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
@@ -218,17 +228,32 @@ export class PointCloud {
         }
 
         const offset = new Vector3(...details.header.offset);
-        const bounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
+
+        const tightBounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
 
         const pcloudName = typeof source === "string" ? source.split("/").pop()! : source.name;
-        const pcloud = new PointCloud(viewer, pcloudName, source, bounds, offset, details.hierarchy, details.info);
+
+        const octreeBounds = new Box3().setFromArray(details.info.cube);
+
+        octreeBounds.translate(offset.clone().negate());
+
+        const pcloud = new PointCloud(
+            viewer,
+            pcloudName,
+            source,
+            tightBounds,
+            octreeBounds,
+            offset,
+            details.hierarchy,
+            details.info.spacing
+        );
 
         return pcloud;
     }
 
     static async loadInfo(source: LazSource) {
         const info = await getInfo(source);
-        console.log("COPC INFO", info);
+        // console.log("COPC INFO", info);
         return info;
     }
 
@@ -279,9 +304,9 @@ export class PointCloud {
             }
         }
 
-        const bounds = new Box3();
+        const tightBounds = new Box3();
         for (let i = 0; i < vertices.length; i += 3) {
-            bounds.expandByPoint(new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]));
+            tightBounds.expandByPoint(new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]));
         }
 
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
@@ -290,6 +315,9 @@ export class PointCloud {
         geometry.setAttribute("classification", new Int32BufferAttribute(classes, 1));
 
         const vis = new Uint8Array(classes.length);
+
+        const cid = ++chunkId;
+        vis.fill(cid);
         const visibleIndex = new Uint8BufferAttribute(vis, 1, true);
         // visibleIndex.gpuType = IntType;
         geometry.setAttribute("visibleIndex", visibleIndex);
@@ -302,17 +330,14 @@ export class PointCloud {
             viewer,
             "demodata",
             "",
-            bounds,
+            tightBounds,
+            tightBounds,
             offset,
             { pages: {}, nodes: {} },
-            { cube: [bounds.min.x, bounds.min.y, bounds.min.z, bounds.max.x, bounds.max.y, bounds.max.z], spacing: 0 }
+            0
         );
-        // console.log("DEMO", bounds, pc.octreeInfo.cube, {
-        //     cube: [bounds.min.x, bounds.min.y, bounds.min.z, bounds.max.x, bounds.max.y, bounds.max.z],
-        //     spacing: 0,
-        // });
 
-        pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, bounds));
+        pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, tightBounds, cid));
 
         return pc;
     }
