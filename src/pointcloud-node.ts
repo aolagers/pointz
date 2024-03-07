@@ -80,7 +80,7 @@ export class PointCloudNode {
         this.debugMesh = cube;
 
         this.debugMesh.visible = false;
-        // this.parent.viewer.scene.add(this.debugMesh);
+        this.parent.viewer.scene.add(this.debugMesh);
     }
 
     get sizeBytes() {
@@ -99,12 +99,8 @@ export class PointCloudNode {
 
         const center = this.bounds.getCenter(new Vector3());
         const centerDist = cameraRay.distanceToPoint(center);
-        // const screenRes = this.spacing / dist;
 
         const angle = Math.atan(this.spacing / (dist + centerDist));
-
-        // get distance from the ray to the bounds
-        // console.log("err", this.nodeName, this.bounds, angle, centerDist);
 
         return angle;
     }
@@ -122,6 +118,9 @@ export class PointCloudNode {
         this.setState("loading");
 
         try {
+            const bboxWasVisible = this.debugMesh.visible;
+            this.debugMesh.visible = true;
+            viewer.requestRender();
             const pointData = await getChunk(this.parent.source, this.copcInfo, this.parent.offset.toArray());
 
             pointData.geometry.boundingBox = this.bounds;
@@ -136,6 +135,10 @@ export class PointCloudNode {
             this.data.pco.userData.nodeIndex = this.data.pickIndex;
 
             this.setState("visible");
+
+            if (!bboxWasVisible) {
+                this.debugMesh.visible = false;
+            }
 
             viewer.addNode(this);
 
