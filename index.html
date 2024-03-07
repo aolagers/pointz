@@ -27,6 +27,11 @@
                 bottom: 20px;
                 right: 20px;
             }
+            #viewer {
+                margin: 0;
+                padding: 0;
+                display: block;
+            }
         </style>
     </head>
 
@@ -36,6 +41,7 @@
             <input id="sl1" type="range" min="-100" max="100" value="0" /> <br />
             <input id="sl2" type="range" min="-100" max="100" value="0" />
         </div>
+        <canvas id="viewer"></canvas>
         <script type="module" src="/src/index.ts"></script>
     </body>
 </html>
