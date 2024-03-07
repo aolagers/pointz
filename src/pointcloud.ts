@@ -12,12 +12,6 @@ export const infoWorkerPool = new WorkerPool<
     WorkerInfoResponse
 >(workerUrl, 4);
 
-let _chunkId = 0;
-
-export function getChunkID() {
-    return ++_chunkId;
-}
-
 export class PointCloud {
     viewer: Viewer;
     name: string;

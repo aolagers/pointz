@@ -8,7 +8,7 @@ import {
     IntType,
     Points,
 } from "three";
-import { PointCloud, getChunkID } from "./pointcloud";
+import { PointCloud } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
 import { Viewer } from "./viewer";
 import { pointMaterialPool } from "./materials/point-material";
@@ -98,7 +98,7 @@ export function loadDemo(viewer: Viewer) {
     node.isDemo = true;
 
     node.data = {
-        pickIndex: getChunkID(),
+        pickIndex: 0,
         pco: new Points(geometry, pointMaterialPool.getMaterial()),
     };
 
