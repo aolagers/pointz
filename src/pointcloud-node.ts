@@ -18,11 +18,17 @@ import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud, getChunkID } from "./pointcloud";
 import { Viewer } from "./viewer";
-import { CopcNodeInfo, LazSource, WorkerResponseMapping } from "./copc-loader";
+import { CopcNodeInfo, WorkerPointsRequest, WorkerPointsResponse } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
 
-export const workerPool = new WorkerPool<WorkerResponseMapping>(workerUrl, 4);
+export const pointsWorkerPool = new WorkerPool<
+    {
+        info: { abort: AbortController; score: number; node: PointCloudNode };
+        command: WorkerPointsRequest;
+    },
+    WorkerPointsResponse
+>(workerUrl, 4);
 
 type NodeState = "unloaded" | "loading" | "visible" | "error";
 
@@ -116,7 +122,7 @@ export class PointCloudNode {
             const bboxWasVisible = this.debugMesh.visible;
             this.debugMesh.visible = true;
             viewer.requestRender();
-            const pointData = await getChunk(this.parent.source, this.copcInfo, this.parent.offset.toArray());
+            const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
 
             pointData.geometry.boundingBox = this.bounds;
 
@@ -155,38 +161,45 @@ export class PointCloudNode {
             viewer.scene.remove(this.data.pco);
             if (this.data.pco.material instanceof PointMaterial) {
                 pointMaterialPool.returnMaterial(this.data.pco.material);
-            } else {
-                throw new Error("Expected a PointMaterial");
             }
             this.data.pco.geometry.dispose();
         }
 
+        this.debugMesh.visible = false;
+
         this.data = null;
         this.setState("unloaded");
     }
-}
 
-async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
-    const data = await workerPool.runTask({
-        command: "points",
-        source: source,
-        node: node,
-        offset: offset,
-    });
+    async getChunk(score: number) {
+        const data = await pointsWorkerPool.runTask({
+            info: {
+                abort: new AbortController(),
+                score: score,
+                node: this,
+            },
+            command: {
+                command: "points",
+                nodeInfo: this.copcInfo,
+                offset: this.parent.offset.toArray(),
+                source: this.parent.source,
+            },
+        });
 
-    const geometry = new BufferGeometry();
+        const geometry = new BufferGeometry();
 
-    geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
-    geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-    geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+        geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
+        geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
+        geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
-    const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
-    classificationAttribute.gpuType = IntType;
-    geometry.setAttribute("classification", classificationAttribute);
+        const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
+        classificationAttribute.gpuType = IntType;
+        geometry.setAttribute("classification", classificationAttribute);
 
-    const ptIndexAttribute = new Int32BufferAttribute(data.indices, 1);
-    ptIndexAttribute.gpuType = IntType;
-    geometry.setAttribute("ptIndex", ptIndexAttribute);
+        const ptIndexAttribute = new Int32BufferAttribute(data.indices, 1);
+        ptIndexAttribute.gpuType = IntType;
+        geometry.setAttribute("ptIndex", ptIndexAttribute);
 
-    return { geometry: geometry, pointCount: data.pointCount, chunkId: getChunkID() };
+        return { geometry: geometry, pointCount: data.pointCount, chunkId: getChunkID() };
+    }
 }

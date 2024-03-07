@@ -87,6 +87,10 @@ export class PriorityQueue<T> {
     public clear() {
         this.heap = [];
     }
+
+    public count() {
+        return this.heap.length;
+    }
 }
 
 if (import.meta.vitest) {

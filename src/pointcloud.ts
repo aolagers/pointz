@@ -1,9 +1,16 @@
 import { Box3, Vector3 } from "three";
-import type { Hierarchy, LazSource, WorkerInfoRequest } from "./copc-loader";
+import type { Hierarchy, LazSource, WorkerInfoRequest, WorkerInfoResponse } from "./copc-loader";
 import { Viewer } from "./viewer";
 import { nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
-import { PointCloudNode, workerPool } from "./pointcloud-node";
+import { PointCloudNode } from "./pointcloud-node";
+import { WorkerPool } from "./worker-pool";
+import workerUrl from "./copc-loader?worker&url";
+
+export const infoWorkerPool = new WorkerPool<
+    { info: { abort: AbortController; score: number }; command: WorkerInfoRequest },
+    WorkerInfoResponse
+>(workerUrl, 4);
 
 let _chunkId = 0;
 
@@ -77,7 +84,7 @@ export class PointCloud {
     static async loadLAZ(viewer: Viewer, source: string | File) {
         const pcloudName = typeof source === "string" ? source.split("/").pop()! : source.name;
 
-        const details = await getInfo(source);
+        const details = await PointCloud.getInfo(source);
         const offset = new Vector3(...details.header.offset);
 
         const tightBounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
@@ -102,14 +109,16 @@ export class PointCloud {
 
         return pcloud;
     }
-}
-
-async function getInfo(source: LazSource) {
-    const req: WorkerInfoRequest = {
-        command: "info",
-        source: source,
-    };
-
-    const res = await workerPool.runTask(req);
-    return res;
+    static async getInfo(source: LazSource) {
+        return await infoWorkerPool.runTask({
+            info: {
+                score: Date.now(),
+                abort: new AbortController(),
+            },
+            command: {
+                command: "info",
+                source: source,
+            },
+        });
+    }
 }
