@@ -10,14 +10,12 @@ import {
     Points,
     ShaderMaterial,
     Color,
-    PointsMaterial,
     Camera,
     Raycaster,
     Vector2,
     Vector3,
     LineBasicMaterial,
     Line,
-    Uint8BufferAttribute,
     Uint32BufferAttribute,
 } from "three";
 
@@ -47,34 +45,50 @@ class PointCloud {
     static getMaterial() {
         const vertexShader = `
 
+            uniform vec2 uMouse;
+
             attribute uint classification;
 
             flat varying uint cls;
 
             void main() {
                 cls = classification;
+
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_PointSize = 3.0;
-                gl_Position = projectionMatrix * mvPosition;
+                vec4 screenPosition = projectionMatrix * mvPosition;
+
+                vec2 screenNorm = mvPosition.xy * 0.5;
+
+                float dist = distance(screenNorm, uMouse);
+
+                if (dist < 0.2) {
+                    gl_PointSize = 5.0;
+                } else {
+                    gl_PointSize = 2.0;
+                }
+
+                gl_Position = screenPosition;
+                
             }
         `;
 
         const fragmentShader = `
-            uniform vec3 color;
+            uniform vec3 uColor;
             flat varying uint cls;
 
             void main() {
                 if (cls == 0u) {
                     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
                 } else {
-                    gl_FragColor = vec4(color, 1.0);
+                    gl_FragColor = vec4(uColor, 1.0);
                 }
             }
         `;
 
         const smaterial = new ShaderMaterial({
             uniforms: {
-                color: { value: new Color(0x77ffaa) },
+                uColor: { value: new Color(0x77ffaa) },
+                uMouse: { value: pointer },
             },
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
@@ -135,6 +149,8 @@ document.body.addEventListener("pointermove", onPointerMove);
 
 window.addEventListener("resize", onWindowResize);
 
+const debug = document.getElementById("debug")!;
+
 const pointer = new Vector2();
 let mouseX = 0;
 let mouseY = 0;
@@ -167,7 +183,6 @@ function loop() {
 
     if (intersections.length > 0 && intersections[0]) {
         line.visible = true;
-        console.log(intersections[0].distance, line.geometry.attributes);
         const pos = line.geometry.attributes.position!;
         const verts = pos.array;
 
@@ -198,14 +213,12 @@ function onPointerMove(event: PointerEvent) {
 
     mouseX = event.clientX - windowHalfX;
     mouseY = event.clientY - windowHalfY;
+
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    debug.innerHTML = `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
 }
 
 loop();
 
-window.onerror = function (...args) {
-    console.error(args);
-    cont = false;
-    return false;
-};
