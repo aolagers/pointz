@@ -46,6 +46,8 @@ export class PointCloud {
         this.hierarchy = hierarchy;
         this.rootSpacing = rootSpacing;
         this.pointCount = pointCount;
+
+        // TODO: fix offset if it seems too small
     }
 
     async initializeNodes() {

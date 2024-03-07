@@ -72,6 +72,14 @@ export class Viewer {
 
     edlMaterial: EDLMaterial;
 
+    errors: Record<string, boolean> = {
+        noPointClouds: true,
+        resizing: false,
+    };
+
+    errorElement: HTMLElement | null;
+    initialized = false;
+
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         (window as any).viewer = this;
 
@@ -126,6 +134,8 @@ export class Viewer {
         this.sceneOrtho.add(tquad); // Scene for orthographic display
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+        this.errorElement = document.querySelector("#errormsg");
 
         this.setSize(this.width, this.height);
     }
@@ -224,6 +234,7 @@ export class Viewer {
 
         this.econtrols.restoreCamera();
 
+        this.initialized = true;
         this.requestRender();
     }
 
@@ -445,6 +456,7 @@ export class Viewer {
     resizeHandle = 0;
 
     setSize(width: number, height: number) {
+        this.setError("resizing", true);
         if (this.resizeHandle > 0) {
             clearTimeout(this.resizeHandle);
         }
@@ -465,11 +477,33 @@ export class Viewer {
             // this.renderer.domElement.style.width = `${this.width}px`;
 
             this.labelRenderer.setSize(this.width, this.height);
+            this.setError("resizing", false);
             this.requestRender();
-        }, 200);
+        }, 100);
+    }
+
+    setError(k: keyof typeof this.errors, set_to: boolean) {
+        if (!this.errorElement) {
+            return;
+        }
+        if (!this.initialized) {
+            return;
+        }
+
+        this.errors[k] = set_to;
+
+        this.errorElement.style.display = "block";
+        if (this.errors.resizing) {
+            this.errorElement.textContent = "resizing...";
+        } else if (this.errors.noPointClouds) {
+            this.errorElement.textContent = "no pointclouds";
+        } else {
+            this.errorElement.style.display = "none";
+        }
     }
 
     addPointCloud(pc: PointCloud, center = false) {
+        this.setError("noPointClouds", false);
         this.pointClouds.push(pc);
 
         const cube = createTightBounds(pc);
