@@ -1,4 +1,4 @@
-import { BoxGeometry, Mesh, MeshBasicMaterial, Vector3 } from "three";
+import { BoxGeometry, Mesh, MeshBasicMaterial, Vector2, Vector3 } from "three";
 import { PointCloud } from "./pointcloud";
 import { MATERIALS } from "./materials";
 
@@ -13,7 +13,18 @@ export function createTightBounds(pc: PointCloud) {
 
 const bboxMaterial = new MeshBasicMaterial({ color: "yellow", wireframe: true });
 
-export function createCubeBounds(baseCube: [number, number, number, number, number, number], key: number[], offset: Vector3) {
+export function printVec(v: Vector3 | Vector2) {
+    if (v instanceof Vector2) {
+        return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`;
+    }
+    return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
+}
+
+export function createCubeBounds(
+    baseCube: [number, number, number, number, number, number],
+    key: number[],
+    offset: Vector3,
+) {
     const D = key[0]!;
     const X = key[1]!;
     const Y = key[2]!;

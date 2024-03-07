@@ -14,7 +14,7 @@ import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud } from "./pointcloud";
 import { MATERIALS, pointer, updateValues } from "./materials";
-import { createTightBounds } from "./utils";
+import { createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
 const points = [];
@@ -22,6 +22,12 @@ points.push(new Vector3(0, 0, 100));
 points.push(new Vector3(1, 1, 1));
 const lineGeom = new BufferGeometry().setFromPoints(points);
 const line = new Line(lineGeom, MATERIALS.LINE);
+
+const debug = {
+    mouse: "",
+    camera: "",
+    target: "",
+};
 
 export class Viewer {
     renderer: WebGLRenderer;
@@ -79,6 +85,11 @@ export class Viewer {
             updateValues(sliders[0], sliders[1]);
         });
         window.addEventListener("resize", this.onWindowResize);
+
+        this.controls.addEventListener("change", (e) => {
+            debug.target = `trg: ${printVec(e.target.target)}`;
+            debug.camera = `pos: ${printVec(this.camera.position)}`;
+        });
     }
 
     loop() {
@@ -110,6 +121,8 @@ export class Viewer {
         this.gpuPanel.startQuery();
         this.renderer.render(this.scene, this.camera);
         this.gpuPanel.endQuery();
+
+        debugEl.innerHTML = `${debug.mouse}<br>` + `${debug.camera}<br>` + `${debug.target}<br>`;
 
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
         requestAnimationFrame(() => this.loop());
@@ -161,7 +174,7 @@ export class Viewer {
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        debug.innerHTML = `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
+        debug.mouse = `mouse: ${printVec(pointer)}`;
     }
 
     async addDemo() {
@@ -185,7 +198,7 @@ export class Viewer {
     }
 }
 
-const debug = document.getElementById("debug")!;
+const debugEl = document.getElementById("debug")!;
 
 const raycaster = new Raycaster();
 raycaster.params.Points.threshold = 0.5;
