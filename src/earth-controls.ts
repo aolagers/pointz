@@ -66,7 +66,7 @@ export class EarthControls {
 
         this.pivot.visible = false;
 
-        this.domElement.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+        // this.domElement.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
         this.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
 
         this.domElement.addEventListener("pointerdown", (e) => this.pointerStart(e));
