@@ -1,24 +1,24 @@
 uniform vec2 uMouse;
 
-attribute uint classification;
-attribute float intensity;
-attribute vec3 color;
+in uint classification;
+in float intensity;
+in vec3 color;
 
 uniform float ptSize;
 uniform float uCustom1;
 uniform float uCustom2;
 
-flat varying vec3 rgbColor;
-flat varying uint cls;
+out vec3 rgbColor;
+flat out uint cls;
 
-flat varying float custom1;
-flat varying float custom2;
+out float custom1;
+out float custom2;
 
-flat varying float fintensity;
+out float fintensity;
 
-flat varying vec2 mouse;
+out vec2 mouse;
 
-flat varying float depth;
+out float depth;
 
 void main() {
     cls = classification;
