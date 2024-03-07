@@ -25,7 +25,7 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { updateSliders, changeColorMode, updatePointSize } from "./materials/point-material";
+import { PointMaterial } from "./materials/point-material";
 import { createEDLMaterial } from "./materials/edl-material";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
@@ -143,16 +143,18 @@ export class Viewer {
         const sl1 = document.getElementById("sl1") as HTMLInputElement;
         const sl2 = document.getElementById("sl2") as HTMLInputElement;
 
+        const ptmat = PointMaterial.getSingleton();
+
         const sliders: [number, number] = [0, 0];
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
             debug.slider1 = sliders[0].toFixed(2);
-            updateSliders(sliders[0], sliders[1]);
+            ptmat.updateSliders(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
             debug.slider2 = sliders[1].toFixed(2);
-            updateSliders(sliders[0], sliders[1]);
+            ptmat.updateSliders(sliders[0], sliders[1]);
         });
 
         this.controls.addEventListener("change", (e) => {
@@ -185,21 +187,22 @@ export class Viewer {
         });
 
         document.addEventListener("keydown", (ev) => {
-            // if number one
+            const ptmat = PointMaterial.getSingleton();
+
             if (ev.key === "1") {
-                changeColorMode("INTENSITY");
+                ptmat.changeColorMode("INTENSITY");
             }
             if (ev.key === "2") {
-                changeColorMode("CLASSIFICATION");
+                ptmat.changeColorMode("CLASSIFICATION");
             }
             if (ev.key === "3") {
-                changeColorMode("RGB");
+                ptmat.changeColorMode("RGB");
             }
             if (ev.key === "+") {
-                updatePointSize(+1);
+                ptmat.updatePointSize(+1);
             }
             if (ev.key === "-") {
-                updatePointSize(-1);
+                ptmat.updatePointSize(-1);
             }
         });
 

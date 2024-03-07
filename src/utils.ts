@@ -13,7 +13,6 @@ export function createTightBounds(pc: PointCloud) {
     return cube;
 }
 
-
 export function printVec(v: Vector3 | Vector2) {
     if (v instanceof Vector2) {
         return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`;
