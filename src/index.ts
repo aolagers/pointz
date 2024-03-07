@@ -5,7 +5,7 @@ window.onerror = (message, source, lineno, colno, error) => {
     document.body.innerHTML = `<pre>${message}\n${source} ${lineno}:${colno}\n${error}</pre>`;
 };
 
-const canvas = document.getElementById("viewer") as HTMLCanvasElement;
+const canvas = document.querySelector("#viewer") as HTMLCanvasElement;
 
 const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
@@ -28,6 +28,13 @@ if (window.location.hostname === "localhost") {
 
 window.addEventListener("resize", () => {
     viewer.setSize(window.innerWidth, window.innerHeight);
+});
+
+document.querySelector("#more")!.addEventListener("click", () => {
+    viewer.loadMoreNodes();
+});
+document.querySelector("#less")!.addEventListener("click", () => {
+    viewer.dropWorstNodes();
 });
 
 // viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");

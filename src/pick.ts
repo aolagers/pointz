@@ -133,10 +133,10 @@ export function getMouseIntersection(
                 pointcloud: pchit,
             };
 
-            console.log(
-                `HIT a:${a} c:${vals.join("/")} idx:${idx} n:${nodehit} ` +
-                    `p:${X} ${Y} ${Z} pts:${attrs.count} idx:${idx}`
-            );
+            // console.log(
+            //     `HIT a:${a} c:${vals.join("/")} idx:${idx} n:${nodehit} ` +
+            //         `p:${X} ${Y} ${Z} pts:${attrs.count} idx:${idx}`
+            // );
         } else {
             console.warn("NOPE", a, vals.join("/"), idx, nodehit, "f:", hits);
         }
