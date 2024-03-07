@@ -55,8 +55,8 @@ export class EarthControls {
                 // const step = Math.sign(deltaY) * Math.sqrt(Math.abs(deltaY));
                 // const dir = this.camera.getWorldDirection(new Vector3());
                 // this.camera.position.add(dir.multiplyScalar(-step));
+                this.onChange?.();
             }
-            this.onChange?.();
         });
     }
 
@@ -67,6 +67,7 @@ export class EarthControls {
     zoomTo(target: Vector3, amount: number) {
         const camToTarget = new Vector3().subVectors(target, this.camera.position);
         this.camera.position.add(camToTarget.multiplyScalar(amount));
+        this.onChange?.();
     }
 
     pointerStart(e: PointerEvent) {

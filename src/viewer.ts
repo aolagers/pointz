@@ -1,17 +1,16 @@
 import {
-    BufferGeometry,
     Clock,
     Color,
     DepthTexture,
-    Line,
-    LineBasicMaterial,
     Mesh,
+    MeshBasicMaterial,
     NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
     PlaneGeometry,
     Points,
     RGBAFormat,
+    Ray,
     Raycaster,
     Scene,
     UnsignedIntType,
@@ -24,17 +23,11 @@ import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
 
 import { EarthControls } from "./earth-controls";
-import { PointCloud, pool } from "./pointcloud";
+import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, printVec } from "./utils";
+import { boxToMesh, createTightBounds, getCameraFrustum, printVec } from "./utils";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
-
-const points = [];
-
-points.push(new Vector3(0, 0, 200));
-points.push(new Vector3(1, 1, 1));
-const lineGeom = new BufferGeometry().setFromPoints(points);
-const line = new Line(lineGeom, new LineBasicMaterial({ color: 0x00ee00 }));
+import { PriorityQueue } from "./priority-queue";
 
 const debugEl = document.getElementById("debug")!;
 const debug = {
@@ -122,7 +115,6 @@ export class Viewer {
         this.econtrols = new EarthControls(this.camera, this.renderer.domElement, this);
 
         this.scene = new Scene();
-        this.scene.add(line);
 
         this.stats = new Stats();
         this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
@@ -203,6 +195,9 @@ export class Viewer {
             }
             if (ev.key === "-") {
                 ptmat.updatePointSize(-1);
+            }
+            if (ev.key === "u") {
+                this.updateVisibile();
             }
 
             this.requestRender();
@@ -286,32 +281,55 @@ export class Viewer {
         this.requestRender();
     }
 
-    /*
     updateVisibile() {
-        const frustum = new Frustum();
-        frustum.setFromProjectionMatrix(this.camera.projectionMatrix);
-        frustum.planes.forEach((plane) => {
-            plane.applyMatrix4(this.camera.matrixWorld);
+        const frustum = getCameraFrustum(this.camera);
+
+        const cameraRay = new Ray(this.camera.position, this.camera.getWorldDirection(new Vector3()).normalize());
+
+        const nodeScore = (n: PointCloudNode) => {
+            return (
+                100_000 * n.depth +
+                n.bounds.distanceToPoint(this.camera.position) +
+                cameraRay.distanceToPoint(n.bounds.getCenter(new Vector3()))
+            );
+        };
+
+        const pq = new PriorityQueue<PointCloudNode>((a, b) => {
+            return nodeScore(a) - nodeScore(b);
         });
 
-        const toDrop: [PointCloud, PointCloudNode][] = [];
         for (const pc of this.pclouds) {
             for (const node of pc.loadedNodes) {
-                const bbox = createCubeBoundsBox(pc.octreeInfo.cube, node.nodeName, pc.offset);
-                const visible = frustum.intersectsBox(bbox);
-                if (!visible) {
-                    toDrop.push([pc, node]);
+                const inFrustum = frustum.intersectsBox(node.bounds);
+                if (inFrustum) {
+                    // node.debugMesh.material = new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true });
+                    node.pco.visible = true;
+                    pq.push(node);
+                } else {
+                    // node.debugMesh.material = new MeshBasicMaterial({ color: 0xcc33ff, wireframe: true });
+                    node.pco.visible = false;
                 }
             }
         }
 
-        for (const [pc, n] of toDrop) {
-            console.log("drop", pc.name, n.nodeName);
-            this.scene.remove(n.pco);
-            pc.loadedNodes.splice(pc.loadedNodes.indexOf(n), 1);
+        let show = 32;
+
+        while (show > 0 && !pq.isEmpty()) {
+            const n = pq.pop()!;
+            if (!n.pco.visible) console.log("show", n);
+            n.pco.visible = true;
+            n.debugMesh.material = new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true });
+            show--;
+        }
+
+        while (!pq.isEmpty()) {
+            const n = pq.pop()!;
+
+            if (n.pco.visible) console.log("hide", n);
+            n.pco.visible = false;
+            n.debugMesh.material = new MeshBasicMaterial({ color: 0xcc33ff, wireframe: true });
         }
     }
-    */
 
     setSize(width: number, height: number) {
         this.width = width;
@@ -341,6 +359,8 @@ export class Viewer {
     async addLAZ(what: string | File, center = false) {
         const pc = await PointCloud.loadLAZ(this, what);
         this.pclouds.push(pc);
+        const cube = createTightBounds(pc);
+        this.scene.add(cube);
 
         console.log("NODES for", what, pc.hierarchy.nodes);
         pc.load();

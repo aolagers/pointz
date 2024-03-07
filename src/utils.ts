@@ -1,4 +1,4 @@
-import { Box3, BoxGeometry, Mesh, MeshBasicMaterial, Vector2, Vector3 } from "three";
+import { Box3, BoxGeometry, Camera, Frustum, Matrix4, Mesh, MeshBasicMaterial, Vector2, Vector3 } from "three";
 import { PointCloud } from "./pointcloud";
 import { OctreePath } from "./octree";
 
@@ -52,4 +52,14 @@ export function nodeToBox(base: Box3, key: OctreePath) {
     const nodeBox = new Box3(newMin, newMin.clone().add(divSize));
 
     return nodeBox;
+}
+
+export function getCameraFrustum(camera: Camera) {
+    const frustum = new Frustum();
+    // camera.updateMatrix();
+    // camera.updateMatrixWorld();
+
+    const projScreenMatrix = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(projScreenMatrix);
+    return frustum;
 }
