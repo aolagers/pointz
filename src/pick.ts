@@ -42,26 +42,13 @@ export function getMouseIntersection(
         null;
 
     let hits = 0;
-    for (const pc of viewer.pclouds) {
+    for (const pc of viewer.pointClouds) {
         for (const node of pc.loadedNodes) {
             const isHit = ray.intersectsBox(node.bounds);
-            // const attr = node.geometry.getAttribute("visibleIndex");
 
             if (isHit) {
-                // console.log("RAY", ray, node.bounds);
-
-                // node.debugMesh.material = new MeshBasicMaterial({ color: "pink", wireframe: true });
-                // node.visibleIndex = hitIdx;
-                // for (let pidx = 0; pidx < attr.count; pidx++) {
-                //     attr.setW(pidx, hitIdx);
-                // }
-
-                // console.log("SET", node, vi);
                 hits++;
-                // attr.needsUpdate = true;
             } else {
-                // node.debugMesh.material = new MeshBasicMaterial({ color: "gray", wireframe: true });
-                // node.visibleIndex = -1;
             }
         }
     }
@@ -77,7 +64,8 @@ export function getMouseIntersection(
     );
 
     // TODO: only matching objects
-    for (const o of viewer.objects) {
+    for (const o of viewer.pointObjects) {
+        o.userData.pointMaterial = o.material;
         o.material = pickMaterial;
     }
 
@@ -120,7 +108,7 @@ export function getMouseIntersection(
         const idx = r * 256 * 256 + g * 256 + b;
         let nodehit = null;
         let pchit = null;
-        for (const pc of viewer.pclouds) {
+        for (const pc of viewer.pointClouds) {
             for (const lnode of pc.loadedNodes) {
                 // console.log(node.visibleIndex);
                 if (lnode.visibleIndex === a) {
@@ -164,8 +152,8 @@ export function getMouseIntersection(
     camera.clearViewOffset();
     renderer.setViewport(0, 0, viewer.width, viewer.height);
 
-    for (const o of viewer.objects) {
-        o.material = PointCloud.material;
+    for (const o of viewer.pointObjects) {
+        o.material = o.userData.pointMaterial;
     }
 
     return point;

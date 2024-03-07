@@ -26,6 +26,7 @@ import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, getNodeVisibilityRating, printVec } from "./utils";
 import { CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
+import { pointMaterialPool } from "./materials/point-material";
 
 const debugEl = document.getElementById("debug")!;
 const debug = {
@@ -54,8 +55,8 @@ export class Viewer {
 
     scene: Scene;
 
-    pclouds: PointCloud[] = [];
-    objects: Points[] = [];
+    pointClouds: PointCloud[] = [];
+    pointObjects: Points[] = [];
 
     stats: Stats;
     gpuPanel: GPUStatsPanel;
@@ -140,13 +141,15 @@ export class Viewer {
         const sliders: [number, number] = [0, 0];
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
-            // debug.slider1 = sliders[0].toFixed(2);
-            PointCloud.material.updateSliders(sliders[0], sliders[1]);
+            for (const m of pointMaterialPool.all) {
+                m.updateSliders(sliders[0], sliders[1]);
+            }
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
-            // debug.slider2 = sliders[1].toFixed(2);
-            PointCloud.material.updateSliders(sliders[0], sliders[1]);
+            for (const m of pointMaterialPool.all) {
+                m.updateSliders(sliders[0], sliders[1]);
+            }
         });
 
         this.econtrols.onChange = () => {
@@ -178,25 +181,25 @@ export class Viewer {
         });
 
         document.addEventListener("keydown", (ev) => {
-            const ptmat = PointCloud.material;
-
-            if (ev.key === "1") {
-                ptmat.changeColorMode("INTENSITY");
-            }
-            if (ev.key === "2") {
-                ptmat.changeColorMode("CLASSIFICATION");
-            }
-            if (ev.key === "3") {
-                ptmat.changeColorMode("RGB");
-            }
-            if (ev.key === "+") {
-                ptmat.updatePointSize(+1);
-            }
-            if (ev.key === "-") {
-                ptmat.updatePointSize(-1);
-            }
-            if (ev.key === "u") {
-                this.updateVisibile();
+            for (const ptmat of pointMaterialPool.all) {
+                if (ev.key === "1") {
+                    ptmat.changeColorMode("INTENSITY");
+                }
+                if (ev.key === "2") {
+                    ptmat.changeColorMode("CLASSIFICATION");
+                }
+                if (ev.key === "3") {
+                    ptmat.changeColorMode("RGB");
+                }
+                if (ev.key === "+") {
+                    ptmat.updatePointSize(+1);
+                }
+                if (ev.key === "-") {
+                    ptmat.updatePointSize(-1);
+                }
+                if (ev.key === "u") {
+                    this.updateVisibile();
+                }
             }
 
             this.requestRender();
@@ -243,7 +246,7 @@ export class Viewer {
 
         let totalPts = 0;
 
-        for (const pc of this.pclouds) {
+        for (const pc of this.pointClouds) {
             totalPts += pc.pointsLoaded;
         }
 
@@ -281,7 +284,7 @@ export class Viewer {
 
     addObject(o: Points) {
         this.scene.add(o);
-        this.objects.push(o);
+        this.pointObjects.push(o);
         this.requestRender();
     }
 
@@ -298,7 +301,7 @@ export class Viewer {
 
         const pq = new PriorityQueue<PointCloudNode>((a, b) => nodeScore(a) - nodeScore(b));
 
-        for (const pc of this.pclouds) {
+        for (const pc of this.pointClouds) {
             for (const node of pc.loadedNodes) {
                 const inFrustum = frustum.intersectsBox(node.bounds);
                 if (inFrustum) {
@@ -365,7 +368,7 @@ export class Viewer {
 
     async addDemo() {
         const demo = PointCloud.loadDemo(this);
-        this.pclouds.push(demo);
+        this.pointClouds.push(demo);
         demo.loadFake();
         const cube = createTightBounds(demo);
         this.scene.add(cube);
@@ -373,7 +376,7 @@ export class Viewer {
 
     async addLAZ(what: string | File, center = false) {
         const pc = await PointCloud.loadLAZ(this, what);
-        this.pclouds.push(pc);
+        this.pointClouds.push(pc);
         const cube = createTightBounds(pc);
         this.scene.add(cube);
 

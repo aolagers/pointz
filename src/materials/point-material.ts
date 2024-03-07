@@ -3,10 +3,36 @@ import { COLOR_MODE } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
-let ptSize = 6.0;
+export const pointMaterialPool = {
+    stash: [] as PointMaterial[],
+    rented: [] as PointMaterial[],
+    all: [] as PointMaterial[],
 
+    getMaterial() {
+        let m: PointMaterial;
+        if (this.stash.length) {
+            m = this.stash.pop()!;
+        } else {
+            m = new PointMaterial(false);
+            this.all.push(m);
+        }
+        this.rented.push(m);
+        return m;
+    },
+
+    returnMaterial(mat: PointMaterial) {
+        this.rented.splice(this.rented.indexOf(mat), 1);
+        this.stash.push(mat);
+    },
+};
+
+const DEFAULT_PT_SIZE = 6.0;
 export class PointMaterial extends ShaderMaterial {
-    constructor(pick: boolean) {
+    nodeIndex = 0;
+
+    ptSize = DEFAULT_PT_SIZE;
+
+    constructor(pick: boolean, nodeIndex = 0) {
         const colorMode: keyof typeof COLOR_MODE = (localStorage.getItem("COLOR_MODE") as any) || "RGB";
         super({
             glslVersion: "300 es",
@@ -17,22 +43,34 @@ export class PointMaterial extends ShaderMaterial {
             uniforms: {
                 uColor: { value: new Color(3403332) },
                 uMouse: { value: new Vector2(0, 0) },
-                ptSize: { value: ptSize },
+                ptSize: { value: DEFAULT_PT_SIZE },
                 uCustom1: { value: 0.0 },
                 uCustom2: { value: 0.0 },
                 // uClassMask: { value: 0xffff & ~(1 << 2) },
                 uClassMask: { value: 0xffff },
+                uNodeIndex: { value: 0 },
             },
             vertexShader: defaultVert,
             fragmentShader: defaultFrag,
         });
+
+        this.updateNodeIndex(nodeIndex);
+    }
+
+    updateNodeIndex(nodeIndex: number) {
+        if (nodeIndex !== this.nodeIndex) {
+            this.uniforms.uNodeIndex.value = nodeIndex;
+            this.nodeIndex = nodeIndex;
+
+            this.needsUpdate = true;
+        }
     }
 
     updatePointSize(amount: number) {
-        ptSize += amount;
+        this.ptSize += amount;
         const uc1 = this.uniforms.ptSize;
         if (uc1) {
-            uc1.value = ptSize;
+            uc1.value = this.ptSize;
         }
         this.needsUpdate = true;
     }
