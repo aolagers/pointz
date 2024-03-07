@@ -6,11 +6,11 @@ type Wrapper = {
 
 type QueuedItem = {
     request: unknown;
-    resolve: (resp: any) => void;
-    reject: (resp: any) => void;
+    resolve: (resp: unknown) => void;
+    reject: (resp: unknown) => void;
 };
 
-export class WorkerPool<R extends Record<string, any>> {
+export class WorkerPool<Mappings extends Record<string, { msgType: string }>> {
     pool: Wrapper[] = [];
     queue: QueuedItem[] = [];
 
@@ -39,7 +39,7 @@ export class WorkerPool<R extends Record<string, any>> {
         this.tasksFinished++;
         const next = this.queue.shift();
         if (next) {
-            w.worker.onmessage = async (e) => {
+            w.worker.onmessage = (e: MessageEvent<Mappings[keyof Mappings]>) => {
                 if (e.data.msgType === "error") {
                     next.reject(e.data);
                 } else {
@@ -53,13 +53,13 @@ export class WorkerPool<R extends Record<string, any>> {
         }
     }
 
-    async runTask<J extends { command: keyof R }>(req: J): Promise<R[J["command"]]> {
+    async runTask<Job extends { command: keyof Mappings }>(req: Job): Promise<Mappings[Job["command"]]> {
         const available = this.pool.find((w) => !w.busy);
 
         if (available) {
             available.busy = true;
-            return new Promise<R[J["command"]]>((resolve, reject) => {
-                available.worker.onmessage = async (e) => {
+            return new Promise<Mappings[Job["command"]]>((resolve, reject) => {
+                available.worker.onmessage = (e: MessageEvent<Mappings[keyof Mappings]>) => {
                     if (e.data.msgType === "error") {
                         reject(e.data);
                     } else {
@@ -71,8 +71,8 @@ export class WorkerPool<R extends Record<string, any>> {
                 available.worker.postMessage(req);
             });
         } else {
-            return new Promise<R[J["command"]]>((resolve, reject) => {
-                this.queue.push({ request: req, resolve, reject });
+            return new Promise<Mappings[Job["command"]]>((resolve, reject) => {
+                this.queue.push({ request: req, resolve: resolve as (_: unknown) => void, reject });
             });
         }
     }

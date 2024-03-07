@@ -46,7 +46,8 @@ export class PointMaterial extends ShaderMaterial {
     ptSize = DEFAULT_PT_SIZE;
 
     constructor(pick: boolean) {
-        const colorMode: keyof typeof COLOR_MODE = (localStorage.getItem("COLOR_MODE") as any) || "RGB";
+        const colorMode: keyof typeof COLOR_MODE =
+            (localStorage.getItem("COLOR_MODE") as keyof typeof COLOR_MODE) ?? "RGB";
         super({
             glslVersion: "300 es",
             defines: {

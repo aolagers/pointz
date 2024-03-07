@@ -6,7 +6,7 @@ export class Octree {
     path: OctreePath;
     bounds: Box3;
 
-    isLoaded: boolean = false;
+    isLoaded = false;
 
     constructor(path: OctreePath, bounds: Box3) {
         this.path = path;

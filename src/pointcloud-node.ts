@@ -45,7 +45,7 @@ export class PointCloudNode {
         pickIndex: number;
     };
 
-    isDemo: boolean = false;
+    isDemo = false;
 
     constructor(parent: PointCloud, name: OctreePath, bounds: Box3, spacing: number) {
         this.parent = parent;
@@ -154,7 +154,7 @@ export class PointCloudNode {
         }
 
         if (this.data) {
-            viewer.scene.remove(this.data!.pco);
+            viewer.scene.remove(this.data.pco);
             if (this.data.pco.material instanceof PointMaterial) {
                 pointMaterialPool.returnMaterial(this.data.pco.material);
             } else {

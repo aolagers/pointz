@@ -1,5 +1,6 @@
 import {
     Camera,
+    Material,
     NearestFilter,
     PerspectiveCamera,
     RGBAFormat,
@@ -81,7 +82,7 @@ export function getMouseIntersection(
     // turn extra objects back on
     camera.layers.enable(1);
 
-    let pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
+    const pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
 
     renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, PICK_WINDOW, PICK_WINDOW, pbuf);
 
@@ -161,7 +162,7 @@ export function getMouseIntersection(
     for (const n of viewer.getVisibleNodes()) {
         if (n.data) {
             pickMaterialPool.returnMaterial(n.data.pco.material);
-            n.data.pco.material = n.data.pco.userData.pointMaterial;
+            n.data.pco.material = n.data.pco.userData.pointMaterial as Material | Material[];
         }
     }
 

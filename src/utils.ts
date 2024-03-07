@@ -63,3 +63,12 @@ export function getCameraFrustum(camera: Camera) {
     return frustum;
 }
 
+export function stringifyError(e: unknown) {
+    if (e instanceof Error) {
+        return JSON.stringify(e, Object.getOwnPropertyNames(e));
+    } else if (typeof e === "string") {
+        return e;
+    } else {
+        return JSON.stringify(e);
+    }
+}

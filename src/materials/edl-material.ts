@@ -1,4 +1,4 @@
-import { DepthTexture, ShaderMaterial, Texture, Vector2 } from "three";
+import { DepthTexture, ShaderMaterial, Texture } from "three";
 import { CAMERA_FAR, CAMERA_NEAR } from "../settings";
 import edlFrag from "../shaders/edl.frag";
 import edlVert from "../shaders/edl.vert";
