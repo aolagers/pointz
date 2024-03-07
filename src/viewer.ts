@@ -317,7 +317,7 @@ export class Viewer {
     }
 
     addNode(n: PointCloudNode) {
-        if (n.state === "visible") {
+        if (n.state === "loading") {
             const o = n.data!.pco;
             this.scene.add(o);
             this.requestRender();
@@ -386,7 +386,8 @@ export class Viewer {
         // unload culled nodes
         for (const node of nonVisibleNodes) {
             if (node.state === "visible") {
-                node.unload(this);
+                // node.unload(this);
+                node.cache();
             }
         }
 
@@ -407,7 +408,15 @@ export class Viewer {
                         visiblePoints += node.pointCount;
                     } else {
                         console.log("DROP", node.nodeName, err);
-                        node.unload(this);
+                        // node.unload(this);
+                        node.cache();
+                    }
+                    break;
+
+                case "cache":
+                    if (shouldBeShown) {
+                        node.show(this);
+                        visiblePoints += node.pointCount;
                     }
                     break;
 
@@ -437,7 +446,6 @@ export class Viewer {
             }
         }
 
-        // TODO: how to count in-progress node points?
         for (const r of pointsWorkerPool.active) {
             visiblePoints += r.info.node.pointCount;
         }
