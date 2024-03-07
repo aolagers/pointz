@@ -49,13 +49,13 @@ export function createCubeBoundsBox(
 
 export function createCubeBounds(
     baseCube: [number, number, number, number, number, number],
-    key: number[],
+    key: OctreePath,
     offset: Vector3
 ) {
-    const D = key[0]!;
-    const X = key[1]!;
-    const Y = key[2]!;
-    const Z = key[3]!;
+    const D = key[0];
+    const X = key[1];
+    const Y = key[2];
+    const Z = key[3];
 
     const fullSize = new Vector3(baseCube[3] - baseCube[0], baseCube[4] - baseCube[1], baseCube[5] - baseCube[2]);
     const divSize = new Vector3().copy(fullSize).divideScalar(Math.pow(2, D));

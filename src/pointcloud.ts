@@ -22,8 +22,9 @@ import type {
 } from "./worker";
 import { MATERIALS } from "./materials";
 import { Viewer } from "./viewer";
-import { createCubeBounds, createCubeBoundsBox } from "./utils";
+import { createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
+import { PriorityQueue } from "./priority-queue";
 
 export class PointCloudNode {
     nodeName: string;
@@ -129,18 +130,18 @@ export class PointCloud {
 
         const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
 
-        toLoad.sort((a, b) => {
-            for (let i = 0; i < 4; i++) {
-                if (a[i]! < b[i]!) {
-                    return -1;
-                } else if (a[i]! > b[i]!) {
-                    return 1;
-                }
-            }
-            return 0;
-        });
+        // toLoad.sort((a, b) => {
+        //     for (let i = 0; i < 4; i++) {
+        //         if (a[i]! < b[i]!) {
+        //             return -1;
+        //         } else if (a[i]! > b[i]!) {
+        //             return 1;
+        //         }
+        //     }
+        //     return 0;
+        // });
 
-        console.log({ toLoad, l: toLoad.length });
+        console.log(this.name, { toLoad, l: toLoad.length });
 
         let loaded = 0;
 
@@ -150,14 +151,50 @@ export class PointCloud {
             plane.applyMatrix4(this.viewer.camera.matrixWorld);
         });
 
+        const pq = new PriorityQueue<OctreePath>((a, b) => {
+            const bboxA = createCubeBoundsBox(this.octreeInfo.cube, a, this.offset);
+            const distA = this.viewer.camera.position.distanceTo(bboxA.getCenter(new Vector3()));
+
+            const bboxB = createCubeBoundsBox(this.octreeInfo.cube, b, this.offset);
+            const distB = this.viewer.camera.position.distanceTo(bboxB.getCenter(new Vector3()));
+
+            return distA - distB;
+        });
+
         let inview = 0;
+        for (const nnum of toLoad) {
+            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
+            if (frustum.intersectsBox(bbox)) {
+                inview++;
+                pq.push(nnum);
+            }
+        }
+
+        while (!pq.isEmpty() && loaded < 128) {
+            const n = pq.pop()!;
+            const nname = n.join("-");
+            console.log(this.name, "LOAD", nname);
+            const node = this.hierarchy.nodes[nname]!;
+            const data = await getData(worker, this.source, node, this.offset.toArray());
+
+            const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
+
+            this.loadedNodes.push(pcn);
+
+            this.viewer.scene.add(pcn.pco);
+            this.viewer.objects.push(pcn.pco);
+            // await new Promise((resolve) => setTimeout(resolve, 100));
+            loaded++;
+        }
+
+        /*
         for (const nnum of toLoad) {
             const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
             if (loaded < 128) {
                 const nname = nnum.join("-");
 
                 if (frustum.intersectsBox(bbox)) {
-                    console.log("LOAD", nname);
+                    console.log(this.name, "LOAD", nname);
                     const node = this.hierarchy.nodes[nname]!;
                     const data = await getData(worker, this.source, node, this.offset.toArray());
 
@@ -180,8 +217,16 @@ export class PointCloud {
             // this.viewer.scene.add(bbox);
             // await new Promise((resolve) => setTimeout(resolve, 50));
         }
+        */
 
-        console.log("load ratio", inview, "/", toLoad.length, ((100 * inview) / toLoad.length).toFixed(1) + "%");
+        console.log(
+            this.name,
+            "load ratio",
+            inview,
+            "/",
+            toLoad.length,
+            ((100 * inview) / toLoad.length).toFixed(1) + "%"
+        );
 
         worker.terminate();
     }
@@ -196,9 +241,10 @@ export class PointCloud {
         const offset = new Vector3(...details.header.offset);
         const bounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
 
-        const pc = new PointCloud(viewer, "pc-1", source, bounds, offset, details.hierarchy, details.info);
+        const pcloudName = typeof source === "string" ? source.split("/").pop()! : source.name;
+        const pcloud = new PointCloud(viewer, pcloudName, source, bounds, offset, details.hierarchy, details.info);
 
-        return pc;
+        return pcloud;
     }
 
     static async loadInfo(source: LazSource) {
