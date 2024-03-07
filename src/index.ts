@@ -1,4 +1,5 @@
 import { Viewer } from "./viewer";
+import { loadDemo } from "./demo";
 
 window.onerror = (message, source, lineno, colno, error) => {
     document.body.innerHTML = `<pre>${message}\n${source} ${lineno}:${colno}\n${error}</pre>`;
@@ -10,10 +11,11 @@ const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
 viewer.init();
 
-//viewer.requestRender();
+// viewer.requestRener();
 // viewer.renderLoop();
 
-// viewer.addDemo();
+const demopc = loadDemo(viewer);
+viewer.addPointCloud(demopc);
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
 // viewer.addLAZ(here + "/lion_takanawa.copc.laz", true);
