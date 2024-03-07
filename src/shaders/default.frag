@@ -1,6 +1,3 @@
-#define INTENSITY false
-#define CLASSIFICATION false
-
 uniform vec3 uColor;
 
 flat varying uint cls;
@@ -49,13 +46,17 @@ void main() {
         discard;
     }
 
-    if (INTENSITY) {
+    if (COLOR_MODE == 0) {
+        // intensity
         gl_FragColor = vec4(vec3(fintensity), 1.0);
-    } else if (CLASSIFICATION) {
+    } else if (COLOR_MODE == 1) {
+        // classification
         gl_FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], 1.0);
-        //if (cls == 0u) { gl_FragColor = vec4(rgbColor, 1.0); }
-    } else {
+    } else if (COLOR_MODE == 2) {
+        // RGB
         gl_FragColor = vec4(rgbColor, 1.0);
+    } else {
+        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
     }
 
     // fix colors when rendering to a texture

@@ -233,6 +233,7 @@ export class PointCloud {
         const colors = [];
 
         const classes = [];
+        const ints = [];
         const C = 0.2;
 
         const offset = new Vector3(0, 0, 0);
@@ -248,6 +249,7 @@ export class PointCloud {
             vertices.push(x, y, z);
             colors.push(0.4 + Math.random() * C, 0.15 + Math.random() * C, 0 + Math.random() * C);
             classes.push(0);
+            ints.push(Math.floor(200 * (x + y + 100)));
         }
 
         // trees
@@ -262,6 +264,7 @@ export class PointCloud {
                 vertices.push(x + (r() * (treePts - j)) / treePts, y + (r() * (treePts - j)) / treePts, z + h);
                 colors.push(0.1 + Math.random() * C, 0.7 + Math.random() * C, 0.1 + Math.random() * C);
                 classes.push(1);
+                ints.push(i * 1000);
             }
         }
 
@@ -272,6 +275,7 @@ export class PointCloud {
 
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
         geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
+        geometry.setAttribute("intensity", new Uint16BufferAttribute(ints, 1, true));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
 
         const pc = new PointCloud(
