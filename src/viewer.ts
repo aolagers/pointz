@@ -216,7 +216,7 @@ export class Viewer {
 
         const label = new CSS2DObject(div);
         label.position.copy(pos);
-        label.center.set(0, 0);
+        label.center.set(0, 1);
 
         console.log("label", text, label);
         this.scene.add(label);
@@ -327,7 +327,7 @@ export class Viewer {
         }
 
         loadedNodes.sort((a, b) => {
-            return a.getNodeVisibilityRating(this.camera) - b.getNodeVisibilityRating(this.camera);
+            return b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera);
         });
 
         const toDrop = loadedNodes.slice(-5);
@@ -344,7 +344,7 @@ export class Viewer {
         const frustum = getCameraFrustum(this.camera);
 
         const pq = new PriorityQueue<PointCloudNode>(
-            (a, b) => a.getNodeVisibilityRating(this.camera) - b.getNodeVisibilityRating(this.camera)
+            (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
         let visiblePoints = 0;
@@ -430,16 +430,7 @@ export class Viewer {
 
         pc.initializeNodes();
 
-        cube.geometry.computeBoundingSphere();
-        cube.geometry.computeBoundingBox();
-
-        if (cube.geometry.boundingBox) {
-            const cnt = cube.geometry.boundingBox.getCenter(new Vector3());
-            const sz = cube.geometry.boundingBox.getSize(new Vector3());
-            console.log("cnt", cnt, "sz", sz);
-            const ofz = new Vector3(0, 0, sz.z);
-            this.addLabel(pc.name, cube.position.clone().addVectors(cnt, ofz));
-        }
+        this.addLabel(pc.name, pc.tightBounds.max);
 
         if (center) {
             this.econtrols.showPointCloud(pc);
