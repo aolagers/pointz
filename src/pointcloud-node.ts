@@ -13,6 +13,7 @@ import {
     Uint8BufferAttribute,
     Vector3,
 } from "three";
+import { LRUCache } from "lru-cache";
 import { PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
@@ -29,6 +30,21 @@ export const pointsWorkerPool = new WorkerPool<
     },
     WorkerPointsResponse
 >(workerUrl, 4);
+
+const nodeCache = new LRUCache<string, PointCloudNode>({
+    // max: 10,
+    maxSize: 3_000_000,
+
+    sizeCalculation: (value) => {
+        return value.pointCount;
+    },
+    dispose: (node, key, reason) => {
+        console.log("CACHE DROP", reason, key, node.state, node);
+        if (reason !== "delete") {
+            node.unload(node.parent.viewer);
+        }
+    },
+});
 
 type NodeState = "unloaded" | "loading" | "visible" | "cached" | "error";
 
@@ -51,6 +67,8 @@ export class PointCloudNode {
         pickIndex: number;
     };
 
+    cacheID: string;
+
     static stats = {
         retries: 0,
         errors: 0,
@@ -68,6 +86,8 @@ export class PointCloudNode {
 
         this.copcInfo = this.parent.hierarchy.nodes[this.nodeName.join("-")]!;
         this.pointCount = this.copcInfo?.pointCount ?? 0;
+
+        this.cacheID = `${this.parent.id}-${this.nodeName.join("-")}`;
 
         const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
         if (name[0] === 0) {
@@ -145,6 +165,8 @@ export class PointCloudNode {
         this.assertState("loading", "cached");
 
         if (this.state === "cached") {
+            nodeCache.delete(this.cacheID);
+            // console.log("CACHE STATS", nodeCache.size, nodeCache.calculatedSize);
             this.data!.pco.visible = true;
         } else if (this.state === "loading") {
             viewer.addNode(this);
@@ -158,6 +180,7 @@ export class PointCloudNode {
         this.assertState("visible");
         this.data!.pco.visible = false;
         this.setState("cached");
+        nodeCache.set(this.cacheID, this);
     }
 
     async load(viewer: Viewer, retry = 2) {
