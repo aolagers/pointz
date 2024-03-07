@@ -18,25 +18,23 @@ const wasmInterceptor = {
     },
 };
 
-export default defineConfig({
-    plugins: [glsl(), wasmInterceptor, viteStaticCopy({
-        targets: [
-            {
-                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
-                dest: ".",
-            },
-            {
-                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
-                dest: "./src",
-            },
-            {
-                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
-                dest: "./assets",
-            }
-        ]
-    })],
+export default defineConfig((x) => ({
+    plugins: [
+        glsl(),
+        wasmInterceptor,
+        x.command === "build"
+            ? viteStaticCopy({
+                  targets: [
+                      {
+                          src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
+                          dest: "./assets",
+                      },
+                  ],
+              })
+            : [],
+    ],
     base: "",
     test: {
         includeSource: ["src/**/*.ts"],
     },
-});
+}));

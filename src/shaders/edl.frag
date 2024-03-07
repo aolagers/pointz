@@ -14,6 +14,7 @@ float readDepth(sampler2D depthSampler, vec2 coord) {
 
 void main() {
     vec4 color = texture2D(colorTexture, vUv);
+
     float depth = readDepth(depthTexture, vUv);
 
     float range = cameraFar - cameraNear;
@@ -26,16 +27,38 @@ void main() {
     float depth3 = readDepth(depthTexture, vUv + vec2(0.0, F));
     float depth4 = readDepth(depthTexture, vUv + vec2(0.0, -F));
 
-    if (depth1 > depth+dz ||
-        depth2 > depth+dz ||
-        depth3 > depth+dz ||
-        depth4 > depth+dz
-       ) {
-        gl_FragColor = vec4(color.xyz * 0.5, 1.0);
+    float dm = range * depth;
+    float d1 = range * depth1;
+    float d2 = range * depth2;
+    float d3 = range * depth3;
+    float d4 = range * depth4;
+
+    float ddif = 0.0
+        + max(0.0, d1 - dm)
+        + max(0.0, d2 - dm)
+        + max(0.0, d3 - dm)
+        + max(0.0, d4 - dm);
+
+    //if (depth1 > depth+dz ||
+        //depth2 > depth+dz ||
+        //depth3 > depth+dz ||
+        //depth4 > depth+dz
+    if (ddif > 3.000 ) {
+        gl_FragColor = vec4(color.xyz * (1.0 - ddif/50.0), 1.0);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
         gl_FragColor = vec4(color.xyz, 1.0);
 
     }
+
+    // Fog
+    /*
+    float from = 0.9;
+    if (depth > from) {
+        float m = 1.0 - (depth-from)/(1.0-from);
+        gl_FragColor.xyz *= m;
+        //gl_FragColor.a = m;
+    }
+    */
 }
 
