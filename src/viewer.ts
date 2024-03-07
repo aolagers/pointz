@@ -25,7 +25,8 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { createEDLMaterial, updateMaterials1, updateMaterials2 } from "./materials";
+import { updateMaterials1, updateMaterials2 } from "./materials/point-material";
+import { createEDLMaterial } from "./materials/edl-material";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR, PIXEL_RATIO } from "./settings";

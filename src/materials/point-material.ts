@@ -1,26 +1,9 @@
-import { Color, DepthTexture, ShaderMaterial, Texture, Vector2 } from "three";
-import { CAMERA_FAR, CAMERA_NEAR, COLOR_MODE, PIXEL_RATIO } from "./settings";
-import defaultFrag from "./shaders/default.frag";
-import defaultVert from "./shaders/default.vert";
-import edlFrag from "./shaders/edl.frag";
-import edlVert from "./shaders/edl.vert";
+import { Color, ShaderMaterial, Vector2 } from "three";
+import { COLOR_MODE, PIXEL_RATIO } from "../settings";
+import defaultFrag from "../shaders/default.frag";
+import defaultVert from "../shaders/default.vert";
 
 const ptSize = 4.0 * PIXEL_RATIO;
-
-export function createEDLMaterial(colorTexture: Texture, depthTexture: DepthTexture) {
-    const edlMaterial = new ShaderMaterial({
-        uniforms: {
-            cameraNear: { value: CAMERA_NEAR },
-            cameraFar: { value: CAMERA_FAR },
-            colorTexture: { value: colorTexture },
-            depthTexture: { value: depthTexture },
-        },
-        vertexShader: edlVert,
-        fragmentShader: edlFrag,
-    });
-
-    return edlMaterial;
-}
 
 let pointMaterial: ShaderMaterial | null = null;
 
@@ -52,10 +35,7 @@ export function getPointMaterial() {
 
     pointMaterial = new ShaderMaterial({
         defines: {
-            // 0: intensity
-            // 1: classification
-            // 2: rgb
-            COLOR_MODE: "2",
+            COLOR_MODE: COLOR_MODE.RGB,
         },
         uniforms: {
             uColor: { value: new Color(3403332) },

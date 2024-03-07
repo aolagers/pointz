@@ -20,7 +20,7 @@ import type {
     OctreeInfo,
 } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
-import { getPointMaterial } from "./materials";
+import { getPointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
 import { createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
