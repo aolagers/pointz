@@ -2,7 +2,6 @@ import {
     Box3,
     BufferGeometry,
     Float32BufferAttribute,
-    Frustum,
     Int32BufferAttribute,
     IntType,
     Mesh,
@@ -23,7 +22,7 @@ import type {
 import { WorkerPool } from "./worker-pool";
 import { PointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { boxToMesh, nodeToBox } from "./utils";
+import { boxToMesh, getCameraFrustum, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
@@ -60,6 +59,10 @@ export class PointCloudNode {
         }
         this.debugMesh = cube;
         this.visibleIndex = idx;
+    }
+
+    get depth() {
+        return this.nodeName[0];
     }
 }
 
@@ -166,12 +169,6 @@ export class PointCloud {
 
         let loaded = 0;
 
-        const frustum = new Frustum();
-        frustum.setFromProjectionMatrix(this.viewer.camera.projectionMatrix);
-        frustum.planes.forEach((plane) => {
-            plane.applyMatrix4(this.viewer.camera.matrixWorld);
-        });
-
         const pq = new PriorityQueue<OctreePath>((a, b) => {
             const bboxA = nodeToBox(this.octreeBounds, a);
             const distA = this.viewer.camera.position.distanceTo(bboxA.getCenter(new Vector3()));
@@ -187,11 +184,6 @@ export class PointCloud {
             // if (nnum[0] <= 3) {
             inview++;
             pq.push(nnum);
-            // }
-            // const bbox = nodeToBox(this.octreeBounds, nnum);
-            // if (frustum.intersectsBox(bbox)) {
-            //     inview++;
-            //     pq.push(nnum);
             // }
         }
 
