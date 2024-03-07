@@ -1,4 +1,5 @@
 import { PriorityQueue } from "./priority-queue";
+import { EventDispatcher } from "three";
 
 type Wrapper = {
     worker: Worker;
@@ -20,7 +21,11 @@ type QueuedItem<Req, Resp> = {
     reject: (resp: Resp) => void;
 };
 
-export class WorkerPool<Input extends Request, Output extends { msgType: string }> {
+type TEvents = {
+    status: { active: number; queued: number };
+};
+
+export class WorkerPool<Input extends Request, Output extends { msgType: string }> extends EventDispatcher<TEvents> {
     pool: Wrapper[] = [];
     queue = new PriorityQueue<QueuedItem<Input, Output>>((a, b) => b.request.info.score - a.request.info.score);
     active: Set<Input> = new Set();
@@ -38,7 +43,12 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         return this.queue.count();
     }
 
+    dispatchStatus() {
+        this.dispatchEvent({ type: "status", active: this.running(), queued: this.queueLength });
+    }
+
     constructor(workerUrl: string, poolSize: number) {
+        super();
         this.workerUrl = workerUrl;
         this.maxWorkers = poolSize;
     }
@@ -74,6 +84,8 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         } else {
             w.busy = false;
         }
+
+        this.dispatchStatus();
     }
 
     rescore(scoringFunc: (input: Input) => number | null) {
@@ -91,6 +103,8 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         }
 
         this.queue = newQueue;
+
+        this.dispatchStatus();
     }
 
     async runTask(req: Input): Promise<Output> {
@@ -111,6 +125,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
                 };
 
                 this.active.add(req);
+                this.dispatchStatus();
                 available.worker.postMessage(req.command);
             });
         } else {
@@ -121,6 +136,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
             } else {
                 return new Promise<Output>((resolve, reject) => {
                     this.queue.push({ request: req, resolve, reject });
+                    this.dispatchStatus();
                 });
             }
         }
