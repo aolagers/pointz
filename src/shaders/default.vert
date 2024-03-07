@@ -1,6 +1,7 @@
 uniform vec2 uMouse;
 
 attribute uint classification;
+attribute float intensity;
 attribute vec3 color;
 
 uniform float ptSize;
@@ -13,6 +14,8 @@ flat varying uint cls;
 flat varying float custom1;
 flat varying float custom2;
 
+flat varying float fintensity;
+
 flat varying vec2 mouse;
 
 flat varying float depth;
@@ -22,6 +25,8 @@ void main() {
     rgbColor = color;
 
     mouse = uMouse;
+
+    fintensity = intensity;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vec4 screenPosition = projectionMatrix * mvPosition;

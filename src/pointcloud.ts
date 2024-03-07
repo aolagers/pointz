@@ -4,6 +4,7 @@ import {
     Float32BufferAttribute,
     Frustum,
     Points,
+    Uint16BufferAttribute,
     Uint32BufferAttribute,
     Uint8BufferAttribute,
     Vector3,
@@ -69,9 +70,9 @@ function getData(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: 
                 geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
                 const classes = Array(data.pointCount).fill(2);
                 geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
-                resolve({
-                    geometry: geometry,
-                });
+                geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+
+                resolve({ geometry: geometry });
             } else {
                 reject("not points");
             }
