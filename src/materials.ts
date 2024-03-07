@@ -1,5 +1,5 @@
 import { Color, DepthTexture, ShaderMaterial, Texture, Vector2 } from "three";
-import { CAMERA_FAR, CAMERA_NEAR, PIXEL_RATIO } from "./settings";
+import { CAMERA_FAR, CAMERA_NEAR, COLOR_MODE, PIXEL_RATIO } from "./settings";
 import defaultFrag from "./shaders/default.frag";
 import defaultVert from "./shaders/default.vert";
 import edlFrag from "./shaders/edl.frag";
@@ -30,13 +30,19 @@ export function setPointer(pointer: Vector2) {
     if (uc1) uc1.value = pointer;
 }
 
-export function updateMaterials(c1: number, c2: number) {
+export function updateMaterials1(c1: number, c2: number) {
     if (!pointMaterial) return;
 
     const uc1 = pointMaterial.uniforms.uCustom1;
     const uc2 = pointMaterial.uniforms.uCustom2;
     if (uc1) uc1.value = c1;
     if (uc2) uc2.value = c2;
+}
+
+export function updateMaterials2(color: keyof typeof COLOR_MODE) {
+    if (!pointMaterial) return;
+    pointMaterial.defines.COLOR_MODE = COLOR_MODE[color];
+    pointMaterial.needsUpdate = true;
 }
 
 export function getPointMaterial() {
