@@ -28,7 +28,7 @@ export type CopcNodeInfo = {
     pointDataLength: number;
 };
 export type WorkerPointsRequest = {
-    command: "load-node";
+    command: "points";
     source: LazSource;
     offset: number[];
     node: CopcNodeInfo;
@@ -81,7 +81,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
         return;
     }
 
-    if (e.data.command === "load-node") {
+    if (e.data.command === "points") {
         const node = e.data.node;
 
         const view = await Copc.loadPointDataView(getter, copc, node);

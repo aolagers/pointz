@@ -19,7 +19,7 @@ import {
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
-import { PointCloud, PointCloudNode } from "./pointcloud";
+import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { pointer, updateValues } from "./materials";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
@@ -38,6 +38,7 @@ const debug = {
     slider1: "",
     slider2: "",
     pts: "",
+    pool: "",
 };
 
 const raycaster = new Raycaster();
@@ -197,6 +198,8 @@ export class Viewer {
         }
 
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
+
+        debug.pool = ` ${pool.running()} ${pool.queued()} `;
 
         debugEl.innerHTML = Object.entries(debug)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
