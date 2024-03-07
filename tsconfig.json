@@ -1,20 +1,18 @@
 {
-    "compilerOptions": {
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "target": "ES2022",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
 
-        "strict": true,
-        // "noUncheckedIndexedAccess": true,
+    "strict": true,
+    // "noUncheckedIndexedAccess": true,
 
-        "moduleResolution": "bundler",
-        "noEmit": true,
-        "allowImportingTsExtensions": true,
-        "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
 
-        "types": [
-            "vitest/importMeta"
-        ]
-    },
-    "include": ["src"]
+    "types": ["vite/client", "vite-plugin-glsl/ext", "vitest/importMeta"]
+  },
+  "include": ["src"]
 }
