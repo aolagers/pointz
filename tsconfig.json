@@ -2,12 +2,13 @@
     "compilerOptions": {
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "target": "esnext",
+        "target": "ES2022",
 
         "strict": true,
         "noUncheckedIndexedAccess": true,
 
         "moduleResolution": "bundler",
+        "noEmit": true,
         "allowImportingTsExtensions": true,
         "module": "ESNext"
     },
