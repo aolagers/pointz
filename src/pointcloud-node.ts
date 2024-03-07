@@ -14,7 +14,7 @@ import {
     Vector3,
 } from "three";
 import { LRUCache } from "lru-cache";
-import { PointMaterial, pointMaterialPool } from "./materials/point-material";
+import { DEFAULT_POINT_MATERIAL, PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud } from "./pointcloud";
@@ -203,7 +203,7 @@ export class PointCloudNode {
             pointData.geometry.boundingBox = this.bounds;
 
             this.data = {
-                pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
+                pco: new Points(pointData.geometry, DEFAULT_POINT_MATERIAL),
                 pickIndex: 0,
             };
             this.data.pco.matrixAutoUpdate = false;

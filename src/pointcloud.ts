@@ -1,11 +1,11 @@
 import { Box3, Vector3 } from "three";
 import type { Hierarchy, LazSource, WorkerInfoRequest, WorkerInfoResponse } from "./copc-loader";
-import { Viewer } from "./viewer";
-import { nodeToBox } from "./utils";
+import workerUrl from "./copc-loader?worker&url";
 import { OctreePath } from "./octree";
 import { PointCloudNode } from "./pointcloud-node";
+import { nodeToBox } from "./utils";
+import { Viewer } from "./viewer";
 import { WorkerPool } from "./worker-pool";
-import workerUrl from "./copc-loader?worker&url";
 
 export const infoWorkerPool = new WorkerPool<
     { info: { abort: AbortController; score: number }; command: WorkerInfoRequest },
