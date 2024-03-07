@@ -16,6 +16,9 @@
                 height: 100%;
                 /* background-color: rgb(80, 120, 180); */
                 background: radial-gradient(rgb(93, 131, 188), rgb(30, 76, 133));
+
+                --dark: rgba(0, 0, 0, 0.5);
+                --light: rgba(128, 128, 128, 0.5);
             }
 
             .nice {
@@ -27,6 +30,7 @@
                 font-family: sans-serif;
                 font-weight: bold;
                 line-height: 1.5;
+                -webkit-backdrop-filter: blur(2px);
                 backdrop-filter: blur(2px);
                 outline: 1px solid rgba(0, 0, 0, 0.5);
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
@@ -35,7 +39,7 @@
             #debug {
                 z-index: 20;
                 position: fixed;
-                top: 10px;
+                bottom: 10px;
                 right: 10px;
                 text-align: right;
             }
@@ -50,7 +54,23 @@
                 z-index: 10;
                 position: fixed;
                 top: 10px;
-                left: 90px;
+                right: 10px;
+            }
+
+            #btns button:hover {
+                background-color: rgba(0, 0, 0, 0.6);
+            }
+            #btns button {
+                border-top: 1px solid var(--light);
+                border-left: 1px solid var(--light);
+                border-right: 1px solid var(--dark);
+                border-bottom: 1px solid var(--dark);
+            }
+            #btns button:active {
+                border-top: 1px solid var(--dark);
+                border-left: 1px solid var(--dark);
+                border-right: 1px solid var(--light);
+                border-bottom: 1px solid var(--light);
             }
 
             .label {
@@ -68,9 +88,9 @@
 
         <canvas id="viewer"></canvas>
         <div id="btns" class="">
-            <button id="more-points" class="nice">more</button>
-            <button id="less-points" class="nice">less</button>
-            <button id="reset-cam" class="nice">reset cam</button>
+            <button id="more-points" class="nice btn">more</button>
+            <button id="less-points" class="nice btn">less</button>
+            <button id="reset-cam" class="nice btn">reset cam</button>
         </div>
         <script type="module" src="/src/index.ts"></script>
     </body>

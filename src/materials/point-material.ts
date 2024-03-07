@@ -50,7 +50,6 @@ export class PointMaterial extends ShaderMaterial {
         super({
             glslVersion: "300 es",
             defines: {
-                // TODO: combine pick option into color mode?
                 COLOR_MODE: COLOR_MODE[colorMode],
                 PICK: pick ? true : false,
             },
@@ -75,8 +74,6 @@ export class PointMaterial extends ShaderMaterial {
         if (nodeIndex !== this.nodeIndex) {
             this.uniforms.uNodeIndex.value = nodeIndex;
             this.nodeIndex = nodeIndex;
-
-            this.needsUpdate = true;
         }
     }
 
@@ -86,7 +83,6 @@ export class PointMaterial extends ShaderMaterial {
         if (uc1) {
             uc1.value = this.ptSize;
         }
-        this.needsUpdate = true;
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {

@@ -224,13 +224,15 @@ export class Viewer {
         this.requestRender();
     }
 
-    addLabel(text: string, pos: Vector3, pc: PointCloud) {
+    addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
         const div = document.createElement("div");
         div.classList.add("nice", "label");
         div.style.textAlign = "right";
-        div.style.whiteSpace = "pre";
-        div.textContent = text;
-        // div.style.backgroundColor = "transparent";
+
+        div.innerHTML = `
+            <span>${text1}</span><br>
+            <span style="color: rgba(255,255,255,0.3); fontSize: smaller;">${text2}</span>
+        `;
 
         div.addEventListener("click", () => {
             this.econtrols.showPointCloud(pc);
@@ -240,7 +242,6 @@ export class Viewer {
         label.position.copy(pos);
         label.center.set(0, 1);
 
-        console.log("label", text, label);
         this.scene.add(label);
     }
 
@@ -466,7 +467,12 @@ export class Viewer {
 
         pc.initializeNodes();
 
-        this.addLabel(pc.name, pc.tightBounds.max, pc);
+        this.addLabel(
+            `${pc.name}`,
+            `${pc.nodes.length} / ${(pc.pointCount / 1_000_000).toFixed(2)}M`,
+            pc.tightBounds.max,
+            pc
+        );
 
         if (center) {
             this.econtrols.showPointCloud(pc);

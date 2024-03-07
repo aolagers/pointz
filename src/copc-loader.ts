@@ -3,21 +3,9 @@ import type { Copc as CopcType } from "copc";
 
 export type LazSource = string | File;
 
-export type PointCloudHeader = Pick<CopcType["header"], "min" | "max" | "offset">;
-
-export type WorkerInfoRequest = {
-    command: "info";
-    source: LazSource;
-};
+export type PointCloudHeader = Pick<CopcType["header"], "min" | "max" | "offset" | "pointCount">;
 
 export type Hierarchy = Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
-
-export type WorkerInfoResponse = {
-    msgType: "info";
-    header: PointCloudHeader;
-    info: CopcType["info"];
-    hierarchy: Hierarchy;
-};
 
 type WorkerRequest = WorkerInfoRequest | WorkerPointsRequest;
 
@@ -44,6 +32,23 @@ export type WorkerPointsResponse = {
     indices: Int32Array;
 };
 
+export type WorkerInfoRequest = {
+    command: "info";
+    source: LazSource;
+};
+
+export type WorkerInfoResponse = {
+    msgType: "info";
+    header: PointCloudHeader;
+    info: CopcType["info"];
+    hierarchy: Hierarchy;
+};
+
+export type WorkerResponseMapping = {
+    info: WorkerInfoResponse;
+    points: WorkerPointsResponse;
+};
+
 export type WorkerError = {
     msgType: "error";
     message: string;
@@ -58,7 +63,7 @@ function getGetter(source: LazSource) {
         return async (begin: number, end: number) => {
             const range = `bytes=${begin}-${end - 1}`;
             const r = await fetch(source, {
-                headers: { Range: range, },
+                headers: { Range: range },
             });
             const blob = await r.arrayBuffer();
             return new Uint8Array(blob);
