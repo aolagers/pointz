@@ -205,6 +205,8 @@ export class Viewer {
 
         document.body.appendChild(this.labelRenderer.domElement);
 
+        this.econtrols.restoreCamera();
+
         this.requestRender();
     }
 
