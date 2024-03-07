@@ -14,3 +14,4 @@ Supports reading COPC LAZ files.
 ### Check
 
 -   https://threejs.org/examples/?q=stats#webgl_lines_fat
+-   https://github.com/pmndrs/postprocessing
