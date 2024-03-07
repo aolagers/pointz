@@ -413,7 +413,7 @@ export class Viewer {
                     }
                     break;
 
-                case "cache":
+                case "cached":
                     if (shouldBeShown) {
                         node.show(this);
                         visiblePoints += node.pointCount;

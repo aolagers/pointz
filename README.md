@@ -29,20 +29,19 @@ Supports reading [COPC](https://copc.io) LAZ files.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> unloaded
+    unloaded --> loading: load
 
-    unloaded --> loading
+    loading --> visible: show
+  	loading --> error
+	  loading --> unloaded: unload
 
-    loading --> error
-    loading --> visible
+    error --> loading: load
 
-    error --> loading
+	  visible --> cached: cache
 
-    visible --> unloaded
-    visible --> cached
+    cached --> visible: show
+    cached --> unloaded: unload
 
-    cached --> unloaded
-    cached --> visible
 ```
 
 ## Notes

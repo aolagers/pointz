@@ -30,7 +30,7 @@ export const pointsWorkerPool = new WorkerPool<
     WorkerPointsResponse
 >(workerUrl, 4);
 
-type NodeState = "unloaded" | "loading" | "visible" | "cache" | "error";
+type NodeState = "unloaded" | "loading" | "visible" | "cached" | "error";
 
 export class PointCloudNode {
     parent: PointCloud;
@@ -49,6 +49,12 @@ export class PointCloudNode {
     data: null | {
         pco: Points;
         pickIndex: number;
+    };
+
+    static stats = {
+        retries: 0,
+        errors: 0,
+        loads: 0,
     };
 
     constructor(parent: PointCloud, name: OctreePath, bounds: Box3, spacing: number) {
@@ -123,13 +129,12 @@ export class PointCloudNode {
                 }
                 throw err();
             case "visible":
-                // TODO: visible nodes should always go to cahce first
-                if (set_to === "cache") {
+                if (set_to === "cached") {
                     return (this.state = set_to);
                 }
                 throw err();
-            case "cache":
-                if (set_to === "visible") {
+            case "cached":
+                if (set_to === "visible" || set_to === "unloaded") {
                     return (this.state = set_to);
                 }
                 throw err();
@@ -137,9 +142,9 @@ export class PointCloudNode {
     }
 
     show(viewer: Viewer) {
-        this.assertState("loading", "cache");
+        this.assertState("loading", "cached");
 
-        if (this.state === "cache") {
+        if (this.state === "cached") {
             this.data!.pco.visible = true;
         } else if (this.state === "loading") {
             viewer.addNode(this);
@@ -152,7 +157,7 @@ export class PointCloudNode {
     cache() {
         this.assertState("visible");
         this.data!.pco.visible = false;
-        this.setState("cache");
+        this.setState("cached");
     }
 
     async load(viewer: Viewer, retry = 2) {
@@ -173,14 +178,17 @@ export class PointCloudNode {
             };
             this.data.pco.matrixAutoUpdate = false;
 
+            PointCloudNode.stats.loads++;
             this.show(viewer);
         } catch (e) {
             this.setState("error");
             if (retry > 0) {
+                PointCloudNode.stats.retries++;
                 console.error("RETRY ERROR", retry, e);
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 await this.load(viewer, retry - 1);
             } else {
+                PointCloudNode.stats.errors++;
                 this.debugMesh.visible = true;
                 this.debugMesh.material = new MeshBasicMaterial({ color: "red", wireframe: true });
                 throw e;
@@ -189,7 +197,7 @@ export class PointCloudNode {
     }
 
     unload(viewer: Viewer) {
-        this.assertState("loading", "error", "cache");
+        this.assertState("loading", "cached");
 
         if (this.data) {
             viewer.scene.remove(this.data.pco);
