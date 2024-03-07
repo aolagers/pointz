@@ -34,7 +34,7 @@ const debugEl = document.querySelector("#debug")!;
 const debug = {
     jsmem: "",
     camera: "",
-    touchCount: "",
+    touch: "",
     pool: "",
     render: "",
     frames: "",
@@ -300,7 +300,7 @@ export class Viewer {
 
         debug.pool = ` ${workerPool.running()} ${workerPool.queued()} (${workerPool.tasksFinished})`;
 
-        debug.touchCount = ` ${this.econtrols.touchCount}`;
+        debug.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
         debug.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
 

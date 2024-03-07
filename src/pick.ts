@@ -71,6 +71,8 @@ export function getMouseIntersection(
         }
     }
 
+    camera.layers.disable(1);
+
     // render to pick buffer
     renderer.setRenderTarget(pickRenderTarget);
     renderer.render(viewer.scene, camera);
