@@ -51,4 +51,10 @@ void main() {
     if (mDist < 0.01) {
         gl_PointSize = 2.0 + gl_PointSize * 2.0;
     }
+
+#if defined(PICK)
+        gl_PointSize=1.0;
+        return;
+#endif
+
 }

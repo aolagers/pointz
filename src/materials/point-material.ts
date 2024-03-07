@@ -5,14 +5,13 @@ import defaultVert from "../shaders/default.vert";
 
 let ptSize = 6.0;
 
-let _pointMaterial: PointMaterial | null = null;
-
 export class PointMaterial extends ShaderMaterial {
-    constructor() {
+    constructor(pick = false) {
         super({
             glslVersion: "300 es",
             defines: {
                 COLOR_MODE: COLOR_MODE.RGB,
+                PICK: pick ? true : false,
             },
             uniforms: {
                 uColor: { value: new Color(3403332) },
@@ -24,16 +23,6 @@ export class PointMaterial extends ShaderMaterial {
             vertexShader: defaultVert,
             fragmentShader: defaultFrag,
         });
-    }
-
-    static getSingleton() {
-        if (_pointMaterial) {
-            return _pointMaterial;
-        }
-
-        _pointMaterial = new PointMaterial();
-
-        return _pointMaterial;
     }
 
     updatePointSize(amount: number) {
@@ -58,7 +47,6 @@ export class PointMaterial extends ShaderMaterial {
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {
-        if (!_pointMaterial) return;
         this.defines.COLOR_MODE = COLOR_MODE[color];
         this.needsUpdate = true;
     }
