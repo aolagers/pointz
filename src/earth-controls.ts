@@ -1,4 +1,5 @@
 import {
+    Box3,
     Euler,
     Mesh,
     MeshNormalMaterial,
@@ -250,6 +251,16 @@ export class EarthControls {
 
     update(_delta: number) {}
 
+    targetAll() {
+        const tbox = new Box3();
+        for (const pcloud of this.viewer.pointClouds) {
+            tbox.min.min(pcloud.tightBounds.min);
+            tbox.max.max(pcloud.tightBounds.max);
+        }
+        console.log("TBOX", tbox);
+        this.showBox(tbox);
+    }
+
     restoreCamera() {
         const camText = localStorage.getItem("camera");
         console.log("RESTORE", camText);
@@ -270,15 +281,19 @@ export class EarthControls {
         }
     }
 
-    showPointCloud(pc: PointCloud) {
-        const center = pc.tightBounds.getCenter(new Vector3());
-        const size = pc.tightBounds.getSize(new Vector3()).x;
+    showBox(box: Box3) {
+        const center = box.getCenter(new Vector3());
+        const size = box.getSize(new Vector3()).x;
 
-        this.camera.position.copy(center).add(new Vector3(0, -size * 1.5, (size * 1.5) / 2));
+        this.camera.position.copy(center).add(new Vector3(0, -1, 0.5).multiplyScalar(size * 1.1));
         this.camera.lookAt(center);
 
         console.log("cam", this.camera.position);
 
         this.onChange?.();
+    }
+
+    showPointCloud(pc: PointCloud) {
+        this.showBox(pc.tightBounds);
     }
 }

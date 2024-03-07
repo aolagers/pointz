@@ -19,9 +19,9 @@
             }
 
             .nice {
-                padding: 0.5em 1em;
+                padding: 0.4em 0.8em;
                 color: #ccc;
-                background-color: rgba(0, 0, 0, 0.2);
+                background-color: rgba(0, 0, 0, 0.3);
                 font-size: x-small;
                 border-radius: 0.5em;
                 font-family: monospace;
@@ -41,6 +41,7 @@
             }
 
             #btns {
+                z-index: 10;
                 position: fixed;
                 top: 10px;
                 left: 90px;
@@ -60,9 +61,10 @@
         <div id="debug" class="nice">debug</div>
 
         <canvas id="viewer"></canvas>
-        <div id="btns" class="nicez">
-            <button id="more" class="nice">more</button>
-            <button id="less" class="nice">less</button>
+        <div id="btns" class="">
+            <button id="more-points" class="nice">more</button>
+            <button id="less-points" class="nice">less</button>
+            <button id="reset-cam" class="nice">reset cam</button>
         </div>
         <script type="module" src="/src/index.ts"></script>
     </body>
