@@ -1,11 +1,11 @@
 import { Color, DepthTexture, ShaderMaterial, Texture, Vector2 } from "three";
-import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
+import { CAMERA_FAR, CAMERA_NEAR, PIXEL_RATIO } from "./settings";
 import defaultFrag from "./shaders/default.frag";
 import defaultVert from "./shaders/default.vert";
 import edlFrag from "./shaders/edl.frag";
 import edlVert from "./shaders/edl.vert";
 
-const ptSize = 4.0 * window.devicePixelRatio;
+const ptSize = 4.0 * PIXEL_RATIO;
 
 export function createEDLMaterial(colorTexture: Texture, depthTexture: DepthTexture) {
     const edlMaterial = new ShaderMaterial({

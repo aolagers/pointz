@@ -13,7 +13,6 @@ import workerUrl from "./copc-loader?worker&url";
 import type {
     WorkerInfoRequest,
     WorkerInfoResponse,
-    WorkerPointsRequest,
     WorkerPointsResponse,
     LazSource,
     CopcNodeInfo,
@@ -47,6 +46,8 @@ export class PointCloudNode {
         this.geometry = geom;
         this.bounds = bounds;
         this.pco = new Points(this.geometry, pointMaterial);
+
+        this.pco.matrixAutoUpdate = false;
     }
 }
 

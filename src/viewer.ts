@@ -2,7 +2,6 @@ import {
     BufferGeometry,
     Clock,
     Color,
-    DepthFormat,
     DepthTexture,
     Frustum,
     Line,
@@ -28,7 +27,7 @@ import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { createEDLMaterial, updateMaterials } from "./materials";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
-import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
+import { CAMERA_FAR, CAMERA_NEAR, PIXEL_RATIO } from "./settings";
 
 const points = [];
 
@@ -48,6 +47,7 @@ const debug = {
     slider2: "",
     pts: "",
     pool: "",
+    render: "",
 };
 
 const raycaster = new Raycaster();
@@ -75,19 +75,19 @@ export class Viewer {
 
     constructor() {
         this.renderer = new WebGLRenderer({
-            antialias: true,
+            antialias: false,
+            alpha: false,
+            stencil: false,
             powerPreference: "high-performance",
             logarithmicDepthBuffer: false,
         });
 
-        this.renderer.autoClear = true;
-        this.renderer.autoClearDepth = false;
+        this.renderer.info.autoReset = false;
 
         this.renderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight, {
             format: RGBAFormat,
             minFilter: NearestFilter,
             magFilter: NearestFilter,
-            depthBuffer: true,
             stencilBuffer: false,
             depthTexture: new DepthTexture(window.innerWidth, window.innerHeight, UnsignedIntType),
         });
@@ -102,7 +102,7 @@ export class Viewer {
         this.controls.dampingFactor = 0.2;
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(PIXEL_RATIO);
 
         this.scene = new Scene();
         this.scene.background = new Color(0x202020);
@@ -204,15 +204,14 @@ export class Viewer {
         this.controls.update(delta);
 
         this.gpuPanel.startQuery();
+
+        // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
-        this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
+
+        // render to screen quad
         this.renderer.setRenderTarget(null);
-        // console.log(this.rt2.depthTexture);
-
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
-
-        // this.renderer.render(this.scene, this.camera);
 
         this.gpuPanel.endQuery();
 
@@ -222,9 +221,17 @@ export class Viewer {
             totalPts += pc.pointsLoaded;
         }
 
+        this.frame++;
+
+        if (this.frame % 60 === 0) {
+            debug.render =
+                `calls: ${this.renderer.info.render.calls}, ` +
+                `pts: ${(this.renderer.info.render.points / 1000).toFixed(0)}k`;
+        }
+
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
-        debug.pool = ` ${pool.running()} ${pool.queued()} `;
+        debug.pool = ` ${pool.running()} ${pool.queued()} (${pool.tasksFinished})`;
 
         debugEl.innerHTML = Object.entries(debug)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
@@ -232,7 +239,7 @@ export class Viewer {
 
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
 
-        this.frame++;
+        this.renderer.info.reset();
 
         requestAnimationFrame(() => this.renderLoop());
     }
