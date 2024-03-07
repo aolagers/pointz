@@ -2,6 +2,7 @@ import {
     Box3,
     BufferGeometry,
     Float32BufferAttribute,
+    Frustum,
     Points,
     Uint32BufferAttribute,
     Uint8BufferAttribute,
@@ -20,7 +21,8 @@ import type {
 } from "./worker";
 import { MATERIALS } from "./materials";
 import { Viewer } from "./viewer";
-import { createCubeBounds } from "./utils";
+import { createCubeBounds, createCubeBoundsBox } from "./utils";
+import { OctreePath } from "./octree";
 
 export class PointCloudNode {
     nodeName: string;
@@ -101,7 +103,7 @@ export class PointCloud {
         bounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        octreeInfo: OctreeInfo,
+        octreeInfo: OctreeInfo
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -124,9 +126,9 @@ export class PointCloud {
     async load() {
         const worker = new Worker(workerUrl, { type: "module" });
 
-        const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number));
+        const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
 
-        toLoad.sort((a: number[], b: number[]) => {
+        toLoad.sort((a, b) => {
             for (let i = 0; i < 4; i++) {
                 if (a[i]! < b[i]!) {
                     return -1;
@@ -139,10 +141,17 @@ export class PointCloud {
 
         console.log({ toLoad, l: toLoad.length });
 
-        let ldd = 0;
+        let loaded = 0;
 
+        const frustum = new Frustum();
+        frustum.setFromProjectionMatrix(this.viewer.camera.projectionMatrix);
+        frustum.planes.forEach((plane) => {
+            plane.applyMatrix4(this.viewer.camera.matrixWorld);
+        });
+
+        let inview = 0;
         for (const nnum of toLoad) {
-            if (ldd < 5) {
+            if (loaded < 64) {
                 const nname = nnum.join("-");
 
                 console.log("LOAD", nname);
@@ -156,13 +165,21 @@ export class PointCloud {
                 this.viewer.scene.add(pcn.pco);
                 this.viewer.objects.push(pcn.pco);
             }
-            ldd++;
 
-            const bbox = createCubeBounds(this.octreeInfo.cube, nnum, this.offset);
-            this.viewer.scene.add(bbox);
+            loaded++;
 
-            await new Promise((resolve) => setTimeout(resolve, 50));
+            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
+            if (frustum.intersectsBox(bbox)) {
+                const _dist = this.viewer.camera.position.distanceTo(bbox.getCenter(new Vector3()));
+                // console.log(dist);
+                inview++;
+            }
+
+            // this.viewer.scene.add(bbox);
+            // await new Promise((resolve) => setTimeout(resolve, 50));
         }
+
+        console.log("load ratio", inview, "/", toLoad.length, ((100 * inview) / toLoad.length).toFixed(1) + "%");
 
         worker.terminate();
     }
@@ -245,7 +262,7 @@ export class PointCloud {
             bounds,
             offset,
             { pages: {}, nodes: {} },
-            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 },
+            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 }
         );
 
         pc.loadedNodes.push(new PointCloudNode("0-0-0-0", geometry, bounds));

@@ -3,6 +3,7 @@ import {
     Clock,
     Color,
     Line,
+    LineBasicMaterial,
     PerspectiveCamera,
     Points,
     Raycaster,
@@ -13,15 +14,15 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud } from "./pointcloud";
-import { MATERIALS, pointer, updateValues } from "./materials";
+import { pointer, updateValues } from "./materials";
 import { createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
 const points = [];
-points.push(new Vector3(0, 0, 100));
+points.push(new Vector3(0, 0, 200));
 points.push(new Vector3(1, 1, 1));
 const lineGeom = new BufferGeometry().setFromPoints(points);
-const line = new Line(lineGeom, MATERIALS.LINE);
+const line = new Line(lineGeom, new LineBasicMaterial({ color: 0x00ee00 }));
 
 const debug = {
     mouse: "",
@@ -66,10 +67,16 @@ export class Viewer {
         this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
         this.stats.addPanel(this.gpuPanel);
         this.stats.showPanel(0);
-        document.body.appendChild(this.stats.dom);
+
+        // const gl = this.renderer.getContext();
+        // const f = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE);
+        // const e = gl.getExtension("WEBGL_depth_texture");
+        // const sup = gl.getSupportedExtensions();
+        // console.log({ ALIASED_POINT_SIZE_RANGE: f, WEBGL_depth_texture: e, sup });
     }
 
     init() {
+        document.body.appendChild(this.stats.dom);
         document.body.appendChild(this.renderer.domElement);
 
         document.body.addEventListener("pointermove", this.onPointerMove);
@@ -140,6 +147,8 @@ export class Viewer {
         // this.addLAZ("http://localhost:5173/copc.copc.laz");
         this.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
         // this.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+        // this.addLAZ("http://localhost:5173/sofi.copc.laz");
+        // this.addLAZ("http://localhost:5173/millsite.copc.laz");
 
         document.addEventListener("dragover", (ev) => {
             ev.preventDefault();

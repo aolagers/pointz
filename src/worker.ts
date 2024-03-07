@@ -91,13 +91,15 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
         const colors = new Uint8Array(ptCount * 3);
         const classifications = new Uint8Array(ptCount);
 
+        const hasRGB = "Red" in view.dimensions && "Green" in view.dimensions && "Blue" in view.dimensions;
+
         const getters = {
             x: view.getter("X"),
             y: view.getter("Y"),
             z: view.getter("Z"),
-            r: view.getter("Red"),
-            g: view.getter("Green"),
-            b: view.getter("Blue"),
+            r: hasRGB ? view.getter("Red") : () => 0,
+            g: hasRGB ? view.getter("Green") : () => 0,
+            b: hasRGB ? view.getter("Blue") : () => 0,
         };
 
         let div = 1;

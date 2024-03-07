@@ -15,3 +15,4 @@ Supports reading COPC LAZ files.
 
 -   https://threejs.org/examples/?q=stats#webgl_lines_fat
 -   https://github.com/pmndrs/postprocessing
+-   https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
