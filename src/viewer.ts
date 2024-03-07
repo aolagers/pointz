@@ -2,6 +2,7 @@ import {
     Clock,
     Color,
     DepthTexture,
+    EventDispatcher,
     Mesh,
     MeshBasicMaterial,
     NearestFilter,
@@ -45,7 +46,11 @@ raycaster.params.Points.threshold = 0.5;
 
 const clock = new Clock();
 
-export class Viewer {
+type TEvents = {
+    loading: { nodes: number };
+};
+
+export class Viewer extends EventDispatcher<TEvents> {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
 
@@ -80,6 +85,7 @@ export class Viewer {
     initialized = false;
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
+        super();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (window as any).viewer = this;
 
@@ -228,6 +234,11 @@ export class Viewer {
 
         this.initialized = true;
         this.requestRender("init");
+
+        pointsWorkerPool.addEventListener("status", (ev) => {
+            const n = ev.active + ev.queued;
+            this.dispatchEvent({ type: "loading", nodes: n });
+        });
     }
 
     addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
