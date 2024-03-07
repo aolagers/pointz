@@ -55,7 +55,14 @@ function log(...args: any[]) {
 
 function getGetter(source: LazSource) {
     if (typeof source === "string") {
-        return source;
+        return async (begin: number, end: number) => {
+            const range = `bytes=${begin}-${end - 1}`;
+            const r = await fetch(source, {
+                headers: { Range: range, },
+            });
+            const blob = await r.arrayBuffer();
+            return new Uint8Array(blob);
+        };
     } else {
         const file: File = source;
         return async (begin: number, end: number) => {

@@ -32,6 +32,7 @@ import { pointMaterialPool } from "./materials/point-material";
 
 const debugEl = document.querySelector("#debug")!;
 const debug = {
+    jsmem: "",
     camera: "",
     touchCount: "",
     pts: "",
@@ -288,6 +289,8 @@ export class Viewer {
 
         debug.touchCount = ` ${this.econtrols.touchCount}`;
 
+        debug.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
+
         debugEl.innerHTML = Object.entries(debug)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
             .join("<br>");
@@ -384,6 +387,12 @@ export class Viewer {
             }
 
             const node = pq.popOrThrow();
+
+            // dont load too fine resolution
+            if (node.estimateNodeError(this.camera) < 0.001) {
+                break;
+            }
+
             visiblePoints += node.pointCount;
 
             if (node.state === "unloaded") {
@@ -461,6 +470,7 @@ export class Viewer {
             const pc = await PointCloud.loadLAZ(this, what);
             this.addPointCloud(pc, center);
         } catch (e) {
+            console.error(e);
             alert("LAZ loading error: " + e);
         }
     }
