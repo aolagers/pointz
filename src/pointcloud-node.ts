@@ -8,8 +8,10 @@ import {
     Mesh,
     MeshBasicMaterial,
     Points,
+    Ray,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
+    Vector3,
 } from "three";
 import { PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { boxToMesh } from "./utils";
@@ -89,16 +91,22 @@ export class PointCloudNode {
         return this.nodeName[0];
     }
 
-    getNodeVisibilityRating(camera: Camera) {
-        // TODO: Add preference to points in the screen middle
+    estimateNodeError(camera: Camera) {
         // IDEA: use bounding sphere instead of box?
 
+        const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
         const dist = this.bounds.distanceToPoint(camera.position);
+
+        const center = this.bounds.getCenter(new Vector3());
+        const centerDist = cameraRay.distanceToPoint(center);
         // const screenRes = this.spacing / dist;
 
-        const angle = Math.atan(this.spacing / dist);
+        const angle = Math.atan(this.spacing / (dist + centerDist));
 
-        return -angle;
+        // get distance from the ray to the bounds
+        // console.log("err", this.nodeName, this.bounds, angle, centerDist);
+
+        return angle;
     }
 
     setState(state: NodeState) {
@@ -115,6 +123,8 @@ export class PointCloudNode {
 
         try {
             const pointData = await getChunk(this.parent.source, this.copcInfo, this.parent.offset.toArray());
+
+            pointData.geometry.boundingBox = this.bounds;
 
             this.data = {
                 pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
