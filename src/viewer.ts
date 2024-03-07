@@ -20,7 +20,6 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
-import { MapControls } from "three/addons/controls/MapControls.js";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
 
@@ -29,11 +28,8 @@ import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, printVec } from "./utils";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
-import { getMouseIntersection } from "./pick";
 
 const points = [];
-
-const pointer = new Vector2(0, 0);
 
 points.push(new Vector3(0, 0, 200));
 points.push(new Vector3(1, 1, 1));
@@ -62,7 +58,6 @@ export class Viewer {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
 
-    // controls: MapControls;
     econtrols: EarthControls;
 
     scene: Scene;
@@ -87,8 +82,6 @@ export class Viewer {
 
     edlMaterial: EDLMaterial;
 
-    clicked: boolean;
-
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         (window as any).viewer = this;
 
@@ -96,7 +89,6 @@ export class Viewer {
         this.height = height;
 
         this.renderRequested = false;
-        this.clicked = false;
 
         this.renderer = new WebGLRenderer({
             canvas: canvasElement,
@@ -109,8 +101,6 @@ export class Viewer {
         });
 
         this.renderer.setClearColor(new Color(0x000000), 0.0);
-        // this.renderer.setClearAlpha(0.0);
-        // this.renderer.autoClearColor = false;
 
         this.renderer.setSize(this.width, this.height, false);
 
@@ -128,10 +118,6 @@ export class Viewer {
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -50, 25);
         this.camera.lookAt(0, 0, 0);
-
-        // this.controls = new MapControls(this.camera, this.renderer.domElement);
-        // this.controls.enableDamping = true;
-        // this.controls.dampingFactor = 0.2;
 
         this.econtrols = new EarthControls(this.camera, this.renderer.domElement, this);
 
@@ -157,8 +143,6 @@ export class Viewer {
     init() {
         document.body.appendChild(this.stats.dom);
 
-        this.renderer.domElement.addEventListener("pointermove", (ev) => this.onPointerMove(ev));
-
         const sl1 = document.getElementById("sl1") as HTMLInputElement;
         const sl2 = document.getElementById("sl2") as HTMLInputElement;
 
@@ -174,50 +158,10 @@ export class Viewer {
             PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
 
-        /*
-        this.controls.addEventListener("change", (e) => {
-            debug.target = printVec(e.target.target);
-            debug.camera = printVec(this.camera.position);
-
-            this.requestRender();
-        });
-        */
         this.econtrols.onChange = () => {
             debug.camera = printVec(this.camera.position);
             this.requestRender();
         };
-
-        document.addEventListener("mousedown", (_ev) => {
-            this.clicked = true;
-
-            {
-                raycaster.setFromCamera(pointer, this.camera);
-                const ray = raycaster.ray;
-                //ray.origin.add(new Vector3(0,0,-1))
-                line.visible = true;
-                const linePos = line.geometry.attributes.position!;
-                const verts = linePos.array;
-
-                verts[0] = ray.origin.x;
-                verts[1] = ray.origin.y;
-                verts[2] = ray.origin.z;
-
-                const ep = new Vector3()
-                    .copy(ray.origin)
-                    .add(new Vector3().copy(ray.direction).normalize().multiplyScalar(1000.0));
-
-                verts[3] = ep.x;
-                verts[4] = ep.y;
-                verts[5] = ep.z;
-
-                linePos.needsUpdate = true;
-                line.geometry.computeBoundingBox();
-                line.geometry.computeBoundingSphere();
-                line.frustumCulled = false;
-            }
-
-            this.requestRender();
-        });
 
         document.addEventListener("dragover", (ev) => {
             ev.preventDefault();
@@ -296,14 +240,6 @@ export class Viewer {
         this.renderer.setRenderTarget(null);
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
-        // Picking
-        if (this.clicked) {
-            getMouseIntersection(pointer, this.camera, this.renderer, this);
-        }
-
-        // this.renderer.render(this.scene, this.camera);
-        // this.renderer.render(this.sceneOrtho, this.cameraOrtho);
-
         this.gpuPanel.endQuery();
 
         let totalPts = 0;
@@ -330,16 +266,9 @@ export class Viewer {
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
             .join("<br>");
 
-        // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
-
         this.renderer.info.reset();
         const frameEnd = performance.now();
         this.frameTime = frameEnd - frameStart;
-
-        if (this.clicked) {
-            this.requestRender();
-            this.clicked = false;
-        }
     }
 
     renderLoop() {
@@ -399,19 +328,6 @@ export class Viewer {
         this.renderer.getDrawingBufferSize(sz);
         // this.renderer.domElement.style.width = `${this.width}px`;
         // console.log(this.width, sz);
-    }
-
-    onPointerMove(event: PointerEvent) {
-        if (event.isPrimary === false) return;
-
-        const rect = this.renderer.domElement.getBoundingClientRect();
-
-        pointer.x = ((event.clientX - rect.x) / rect.width) * 2 - 1;
-        pointer.y = -((event.clientY - rect.y) / rect.height) * 2 + 1;
-
-        debug.mouse = printVec(pointer);
-
-        this.requestRender();
     }
 
     async addDemo() {
