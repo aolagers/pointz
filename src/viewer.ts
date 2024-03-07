@@ -54,7 +54,6 @@ export class Viewer {
     scene: Scene;
 
     pointClouds: PointCloud[] = [];
-    pointObjects: Points[] = [];
 
     stats: Stats;
     gpuPanel: GPUStatsPanel;
@@ -274,10 +273,19 @@ export class Viewer {
         if (n.state === "visible") {
             const o = n.data!.pco;
             this.scene.add(o);
-            this.pointObjects.push(o);
             this.requestRender();
         } else {
             throw new Error("cannot add node that is not loaded");
+        }
+    }
+
+    *getVisibleNodes() {
+        for (const pc of this.pointClouds) {
+            for (const node of pc.nodes) {
+                if (node.state === "visible") {
+                    yield node;
+                }
+            }
         }
     }
 
