@@ -18,16 +18,11 @@ import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud, getChunkID } from "./pointcloud";
 import { Viewer } from "./viewer";
-import { CopcNodeInfo, LazSource, WorkerInfoResponse, WorkerPointsResponse } from "./copc-loader";
+import { CopcNodeInfo, LazSource, WorkerResponseMapping } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
 
-type RespMap = {
-    info: WorkerInfoResponse;
-    points: WorkerPointsResponse;
-};
-
-export const workerPool = new WorkerPool<RespMap>(workerUrl, 4);
+export const workerPool = new WorkerPool<WorkerResponseMapping>(workerUrl, 4);
 
 type NodeState = "unloaded" | "loading" | "visible" | "error";
 

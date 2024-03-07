@@ -21,6 +21,7 @@ export class PointCloud {
     hierarchy: Hierarchy;
     nodes: PointCloudNode[];
     rootSpacing: number;
+    pointCount: number;
 
     isDemo = false;
 
@@ -32,7 +33,8 @@ export class PointCloud {
         octreeBounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        rootSpacing: number
+        rootSpacing: number,
+        pointCount: number
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -43,6 +45,7 @@ export class PointCloud {
         this.nodes = [];
         this.hierarchy = hierarchy;
         this.rootSpacing = rootSpacing;
+        this.pointCount = pointCount;
     }
 
     async initializeNodes() {
@@ -87,7 +90,8 @@ export class PointCloud {
             octreeBounds,
             offset,
             details.hierarchy,
-            details.info.spacing
+            details.info.spacing,
+            details.header.pointCount
         );
 
         return pcloud;

@@ -79,7 +79,17 @@ export function loadDemo(viewer: Viewer) {
     ptIndexAttribute.gpuType = IntType;
     geometry.setAttribute("ptIndex", ptIndexAttribute);
 
-    const pc = new PointCloud(viewer, "demodata", "", tightBounds, cubeBounds, offset, { pages: {}, nodes: {} }, 1.0);
+    const pc = new PointCloud(
+        viewer,
+        "demodata",
+        "",
+        tightBounds,
+        cubeBounds,
+        offset,
+        { pages: {}, nodes: {} },
+        1.0,
+        indice
+    );
 
     pc.isDemo = true;
 
