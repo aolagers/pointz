@@ -4,12 +4,9 @@ type Wrapper = {
     id: number;
 };
 
-// IDEA: types should be somehow mapped from request to response so that runTask() could return the correct type instead
-// of type union
-
-export class WorkerPool<RequestTypes, ResponseTypes> {
+export class WorkerPool<R extends Record<string, any>> {
     pool: Wrapper[] = [];
-    queue: { request: RequestTypes; resolve: (resp: ResponseTypes) => void }[] = [];
+    queue: { request: any; resolve: (resp: any) => void }[] = [];
 
     running() {
         return this.pool.filter((w) => w.busy).length;
@@ -34,7 +31,7 @@ export class WorkerPool<RequestTypes, ResponseTypes> {
         }
     }
 
-    onTaskFinished(w: Wrapper) {
+    private onTaskFinished(w: Wrapper) {
         const next = this.queue.shift();
         if (next) {
             w.worker.onmessage = async (e) => {
@@ -48,12 +45,12 @@ export class WorkerPool<RequestTypes, ResponseTypes> {
         }
     }
 
-    async runTask(req: RequestTypes): Promise<ResponseTypes> {
+    async runTask<J extends { command: keyof R }>(req: J): Promise<R[J["command"]]> {
         const available = this.pool.find((w) => !w.busy);
 
         if (available) {
             available.busy = true;
-            return new Promise<ResponseTypes>((resolve) => {
+            return new Promise<R[J["command"]]>((resolve) => {
                 available.worker.onmessage = async (e) => {
                     // await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000));
                     resolve(e.data);
@@ -63,7 +60,7 @@ export class WorkerPool<RequestTypes, ResponseTypes> {
                 available.worker.postMessage(req);
             });
         } else {
-            return new Promise<ResponseTypes>((resolve) => {
+            return new Promise<R[J["command"]]>((resolve) => {
                 this.queue.push({ request: req, resolve });
             });
         }
