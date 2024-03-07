@@ -9,4 +9,5 @@ export const COLOR_MODE = {
     INTENSITY: "0",
     CLASSIFICATION: "1",
     RGB: "2",
+    RGB_AND_CLASS: "3",
 };
