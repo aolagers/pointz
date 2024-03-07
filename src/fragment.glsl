@@ -2,6 +2,7 @@ uniform vec3 uColor;
 
 flat varying uint cls;
 flat varying vec2 mouse;
+flat varying vec3 rgbColor;
 
 void main() {
 
@@ -10,4 +11,6 @@ void main() {
     } else {
         gl_FragColor = vec4(uColor, 1.0);
     }
+
+    gl_FragColor = vec4(rgbColor, 1.0);
 }

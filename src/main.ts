@@ -22,8 +22,10 @@ class PointCloud {
     static load() {
         const geometry = new BufferGeometry();
         const vertices = [];
+        const colors = [];
 
         const classes = [];
+        const C = 0.2;
 
         // gnd
         for (let i = 0; i < 10_000; i++) {
@@ -31,6 +33,7 @@ class PointCloud {
             const y = (Math.random() - 0.5) * 100;
             const z = 2 * Math.sin(x / 10) + 1 * Math.sin(y / 5);
             vertices.push(x, y, z);
+            colors.push(0.4 + Math.random() * C, 0.15 + Math.random() * C, 0.0 + Math.random() * C);
             classes.push(0);
         }
 
@@ -41,11 +44,13 @@ class PointCloud {
             const z = 2 * Math.sin(x / 10) + 1 * Math.sin(y / 5);
             for (let j = 0; j < 50; j++) {
                 vertices.push(x + Math.random() / 2, y + Math.random() / 2, z + j / 5);
+                colors.push(0.1 + Math.random() * C, 0.7 + Math.random() * C, 0.1 + Math.random() * C);
                 classes.push(1);
             }
         }
 
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
 
         return geometry;
