@@ -173,7 +173,18 @@ export class EarthControls {
                 const ay = dp.y * 2 * Math.PI;
 
                 const dx = this.prevAngle.x - ax;
-                const dy = this.prevAngle.y - ay;
+                let dy = this.prevAngle.y - ay;
+
+                const cameraDir = this.camera.getWorldDirection(new Vector3());
+                const pitch = Math.acos(cameraDir.dot(unitZ));
+
+                // limit pitch angle to 0..PI to prevent flipping upside down
+                if (pitch + dy > Math.PI) {
+                    dy = Math.PI - pitch;
+                }
+                if (pitch + dy < 0) {
+                    dy = 0 - pitch;
+                }
 
                 const pivotToCam = new Vector3().subVectors(this.camera.position, this.pivot.position);
 
