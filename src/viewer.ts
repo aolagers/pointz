@@ -21,16 +21,15 @@ import {
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
-import { EarthControls } from "./earth-controls";
+import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
+
+import { EarthControls } from "./earth-controls";
 import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, printVec } from "./utils";
-import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
-import { getMouseIntersection, pickMarker } from "./pick";
-
-const pickWindow = 31;
+import { getMouseIntersection } from "./pick";
 
 const points = [];
 
@@ -67,6 +66,7 @@ export class Viewer {
     econtrols: EarthControls;
 
     scene: Scene;
+
     pclouds: PointCloud[] = [];
     objects: Points[] = [];
 
@@ -133,7 +133,7 @@ export class Viewer {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.2;
 
-        this.econtrols = new EarthControls(this.camera, this.renderer.domElement);
+        this.econtrols = new EarthControls(this.camera, this.renderer.domElement, this);
 
         this.scene = new Scene();
         this.scene.add(line);
@@ -151,14 +151,6 @@ export class Viewer {
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        this.scene.add(pickMarker);
-
-        // this.scene.background = new Color(0x505050);
-        // this.scene.background = new Color(0x4485b4);
-        //this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace).convertSRGBToLinear();
-        // this.sceneOrtho.background = new Color()
-        //     .setStyle("rgb(80,120,180)", LinearSRGBColorSpace)
-        //     .convertSRGBToLinear();
         this.setSize(this.width, this.height);
     }
 
@@ -266,6 +258,8 @@ export class Viewer {
             this.requestRender();
         });
 
+        this.econtrols.init();
+
         this.requestRender();
     }
 
@@ -283,6 +277,7 @@ export class Viewer {
         const delta = clock.getDelta();
 
         this.controls.update(delta);
+        this.econtrols.update(delta);
 
         this.gpuPanel.startQuery();
 
@@ -297,7 +292,7 @@ export class Viewer {
 
         // Picking
         if (this.clicked) {
-            getMouseIntersection(pointer, this);
+            getMouseIntersection(pointer, this.camera, this.renderer, this);
         }
 
         // this.renderer.render(this.scene, this.camera);
@@ -344,6 +339,10 @@ export class Viewer {
     renderLoop() {
         this.render();
         requestAnimationFrame(() => this.renderLoop());
+    }
+
+    addExtraStuff(m: Mesh) {
+        this.scene.add(m);
     }
 
     addObject(o: Points) {

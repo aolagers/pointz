@@ -1,31 +1,26 @@
 import {
     Camera,
-    Mesh,
     MeshBasicMaterial,
-    MeshNormalMaterial,
     NearestFilter,
+    PerspectiveCamera,
     RGBAFormat,
     Raycaster,
-    SphereGeometry,
     Vector2,
+    Vector3,
     WebGLRenderTarget,
+    WebGLRenderer,
 } from "three";
 import { Viewer } from "./viewer";
-import { PointCloud } from "./pointcloud";
+import { PointCloud, PointCloudNode } from "./pointcloud";
 import { PointMaterial } from "./materials/point-material";
 
 const raycaster = new Raycaster();
 
-export const pickMarker = new Mesh(
-    new SphereGeometry(0.5, 16, 16),
-    new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
-);
-
-const pickWindow = 31;
+const PICK_WINDOW = 31;
 
 const pickMaterial = new PointMaterial(true);
 
-const pickRenderTarget = new WebGLRenderTarget(pickWindow, pickWindow, {
+const pickRenderTarget = new WebGLRenderTarget(PICK_WINDOW, PICK_WINDOW, {
     format: RGBAFormat,
     minFilter: NearestFilter,
     magFilter: NearestFilter,
@@ -36,9 +31,16 @@ export function getMouseRay(mouse: Vector2, camera: Camera) {
     return raycaster.ray;
 }
 
-// TODO: only return the hit, dont modify rendering here
-export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
-    const ray = getMouseRay(pointer, viewer.camera);
+export function getMouseIntersection(
+    pointer: Vector2,
+    camera: PerspectiveCamera,
+    renderer: WebGLRenderer,
+    viewer: Viewer
+) {
+    const ray = getMouseRay(pointer, camera);
+
+    let point: null | { screenPosition: Vector2; position: Vector3; pointcloud: PointCloud; node: PointCloudNode } =
+        null;
 
     let hits = 0;
     for (const pc of viewer.pclouds) {
@@ -66,13 +68,13 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
     }
 
     // limit rendering to area around mouse
-    viewer.camera.setViewOffset(
+    camera.setViewOffset(
         viewer.width,
         viewer.height,
-        ((pointer.x + 1) / 2) * viewer.width - pickWindow / 2,
-        viewer.height - ((pointer.y + 1) / 2) * viewer.height - pickWindow / 2,
-        pickWindow,
-        pickWindow
+        ((pointer.x + 1) / 2) * viewer.width - PICK_WINDOW / 2,
+        viewer.height - ((pointer.y + 1) / 2) * viewer.height - PICK_WINDOW / 2,
+        PICK_WINDOW,
+        PICK_WINDOW
     );
 
     // TODO: only matching objects
@@ -81,22 +83,20 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
     }
 
     // render to pick buffer
-    viewer.renderer.setRenderTarget(pickRenderTarget);
+    renderer.setRenderTarget(pickRenderTarget);
     // this.renderer.clear();
-    viewer.renderer.render(viewer.scene, viewer.camera);
+    renderer.render(viewer.scene, camera);
 
-    let pbuf = new Uint8Array(4 * pickWindow * pickWindow);
+    let pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
 
-    // if (Date.now() - lastlog > 1000)
-    viewer.renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, pickWindow, pickWindow, pbuf);
-    // console.log(pbuf.slice(0, 4).join("/"), pbuf.slice(4, 8).join("/"));
+    renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, PICK_WINDOW, PICK_WINDOW, pbuf);
     let closest = Infinity;
     let best = 0;
 
     for (let i = 0; i < pbuf.length / 4; i++) {
-        const x = i % pickWindow;
-        const y = Math.floor(i / pickWindow);
-        const sqdist = (x - pickWindow / 2) ** 2 + (y - pickWindow / 2) ** 2;
+        const x = i % PICK_WINDOW;
+        const y = Math.floor(i / PICK_WINDOW);
+        const sqdist = (x - PICK_WINDOW / 2) ** 2 + (y - PICK_WINDOW / 2) ** 2;
 
         const r = pbuf[i * 4 + 0];
         const g = pbuf[i * 4 + 1];
@@ -138,7 +138,12 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
             const Y = attrs.array[idx * 3 + 1];
             const Z = attrs.array[idx * 3 + 2];
 
-            pickMarker.position.set(X, Y, Z);
+            point = {
+                screenPosition: new Vector2(pointer.x, pointer.y),
+                position: new Vector3(X, Y, Z),
+                node: nodehit,
+                pointcloud: pchit,
+            };
 
             console.log(
                 `HIT a:${a} c:${vals.join("/")} idx:${idx} n:${nodehit} ` +
@@ -157,12 +162,12 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
     */
 
     // reset rendering
-    viewer.camera.clearViewOffset();
-    viewer.renderer.setViewport(0, 0, viewer.width, viewer.height);
+    camera.clearViewOffset();
+    renderer.setViewport(0, 0, viewer.width, viewer.height);
 
     for (const o of viewer.objects) {
         o.material = PointCloud.material;
     }
 
-    return null;
+    return point;
 }
