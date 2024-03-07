@@ -1,52 +1,62 @@
 <!doctype html>
 
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
-        <title>pointz</title>
-        <style>
-            html,
-            body {
-                margin: 0;
-                padding: 0;
-                font-family: sans-serif;
-                user-select: none;
-                touch-action: none;
-                background-color: rgb(80, 120, 180);
-            }
-            #debug {
-                position: fixed;
-                top: 20px;
-                right: 20px;
 
-                padding: 0.5em 1em;
-                color: #ccc;
-                background-color: rgba(0, 0, 0, 0.2);
-                font-size: small;
-                text-align: right;
-                border-radius: 0.5em;
-            }
-            #sliders {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-            }
-            #viewer {
-                margin: 0;
-                padding: 0;
-                display: block;
-            }
-        </style>
-    </head>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>pointz</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            user-select: none;
+            touch-action: none;
+            background-color: rgb(80, 120, 180);
+        }
 
-    <body>
-        <div id="debug">debug</div>
-        <div id="sliders">
-            <input id="sl1" type="range" min="-100" max="100" value="0" /> <br />
+        #debug {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-family: monospace;
+
+            padding: 0.5em 1em;
+            color: #ccc;
+            background-color: rgba(0, 0, 0, 0.2);
+            font-size: x-small;
+            text-align: right;
+            border-radius: 0.5em;
+        }
+
+        #sliders {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #viewer {
+            margin: 0;
+            padding: 0;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="debug">debug</div>
+    <div id="sliders">
+        <div>
+            <input id="sl1" type="range" min="-100" max="100" value="0" />
+        </div>
+        <div>
             <input id="sl2" type="range" min="-100" max="100" value="0" />
         </div>
-        <canvas id="viewer"></canvas>
-        <script type="module" src="/src/index.ts"></script>
-    </body>
+    </div>
+    <canvas id="viewer"></canvas>
+    <script type="module" src="/src/index.ts"></script>
+</body>
+
 </html>

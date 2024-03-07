@@ -193,7 +193,7 @@ export class PointCloud {
 
         const promises = [];
 
-        while (!pq.isEmpty() && promises.length < 128) {
+        while (!pq.isEmpty() && promises.length < 255) {
             const n = pq.pop()!;
             const nname = n.join("-");
             const node = this.hierarchy.nodes[nname]!;
