@@ -219,16 +219,6 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.requestRender("keydown");
         });
 
-        const toggleDebugButton = document.getElementById("toggle-debug")!;
-        toggleDebugButton.addEventListener("click", () => {
-            this.debug_mode = !this.debug_mode;
-            if (this.debug_mode) {
-                toggleDebugButton.classList.add("active");
-            } else {
-                toggleDebugButton.classList.remove("active");
-            }
-        });
-
         this.econtrols.init();
 
         const rect = this.renderer.domElement.getBoundingClientRect();

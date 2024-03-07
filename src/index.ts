@@ -28,9 +28,17 @@ viewer.init();
 
 window.addEventListener("resize", () => viewer.setSize(window.innerWidth, window.innerHeight));
 
-document.querySelector("#more-points")!.addEventListener("click", () => viewer.loadMoreNodes());
-document.querySelector("#less-points")!.addEventListener("click", () => viewer.dropWorstNodes());
 document.querySelector("#reset-cam")!.addEventListener("click", () => viewer.econtrols.targetAll());
+
+const toggleDebugButton = document.getElementById("toggle-debug")!;
+toggleDebugButton.addEventListener("click", () => {
+    viewer.debug_mode = !viewer.debug_mode;
+    if (viewer.debug_mode) {
+        toggleDebugButton.classList.add("active");
+    } else {
+        toggleDebugButton.classList.remove("active");
+    }
+});
 
 // viewer.addPointCloud(loadDemo(viewer));
 
