@@ -113,8 +113,8 @@ export class PointCloud {
 
     async loadFake() {
         const pcn = this.loadedNodes[0]!;
-        this.viewer.scene.add(pcn.pco);
-        this.viewer.objects.push(pcn.pco);
+
+        this.viewer.addObject(pcn.pco);
     }
 
     async load() {
@@ -163,31 +163,15 @@ export class PointCloud {
         while (!pq.isEmpty() && loaded < 64) {
             const n = pq.pop()!;
             const nname = n.join("-");
-            console.log(this.name, "LOAD", nname);
+            // console.log(this.name, "LOAD", nname);
             const node = this.hierarchy.nodes[nname]!;
 
-            /*
-            const pointData = await getChunk(this.source, node, this.offset.toArray());
-
-            const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
-
-            this.loadedNodes.push(pcn);
-
-            this.viewer.scene.add(pcn.pco);
-            this.viewer.objects.push(pcn.pco);
-
-            this.pointsLoaded += pointData.pointCount;
-            // await new Promise((resolve) => setTimeout(resolve, 100));
-            loaded++;
-            */
             getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
                 const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
 
                 this.loadedNodes.push(pcn);
 
-                this.viewer.scene.add(pcn.pco);
-                // TODO: this is never removed
-                this.viewer.objects.push(pcn.pco);
+                this.viewer.addObject(pcn.pco);
 
                 this.pointsLoaded += pointData.pointCount;
                 // await new Promise((resolve) => setTimeout(resolve, 100));
