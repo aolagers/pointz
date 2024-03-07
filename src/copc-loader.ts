@@ -10,7 +10,6 @@ export type WorkerInfoRequest = {
     source: LazSource;
 };
 
-export type OctreeInfo = Pick<CopcType["info"], "cube" | "spacing">;
 export type Hierarchy = Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
 
 export type WorkerInfoResponse = {
@@ -27,6 +26,7 @@ export type CopcNodeInfo = {
     pointDataOffset: number;
     pointDataLength: number;
 };
+
 export type WorkerPointsRequest = {
     command: "points";
     source: LazSource;
@@ -41,7 +41,7 @@ export type WorkerPointsResponse = {
     colors: Uint8Array;
     classifications: Uint8Array;
     intensities: Uint16Array;
-    indices: Uint32Array;
+    indices: Int32Array;
 };
 
 function log(...args: any[]) {
@@ -93,7 +93,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
         const colors = new Uint8Array(ptCount * 3);
         const classifications = new Uint8Array(ptCount);
         const intensities = new Uint16Array(ptCount);
-        const indices = new Uint32Array(ptCount);
+        const indices = new Int32Array(ptCount);
 
         const hasRGB = "Red" in view.dimensions && "Green" in view.dimensions && "Blue" in view.dimensions;
 
