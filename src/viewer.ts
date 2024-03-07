@@ -101,9 +101,31 @@ export class Viewer {
             debug.target = printVec(e.target.target);
             debug.camera = printVec(this.camera.position);
         });
+
+        document.addEventListener("dragover", (ev) => {
+            ev.preventDefault();
+        });
+        document.addEventListener("drop", (ev) => {
+            console.log("dropped", ev);
+            ev.preventDefault();
+
+            if (!ev.dataTransfer) return;
+
+            if (ev.dataTransfer.items) {
+                [...ev.dataTransfer.items].forEach((item, i) => {
+                    if (item.kind === "file") {
+                        const file = item.getAsFile();
+                        if (file) {
+                            console.log(`… file[${i}].name = ${file.name}`);
+                            this.addLAZ(file!);
+                        }
+                    }
+                });
+            }
+        });
     }
 
-    loop() {
+    renderLoop() {
         this.stats.update();
         const delta = clock.getDelta();
 
@@ -139,40 +161,7 @@ export class Viewer {
 
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
 
-        requestAnimationFrame(() => this.loop());
-    }
-
-    async start() {
-        this.addDemo();
-        // this.addLAZ("http://localhost:5173/copc.copc.laz");
-        this.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
-        // this.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
-        // this.addLAZ("http://localhost:5173/sofi.copc.laz");
-        // this.addLAZ("http://localhost:5173/millsite.copc.laz");
-
-        document.addEventListener("dragover", (ev) => {
-            ev.preventDefault();
-        });
-        document.addEventListener("drop", (ev) => {
-            console.log("dropped", ev);
-            ev.preventDefault();
-
-            if (!ev.dataTransfer) return;
-
-            if (ev.dataTransfer.items) {
-                [...ev.dataTransfer.items].forEach((item, i) => {
-                    if (item.kind === "file") {
-                        const file = item.getAsFile();
-                        if (file) {
-                            console.log(`… file[${i}].name = ${file.name}`);
-                            this.addLAZ(file!);
-                        }
-                    }
-                });
-            }
-        });
-
-        this.loop();
+        requestAnimationFrame(() => this.renderLoop());
     }
 
     onWindowResize() {
