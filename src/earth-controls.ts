@@ -168,16 +168,17 @@ export class EarthControls {
             const dy = this.prevAngle.y - ay;
 
             const pivotToCam = new Vector3().subVectors(this.camera.position, this.pivot.position);
-            const right = new Vector3().crossVectors(unitZ, this.camera.getWorldDirection(new Vector3())).normalize();
 
-            pivotToCam.applyAxisAngle(right, dy);
+            const right = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+
+            pivotToCam.applyAxisAngle(right, -dy);
             pivotToCam.applyAxisAngle(unitZ, dx);
 
             const newPos = new Vector3().addVectors(this.pivot.position, pivotToCam);
 
             this.camera.position.copy(newPos);
 
-            this.camera.rotateOnWorldAxis(right, dy);
+            this.camera.rotateOnWorldAxis(right, -dy);
             this.camera.rotateOnWorldAxis(unitZ, dx);
 
             this.prevAngle.set(ax, ay);
