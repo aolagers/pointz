@@ -66,7 +66,8 @@ export class EarthControls {
 
         this.pivot.visible = false;
 
-        // this.domElement.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+        this.domElement.addEventListener("touchstart", createDoubleTapPreventer(500), { passive: false });
+
         this.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
 
         this.domElement.addEventListener("pointerdown", (e) => this.pointerStart(e));
@@ -378,4 +379,23 @@ export class EarthControls {
     showPointCloud(pc: PointCloud) {
         this.showBox(pc.tightBounds);
     }
+}
+
+/** Prevent the event if double tapped too quickli */
+function createDoubleTapPreventer(timeout_ms: number) {
+    let dblTapTimer = 0;
+    let dblTapPressed = false;
+
+    return function (e: TouchEvent) {
+        clearTimeout(dblTapTimer);
+        if (dblTapPressed) {
+            e.preventDefault();
+            dblTapPressed = false;
+        } else {
+            dblTapPressed = true;
+            dblTapTimer = setTimeout(() => {
+                dblTapPressed = false;
+            }, timeout_ms);
+        }
+    };
 }
