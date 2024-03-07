@@ -276,9 +276,8 @@ export class Viewer {
                 ((pointer.x + 1) / 2) * this.width - pickWindow / 2,
                 this.height - ((pointer.y + 1) / 2) * this.height - pickWindow / 2,
                 pickWindow,
-                pickWindow,
+                pickWindow
             );
-
 
             for (const o of this.objects) {
                 o.material = PointCloud.pickMaterial;

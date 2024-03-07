@@ -10,20 +10,22 @@ export function createTightBounds(pc: PointCloud) {
     const boundGeom = new BoxGeometry(...size);
     const cube = new Mesh(boundGeom, redBboxMaterial);
     cube.position.copy(pc.bounds.min).sub(pc.offset).add(halfSize);
+
     return cube;
 }
 
 export function printVec(v: Vector3 | Vector2) {
     if (v instanceof Vector2) {
         return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`;
+    } else {
+        return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
     }
-    return `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
 }
 
 export function createCubeBoundsBox(
     baseCube: [number, number, number, number, number, number],
     key: OctreePath,
-    offset: Vector3,
+    offset: Vector3
 ) {
     const D = key[0];
     const X = key[1];
@@ -40,7 +42,7 @@ export function createCubeBoundsBox(
     const midP = new Vector3(
         baseCube[0] - offset.x + X * divSize.x,
         baseCube[1] - offset.y + Y * divSize.y,
-        baseCube[2] - offset.z + Z * divSize.z,
+        baseCube[2] - offset.z + Z * divSize.z
     );
 
     return new Box3(new Vector3().subVectors(midP, halfSize), new Vector3().addVectors(midP, halfSize));
@@ -49,7 +51,7 @@ export function createCubeBoundsBox(
 export function createCubeBounds(
     baseCube: [number, number, number, number, number, number],
     key: OctreePath,
-    offset: Vector3,
+    offset: Vector3
 ) {
     const D = key[0];
     const X = key[1];
@@ -66,7 +68,7 @@ export function createCubeBounds(
     const midP = new Vector3(
         baseCube[0] - offset.x + X * divSize.x,
         baseCube[1] - offset.y + Y * divSize.y,
-        baseCube[2] - offset.z + Z * divSize.z,
+        baseCube[2] - offset.z + Z * divSize.z
     );
     cube.position.copy(new Vector3().copy(midP)).add(halfSize);
     return cube;

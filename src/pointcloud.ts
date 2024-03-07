@@ -99,7 +99,7 @@ export class PointCloud {
         bounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        octreeInfo: OctreeInfo,
+        octreeInfo: OctreeInfo
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -188,7 +188,7 @@ export class PointCloud {
             inview,
             "/",
             toLoad.length,
-            ((100 * inview) / toLoad.length).toFixed(1) + "%",
+            ((100 * inview) / toLoad.length).toFixed(1) + "%"
         );
     }
 
@@ -272,7 +272,7 @@ export class PointCloud {
             bounds,
             offset,
             { pages: {}, nodes: {} },
-            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 },
+            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 }
         );
 
         pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, bounds));
