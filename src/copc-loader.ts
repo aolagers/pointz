@@ -54,7 +54,7 @@ export type WorkerError = {
     message: string;
 };
 
-function log(...args: any[]) {
+function log(...args: unknown[]) {
     console.log("%c!! WORKER !!", "color: cyan; font-weight: bold;", ...args);
 }
 
@@ -132,9 +132,9 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             const offset = e.data.offset;
 
             for (let i = 0; i < view.pointCount; i++) {
-                positions[pIdx++] = getters.x(i) - offset[0]!;
-                positions[pIdx++] = getters.y(i) - offset[1]!;
-                positions[pIdx++] = getters.z(i) - offset[2]!;
+                positions[pIdx++] = getters.x(i) - offset[0];
+                positions[pIdx++] = getters.y(i) - offset[1];
+                positions[pIdx++] = getters.z(i) - offset[2];
 
                 // TODO: recognize if 16bit colors or not
                 const r = getters.r(i) / div;

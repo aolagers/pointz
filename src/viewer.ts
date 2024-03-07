@@ -25,7 +25,7 @@ import { EarthControls } from "./earth-controls";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, workerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, getCameraFrustum, printVec } from "./utils";
+import { createTightBounds, getCameraFrustum, printVec, stringifyError } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
@@ -58,15 +58,15 @@ export class Viewer {
     stats: Stats;
     gpuPanel: GPUStatsPanel;
 
-    frame: number = 0;
-    frameTime: number = 0;
+    frame = 0;
+    frameTime = 0;
     renderTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
 
-    width: number = 0;
-    height: number = 0;
+    width = 0;
+    height = 0;
 
     renderRequested: boolean;
 
@@ -295,8 +295,6 @@ export class Viewer {
 
         this.gpuPanel.endQuery();
 
-        let totalPts = 0;
-
         this.frame++;
 
         debug.render =
@@ -306,8 +304,6 @@ export class Viewer {
             `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
-
-        // debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
         debug.pool = ` ${workerPool.running()} ${workerPool.queued()} (${workerPool.tasksFinished})`;
 
@@ -511,7 +507,7 @@ export class Viewer {
 
         console.log("ADD POINTCLOUD", pc);
 
-        pc.initializeNodes();
+        void pc.initializeNodes();
 
         this.addLabel(
             `${pc.name}`,
@@ -531,7 +527,7 @@ export class Viewer {
             this.addPointCloud(pc, center);
         } catch (e) {
             console.error(e);
-            alert("LAZ loading error: " + e);
+            alert("LAZ loading error: " + stringifyError(e));
         }
     }
 }

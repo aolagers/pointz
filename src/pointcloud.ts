@@ -52,7 +52,7 @@ export class PointCloud {
 
     async initializeNodes() {
         if (this.isDemo) {
-            const pcn = this.nodes[0]!;
+            const pcn = this.nodes[0];
             this.viewer.addNode(pcn);
             return;
         }
@@ -67,7 +67,11 @@ export class PointCloud {
             this.nodes.push(pcn);
         }
 
-        this.nodes.find((n) => n.depth === 0)?.load(this.viewer);
+        // always load the root node by default
+        const root = this.nodes.find((n) => n.depth === 0);
+        if (root) {
+            await root.load(this.viewer);
+        }
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {

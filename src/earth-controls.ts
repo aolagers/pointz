@@ -1,6 +1,7 @@
 import {
     Box3,
     Euler,
+    EulerOrder,
     Mesh,
     MeshNormalMaterial,
     PerspectiveCamera,
@@ -8,10 +9,16 @@ import {
     SphereGeometry,
     Vector2,
     Vector3,
+    Vector3Tuple,
 } from "three";
 import { Viewer } from "./viewer";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
+
+type CameraPosition = {
+    position: Vector3Tuple;
+    rotation: [number, number, number, EulerOrder];
+};
 
 const unitZ = new Vector3(0, 0, 1);
 
@@ -330,7 +337,7 @@ export class EarthControls {
             const campos = {
                 position: this.camera.position.toArray(),
                 rotation: this.camera.rotation.toArray(),
-            };
+            } as CameraPosition;
             localStorage.setItem("camera", JSON.stringify(campos));
             this.saveHandle = 0;
         }, 100);
@@ -344,7 +351,7 @@ export class EarthControls {
         }
 
         try {
-            const camJSON = JSON.parse(camText);
+            const camJSON = JSON.parse(camText) as CameraPosition;
             this.camera.position.copy(new Vector3().fromArray(camJSON.position));
             this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
             this.changed();

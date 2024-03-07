@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint src"
   },
   "keywords": [],
   "author": "Alex Lagerstedt <aolagers@iki.fi>",
@@ -17,6 +18,9 @@
   },
   "devDependencies": {
     "@types/three": "^0.159.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.8",
     "vite-plugin-glsl": "^1.2.1",

@@ -51,7 +51,7 @@ export function loadDemo(viewer: Viewer) {
         const y = (Math.random() - 0.5) * 100;
         const z = 2 * Math.sin(x / 10) + 1 * Math.sin(y / 5);
         for (let j = 0; j < treePts; j++) {
-            let h = (j / treePts) * treeH;
+            const h = (j / treePts) * treeH;
             vertices.push(x + (r() * (treePts - j)) / treePts, y + (r() * (treePts - j)) / treePts, z + h);
             colors.push(0.1 + Math.random() * C, 0.7 + Math.random() * C, 0.1 + Math.random() * C);
             classes.push(1);
