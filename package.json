@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "Alex Lagerstedt <aolagers@iki.fi>",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "copc": "^0.0.5",
     "three": "^0.159.0"
