@@ -6,43 +6,58 @@ Supports reading [COPC](https://copc.io) LAZ files.
 
 ## Goals:
 
--   Simplicity
--   Performance
--   Good-looking rendering
--   Big scenes with many LAZ files
+- Simplicity
+- Performance
+- Good-looking rendering
+- Big scenes with many LAZ files
 
 ## Links:
 
 ### References
--   https://copc.io/copc-specification-1.0.pdf
--   https://entwine.io/en/latest/entwine-point-tile.html
--   https://publik.tuwien.ac.at/files/publik_252607.pdf
+
+- https://copc.io/copc-specification-1.0.pdf
+- https://entwine.io/en/latest/entwine-point-tile.html
+- https://publik.tuwien.ac.at/files/publik_252607.pdf
 
 ### three.js
--   https://discoverthreejs.com/tips-and-tricks/
--   https://webglinsights.github.io/tips.html
--   https://threejs.org/docs/#manual/en/introduction/How-to-use-post-processing
 
+- https://discoverthreejs.com/tips-and-tricks/
+- https://webglinsights.github.io/tips.html
+- https://threejs.org/docs/#manual/en/introduction/How-to-use-post-processing
+
+## Pointcloud Node State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> unloaded
+
+    unloaded --> loading
+
+    loading --> error
+    loading --> visible
+
+    error --> loading
+
+    visible --> unloaded
+    visible --> cached
+
+    cached --> unloaded
+    cached --> visible
+```
 
 ## Notes
 
-If shrinking the browser window results in massive speed gains, consider using a half-resolution
-framebuffer during mouse interaction.
+- If shrinking the browser window results in massive speed gains, consider using a half-resolution framebuffer during mouse interaction.
 
-Implement EDL as a custom post-processing ShaderPass?
+- FXAA/SMAA post-processing step?
 
-FXAA/SMAA post-processing step?
-https://threejs.org/examples/webgl_postprocessing_fxaa.html
-https://threejs.org/examples/#webgl_postprocessing_smaa
+  - https://threejs.org/examples/webgl_postprocessing_fxaa.html
+  - https://threejs.org/examples/#webgl_postprocessing_smaa
 
-How to only draw EDL for points?
-https://threejs.org/examples/webgl_postprocessing_unreal_bloom_selective.html
-https://threejs.org/examples/webgl_postprocessing_outline.html
+- How to only draw EDL for points?
 
-Implementing text labels
-https://threejs.org/docs/#manual/en/introduction/Creating-text
-https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+  - https://threejs.org/examples/webgl_postprocessing_unreal_bloom_selective.html
+  - https://threejs.org/examples/webgl_postprocessing_outline.html
 
-
-Optimization?
-https://www.khronos.org/opengl/wiki/Buffer_Object#Buffer_Object_Usage
+- Other optimizations
+  - https://www.khronos.org/opengl/wiki/Buffer_Object#Buffer_Object_Usage
