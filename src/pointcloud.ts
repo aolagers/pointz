@@ -16,7 +16,7 @@ export class PointCloud {
     viewer: Viewer;
     name: string;
     source: string | File;
-    offset: Vector3;
+    headerOffset: Vector3;
     tightBounds: Box3;
     octreeBounds: Box3;
     hierarchy: Hierarchy;
@@ -33,7 +33,7 @@ export class PointCloud {
         source: string | File,
         tightBounds: Box3,
         octreeBounds: Box3,
-        offset: Vector3,
+        headerOffset: Vector3,
         hierarchy: Hierarchy,
         rootSpacing: number,
         pointCount: number
@@ -41,7 +41,7 @@ export class PointCloud {
         this.viewer = viewer;
         this.name = name;
         this.source = source;
-        this.offset = offset;
+        this.headerOffset = headerOffset;
         this.tightBounds = tightBounds;
         this.octreeBounds = octreeBounds;
         this.nodes = [];
@@ -81,15 +81,15 @@ export class PointCloud {
         const pcloudName = typeof source === "string" ? source.split("/").pop()! : source.name;
 
         const details = await PointCloud.getInfo(source);
-        const offset = new Vector3(...details.header.offset);
+        const headerOffset = new Vector3(...details.header.offset);
 
         const tightBounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
-        tightBounds.min.sub(offset);
-        tightBounds.max.sub(offset);
+        tightBounds.min.sub(headerOffset);
+        tightBounds.max.sub(headerOffset);
 
         const octreeBounds = new Box3().setFromArray(details.info.cube);
 
-        octreeBounds.translate(offset.clone().negate());
+        octreeBounds.translate(headerOffset.clone().negate());
 
         const pcloud = new PointCloud(
             viewer,
@@ -97,7 +97,7 @@ export class PointCloud {
             source,
             tightBounds,
             octreeBounds,
-            offset,
+            headerOffset,
             details.hierarchy,
             details.info.spacing,
             details.header.pointCount

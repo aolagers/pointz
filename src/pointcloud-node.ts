@@ -39,8 +39,8 @@ const nodeCache = new LRUCache<string, PointCloudNode>({
         return value.pointCount;
     },
     dispose: (node, key, reason) => {
-        console.log("CACHE DROP", reason, key, node.state, node);
-        if (reason !== "delete") {
+        if (reason === "set" || reason === "evict") {
+            console.log("CACHE DROP", reason, key, node.state, nodeCache.size, nodeCache.calculatedSize, node);
             node.unload(node.parent.viewer);
         }
     },
@@ -190,7 +190,7 @@ export class PointCloudNode {
 
         try {
             this.debugMesh.visible = true;
-            viewer.requestRender();
+            viewer.requestRender("start loading");
             const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
 
             pointData.geometry.boundingBox = this.bounds;
@@ -246,7 +246,7 @@ export class PointCloudNode {
             command: {
                 command: "points",
                 nodeInfo: this.copcInfo,
-                offset: this.parent.offset.toArray(),
+                offset: this.parent.headerOffset.toArray(),
                 source: this.parent.source,
             },
         });
