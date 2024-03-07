@@ -57,7 +57,7 @@ void main() {
                 || depth3<0.98
                 || depth3<0.98
            ) {
-            FragColor = vec4(color.xyz, 0.50);
+            FragColor = vec4(color.xyz, 1.00);
         } else {
             // "clear" background
             FragColor = vec4(color.xyz, color.a);
@@ -67,23 +67,20 @@ void main() {
 
 
     float ddif = 0.0
-        //+max(0.0, dm - d1)
-    + max(0.0, d1/dm - 1.0)
-    + max(0.0, d2/dm - 1.0)
-    + max(0.0, d3/dm - 1.0)
-    + max(0.0, d4/dm - 1.0)
-        //+ max(0.0, dm - d1)
+        + max(0.0, dm/d1 - 1.0)
+        + max(0.0, dm/d2 - 1.0)
+        + max(0.0, dm/d3 - 1.0)
+        + max(0.0, dm/d4 - 1.0)
+        /*
+        + max(0.0, d1/dm - 1.0)
+        + max(0.0, d2/dm - 1.0)
+        + max(0.0, d3/dm - 1.0)
+        + max(0.0, d4/dm - 1.0)
+        */
         ;
 
     if (ddif > 0.001 ) {
-        FragColor = vec4(color.xyz * max(0.1, min(1.0, 1.0 - ddif*10.0)), color.a);
-        //a = 0.1;
-        ////FragColor = vec4(color.xyz * 0.1, color.a);
-    //} else if (color.a == 0.000 ) {
-        //FragColor = vec4(0.0, 0.0, 0.0, 0.8);
-        //FragColor = vec4(color.xyz * 0.1, color.a);
-        //FragColor = vec4(color.xyz * max(0.1, (1.0 - ddif/30.0)), color.a);
-        //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        FragColor = vec4(color.xyz * clamp(1.0 - ddif * 20.0, 0.1, 1.0), 1.0);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
         FragColor = vec4(color.xyz, color.a);
