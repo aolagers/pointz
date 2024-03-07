@@ -1,10 +1,8 @@
 import {
-    BoxGeometry,
     BufferGeometry,
     Clock,
     Color,
     Line,
-    Mesh,
     PerspectiveCamera,
     Points,
     Raycaster,
@@ -15,6 +13,7 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import { PointCloud } from "./pointcloud";
 import { MATERIALS, pointer } from "./materials";
+import { createTightBounds } from "./utils";
 
 const points = [];
 points.push(new Vector3(0, 0, 100));
@@ -142,7 +141,7 @@ export class Viewer {
         const demo = PointCloud.loadDemo(this);
         this.pclouds.push(demo);
         demo.loadFake();
-        const cube = Viewer.createBounds(demo);
+        const cube = createTightBounds(demo);
         this.scene.add(cube);
     }
 
@@ -152,32 +151,8 @@ export class Viewer {
 
         console.log("NODES", pc.hierarchy.nodes);
         pc.load();
-        const cube = Viewer.createBounds(pc);
+        const cube = createTightBounds(pc);
         this.scene.add(cube);
-    }
-
-    static createBounds(pc: PointCloud) {
-        const size = new Vector3().subVectors(pc.bounds.max, pc.bounds.min);
-        const boundGeom = new BoxGeometry(...size.toArray());
-        const cube = new Mesh(boundGeom, MATERIALS.BBOX);
-        const halfSize = new Vector3().copy(size).divideScalar(2);
-        const midP = new Vector3().subVectors(pc.bounds.min, pc.offset);
-        cube.position.copy(midP).add(new Vector3(...halfSize));
-
-        return cube;
-
-        /*
-            this.scene.add(cube);
-
-            console.log(midP);
-
-            midP.add(new Vector3(...halfSize));
-
-            // this.viewer.camera.position.set(midP.x, midP.y - 100, midP.z + 50);
-            // this.viewer.camera.lookAt(0, 0, 0);
-            // this.viewer.camera.lookAt(midP);
-            this.viewer.controls.target = midP;
-        */
     }
 }
 
