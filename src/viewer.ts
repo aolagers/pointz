@@ -31,6 +31,8 @@ import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
+const W = 100;
+
 const points = [];
 
 const pointer = new Vector2(0, 0);
@@ -50,6 +52,7 @@ const debug = {
     pts: "",
     pool: "",
     render: "",
+    frames: "",
 };
 
 const raycaster = new Raycaster();
@@ -70,6 +73,7 @@ export class Viewer {
     gpuPanel: GPUStatsPanel;
 
     frame: number = 0;
+    frameTime: number = 0;
     renderTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
@@ -97,6 +101,8 @@ export class Viewer {
             logarithmicDepthBuffer: false,
         });
 
+        this.renderer.autoClearColor = false;
+
         this.renderer.setSize(this.width, this.height, false);
 
         this.renderer.info.autoReset = false;
@@ -121,7 +127,7 @@ export class Viewer {
         this.scene = new Scene();
         // this.scene.background = new Color(0x505050);
         // this.scene.background = new Color(0x4485b4);
-        this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace);
+        this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace).convertSRGBToLinear();
         this.scene.add(line);
 
         this.stats = new Stats();
@@ -222,8 +228,8 @@ export class Viewer {
     }
 
     private render() {
+        const frameStart = performance.now();
         this.renderRequested = false;
-
         this.stats.update();
         const delta = clock.getDelta();
 
@@ -259,11 +265,29 @@ export class Viewer {
 
         // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
+        this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
 
         // render to screen quad
         this.renderer.setRenderTarget(null);
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+
+        if (true) {
+            this.camera.setViewOffset(
+                this.width,
+                this.height,
+                ((pointer.x + 1) / 2) * this.width - W / 2,
+                this.height - ((pointer.y + 1) / 2) * this.height - W / 2,
+                W,
+                W,
+            );
+            this.renderer.setRenderTarget(null);
+            this.renderer.setViewport(0, 0, W, W);
+            this.renderer.render(this.scene, this.camera);
+
+            this.camera.clearViewOffset();
+            this.renderer.setViewport(0, 0, this.width, this.height);
+        }
 
         this.gpuPanel.endQuery();
 
@@ -281,6 +305,8 @@ export class Viewer {
                 `pts: ${(this.renderer.info.render.points / 1000).toFixed(0)}k`;
         }
 
+        debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms}`;
+
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
         debug.pool = ` ${pool.running()} ${pool.queued()} (${pool.tasksFinished})`;
@@ -292,6 +318,8 @@ export class Viewer {
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
 
         this.renderer.info.reset();
+        const frameEnd = performance.now();
+        this.frameTime = frameEnd - frameStart;
     }
 
     renderLoop() {
@@ -356,15 +384,22 @@ export class Viewer {
         pointer.y = -((event.clientY - rect.y) / rect.height) * 2 + 1;
 
         /*
-        const W = 100;
         this.renderer.setScissor(
             ((pointer.x + 1) / 2) * this.width - W / 2,
             this.height + (this.height * (pointer.y - 1)) / 2 - W / 2,
             W,
             W,
         );
-        this.renderer.setScissorTest(true);
         */
+        //this.renderTarget.setSize(W, W)
+        //this.renderer.setSize(W, W)
+        // this.renderer.setViewport(
+        //     ((pointer.x + 1) / 2) * this.width - W / 2,
+        //     this.height + (this.height * (pointer.y - 1)) / 2 - W / 2,
+        //     W,
+        //     W,
+        // );
+        //this.renderer.setScissorTest(true);
 
         debug.mouse = printVec(pointer);
 
