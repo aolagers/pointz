@@ -27,6 +27,8 @@ const debug = {
     mouse: "",
     camera: "",
     target: "",
+    slider1: "",
+    slider2: "",
 };
 
 export class Viewer {
@@ -42,7 +44,7 @@ export class Viewer {
     gpuPanel: GPUStatsPanel;
 
     constructor() {
-        this.renderer = new WebGLRenderer({ antialias: true });
+        this.renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
 
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100_000);
         this.camera.up.set(0, 0, 1);
@@ -77,18 +79,20 @@ export class Viewer {
 
         const sliders: [number, number] = [0, 0];
         sl1.addEventListener("input", () => {
-            sliders[0] = parseInt(sl1.value);
+            sliders[0] = parseFloat(sl1.value);
+            debug.slider1 = sliders[0].toFixed(2);
             updateValues(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
-            sliders[1] = parseInt(sl2.value);
+            sliders[1] = parseFloat(sl2.value);
+            debug.slider2 = sliders[1].toFixed(2);
             updateValues(sliders[0], sliders[1]);
         });
         window.addEventListener("resize", this.onWindowResize);
 
         this.controls.addEventListener("change", (e) => {
-            debug.target = `trg: ${printVec(e.target.target)}`;
-            debug.camera = `pos: ${printVec(this.camera.position)}`;
+            debug.target = printVec(e.target.target);
+            debug.camera = printVec(this.camera.position);
         });
     }
 
@@ -122,9 +126,12 @@ export class Viewer {
         this.renderer.render(this.scene, this.camera);
         this.gpuPanel.endQuery();
 
-        debugEl.innerHTML = `${debug.mouse}<br>` + `${debug.camera}<br>` + `${debug.target}<br>`;
+        debugEl.innerHTML = Object.entries(debug)
+            .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
+            .join("<br>");
 
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
+
         requestAnimationFrame(() => this.loop());
     }
 
@@ -174,7 +181,7 @@ export class Viewer {
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        debug.mouse = `mouse: ${printVec(pointer)}`;
+        debug.mouse = printVec(pointer);
     }
 
     async addDemo() {
