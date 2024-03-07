@@ -20,11 +20,17 @@ import type {
     Hierarchy,
     OctreeInfo,
 } from "./copc-loader";
+import { WorkerPool } from "./worker-pool";
 import { MATERIALS } from "./materials";
 import { Viewer } from "./viewer";
 import { createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
+
+export const pool = new WorkerPool<WorkerPointsRequest | WorkerInfoRequest, WorkerPointsResponse | WorkerInfoResponse>(
+    workerUrl,
+    8,
+);
 
 export class PointCloudNode {
     nodeName: OctreePath;
@@ -40,52 +46,43 @@ export class PointCloudNode {
     }
 }
 
-function getInfo(worker: Worker, source: LazSource) {
-    return new Promise<WorkerInfoResponse>((resolve, reject) => {
-        worker.onmessage = (e) => {
-            console.log("FROM WORKER", e.data);
-            const data = e.data as WorkerInfoResponse;
-            if (data.msgType === "info") {
-                resolve(data);
-            } else {
-                reject("not info");
-            }
-        };
+async function getInfo(source: LazSource) {
+    const req: WorkerInfoRequest = {
+        command: "info",
+        source: source,
+    };
 
-        const req: WorkerInfoRequest = {
-            command: "info",
-            source: source,
-        };
+    const res = await pool.runTask(req);
 
-        worker.postMessage(req);
-    });
+    if (res.msgType === "info") {
+        return res;
+    } else {
+        throw new Error("not info");
+    }
 }
 
-function getChunk(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: number[]) {
-    return new Promise<{ geometry: BufferGeometry; pointCount: number }>((resolve, reject) => {
-        worker.onmessage = (e) => {
-            const data = e.data as WorkerPointsResponse;
-            if (data.msgType === "points") {
-                const geometry = new BufferGeometry();
-                geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
-                geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-                const classes = Array(data.pointCount).fill(2);
-                geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
-                geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
+    const req: WorkerPointsRequest = {
+        command: "points",
+        source: source,
+        node: node,
+        offset: offset,
+    };
+    const data = await pool.runTask(req);
 
-                resolve({ geometry: geometry, pointCount: data.pointCount });
-            } else {
-                reject("not points");
-            }
-        };
-        const req: WorkerPointsRequest = {
-            command: "load-node",
-            source: source,
-            node: node,
-            offset: offset,
-        };
-        worker.postMessage(req);
-    });
+    // const data = e.data as WorkerPointsResponse;
+    if (data.msgType === "points") {
+        const geometry = new BufferGeometry();
+        geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
+        geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
+        // TODO: use actual classification data
+        const classes = Array(data.pointCount).fill(2);
+        geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
+        geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+        return { geometry: geometry, pointCount: data.pointCount };
+    } else {
+        throw new Error("not points");
+    }
 }
 
 export class PointCloud {
@@ -127,8 +124,6 @@ export class PointCloud {
     }
 
     async load() {
-        const worker = new Worker(workerUrl, { type: "module" });
-
         const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
 
         // toLoad.sort((a, b) => {
@@ -176,7 +171,9 @@ export class PointCloud {
             const nname = n.join("-");
             console.log(this.name, "LOAD", nname);
             const node = this.hierarchy.nodes[nname]!;
-            const pointData = await getChunk(worker, this.source, node, this.offset.toArray());
+
+            /*
+            const pointData = await getChunk(this.source, node, this.offset.toArray());
 
             const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
 
@@ -188,6 +185,20 @@ export class PointCloud {
             this.pointsLoaded += pointData.pointCount;
             // await new Promise((resolve) => setTimeout(resolve, 100));
             loaded++;
+            */
+            getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
+                const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
+
+                this.loadedNodes.push(pcn);
+
+                this.viewer.scene.add(pcn.pco);
+                // TODO: this is never removed
+                this.viewer.objects.push(pcn.pco);
+
+                this.pointsLoaded += pointData.pointCount;
+                // await new Promise((resolve) => setTimeout(resolve, 100));
+                loaded++;
+            });
         }
 
         console.log(
@@ -198,8 +209,6 @@ export class PointCloud {
             toLoad.length,
             ((100 * inview) / toLoad.length).toFixed(1) + "%",
         );
-
-        worker.terminate();
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
@@ -219,11 +228,8 @@ export class PointCloud {
     }
 
     static async loadInfo(source: LazSource) {
-        const worker = new Worker(workerUrl, { type: "module" });
-        const info = await getInfo(worker, source);
+        const info = await getInfo(source);
         console.log("COPC INFO", info);
-
-        worker.terminate();
         return info;
     }
 
