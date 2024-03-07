@@ -110,7 +110,8 @@ export class Viewer {
         this.camera.position.set(0, -50, 25);
         this.camera.lookAt(0, 0, 0);
 
-        this.econtrols = new EarthControls(this.camera, this.renderer.domElement, this);
+        this.labelRenderer = new CSS2DRenderer();
+        this.econtrols = new EarthControls(this.camera, this.labelRenderer.domElement, this);
 
         this.scene = new Scene();
 
@@ -197,22 +198,25 @@ export class Viewer {
         //     this.updateVisibile();
         // }, 1000);
 
-        this.labelRenderer = new CSS2DRenderer();
         this.labelRenderer.setSize(this.width, this.height);
         this.labelRenderer.domElement.style.position = "absolute";
         this.labelRenderer.domElement.style.top = "0px";
-        this.labelRenderer.domElement.style.pointerEvents = "none";
+        // this.labelRenderer.domElement.style.pointerEvents = "none";
 
         document.body.appendChild(this.labelRenderer.domElement);
 
         this.requestRender();
     }
 
-    addLabel(text: string, pos: Vector3) {
+    addLabel(text: string, pos: Vector3, pc: PointCloud) {
         const div = document.createElement("div");
         div.classList.add("nice", "label");
         div.textContent = text;
         // div.style.backgroundColor = "transparent";
+
+        div.addEventListener("click", (e) => {
+            this.econtrols.showPointCloud(pc);
+        });
 
         const label = new CSS2DObject(div);
         label.position.copy(pos);
@@ -430,7 +434,7 @@ export class Viewer {
 
         pc.initializeNodes();
 
-        this.addLabel(pc.name, pc.tightBounds.max);
+        this.addLabel(pc.name, pc.tightBounds.max, pc);
 
         if (center) {
             this.econtrols.showPointCloud(pc);

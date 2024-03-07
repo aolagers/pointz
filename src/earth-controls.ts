@@ -9,7 +9,7 @@ const unitZ = new Vector3(0, 0, 1);
 
 export class EarthControls {
     camera: PerspectiveCamera;
-    domElement: HTMLCanvasElement;
+    domElement: HTMLElement;
     viewer: Viewer;
     pivot: Mesh;
 
@@ -29,7 +29,7 @@ export class EarthControls {
 
     onChange: null | (() => void) = null;
 
-    constructor(camera: PerspectiveCamera, element: HTMLCanvasElement, viewer: Viewer) {
+    constructor(camera: PerspectiveCamera, element: HTMLElement, viewer: Viewer) {
         this.camera = camera;
         this.domElement = element;
         this.viewer = viewer;
@@ -233,10 +233,10 @@ export class EarthControls {
     update(_delta: number) {}
 
     showPointCloud(pc: PointCloud) {
-        const center = pc.octreeBounds.getCenter(new Vector3());
-        const size = pc.octreeBounds.getSize(new Vector3()).x;
+        const center = pc.tightBounds.getCenter(new Vector3());
+        const size = pc.tightBounds.getSize(new Vector3()).x;
 
-        this.camera.position.copy(center).add(new Vector3(0, -size, size / 2));
+        this.camera.position.copy(center).add(new Vector3(0, -size * 1.5, (size * 1.5) / 2));
         this.camera.lookAt(center);
 
         console.log("cam", this.camera.position);
