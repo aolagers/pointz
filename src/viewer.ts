@@ -352,25 +352,22 @@ export class Viewer {
         // console.log(this.width, sz);
     }
 
-    async addDemo() {
-        const demo = PointCloud.loadDemo(this);
-        this.pointClouds.push(demo);
-        demo.loadFake();
-        const cube = createTightBounds(demo);
-        this.scene.add(cube);
-    }
-
-    async addLAZ(what: string | File, center = false) {
-        const pc = await PointCloud.loadLAZ(this, what);
+    addPointCloud(pc: PointCloud, center = false) {
         this.pointClouds.push(pc);
         const cube = createTightBounds(pc);
         this.scene.add(cube);
 
-        console.log("NODES for", what, pc.hierarchy.nodes);
+        console.log("ADD POINTCLOUD", pc);
+
         pc.loadNodes();
 
         if (center) {
             this.econtrols.showPointCloud(pc);
         }
+    }
+
+    async addLAZ(what: string | File, center = false) {
+        const pc = await PointCloud.loadLAZ(this, what);
+        this.addPointCloud(pc, center);
     }
 }
