@@ -349,6 +349,7 @@ export class Viewer {
     }
 
     loadMoreNodes() {
+        let loads = 0;
         const frustum = getCameraFrustum(this.camera);
 
         const pq = new PriorityQueue<PointCloudNode>(
@@ -359,21 +360,20 @@ export class Viewer {
 
         for (const pc of this.pointClouds) {
             for (const node of pc.nodes) {
+                if (node.state === "visible" || node.state === "loading") {
+                    visiblePoints += node.pointCount;
+                }
                 const inFrustum = frustum.intersectsBox(node.bounds);
                 if (inFrustum) {
-                    if (node.state === "visible" || node.state === "loading") {
-                        visiblePoints += node.pointCount;
-                    } else {
+                    if (node.state === "unloaded") {
                         pq.push(node);
                     }
                 }
             }
         }
 
-        let maxLoads = 5;
-
         while (visiblePoints < POINT_BUDGET && !pq.isEmpty()) {
-            if (maxLoads == 0) {
+            if (loads == 5) {
                 break;
             }
 
@@ -382,10 +382,10 @@ export class Viewer {
 
             if (node.state === "unloaded") {
                 console.log("load", node);
-                maxLoads--;
+                loads++;
                 node.load(this)
-                    .then((nd) => {
-                        console.log("node laod finishz", nd);
+                    .then((_nd) => {
+                        console.log("node loaded finishz", node.nodeName, node.pointCount);
                     })
                     .catch((e) => {
                         console.error("oh no, load error", e);
@@ -400,8 +400,14 @@ export class Viewer {
         //     node.unload(this);
         // }
 
-        // TODO: only render if changed
+        // TODO: only render if something changed
         this.requestRender();
+
+        if (loads === 0) {
+            console.warn("no more loads to do", visiblePoints, POINT_BUDGET);
+        }
+
+        return loads;
     }
 
     mats = {
@@ -446,7 +452,11 @@ export class Viewer {
     }
 
     async addLAZ(what: string | File, center = false) {
-        const pc = await PointCloud.loadLAZ(this, what);
-        this.addPointCloud(pc, center);
+        try {
+            const pc = await PointCloud.loadLAZ(this, what);
+            this.addPointCloud(pc, center);
+        } catch (e) {
+            alert("LAZ loading error: " + e);
+        }
     }
 }

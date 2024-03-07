@@ -11,11 +11,13 @@ const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
 viewer.init();
 
-// viewer.requestRener();
-// viewer.renderLoop();
+window.addEventListener("resize", () => viewer.setSize(window.innerWidth, window.innerHeight));
 
-// const demopc = loadDemo(viewer);
-// viewer.addPointCloud(demopc);
+document.querySelector("#more-points")!.addEventListener("click", () => viewer.loadMoreNodes());
+document.querySelector("#less-points")!.addEventListener("click", () => viewer.dropWorstNodes());
+document.querySelector("#reset-cam")!.addEventListener("click", () => viewer.econtrols.targetAll());
+
+// viewer.addPointCloud(loadDemo(viewer));
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
 viewer.addLAZ(here + "/lion_takanawa.copc.laz");
@@ -26,19 +28,6 @@ if (window.location.hostname === "localhost") {
     viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
 }
 
-window.addEventListener("resize", () => {
-    viewer.setSize(window.innerWidth, window.innerHeight);
-});
-
-document.querySelector("#more-points")!.addEventListener("click", () => {
-    viewer.loadMoreNodes();
-});
-document.querySelector("#less-points")!.addEventListener("click", () => {
-    viewer.dropWorstNodes();
-});
-document.querySelector("#reset-cam")!.addEventListener("click", () => {
-    viewer.econtrols.targetAll();
-});
 
 // viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");
 // viewer.addLAZ("https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz");
