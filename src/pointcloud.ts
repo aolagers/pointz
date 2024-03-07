@@ -9,7 +9,7 @@ import {
     Uint8BufferAttribute,
     Vector3,
 } from "three";
-import workerUrl from "./worker?worker&url";
+import workerUrl from "./copc-loader?worker&url";
 import type {
     WorkerInfoRequest,
     WorkerInfoResponse,
@@ -19,7 +19,7 @@ import type {
     CopcNodeInfo,
     Hierarchy,
     OctreeInfo,
-} from "./worker";
+} from "./copc-loader";
 import { MATERIALS } from "./materials";
 import { Viewer } from "./viewer";
 import { createCubeBoundsBox } from "./utils";
@@ -27,12 +27,12 @@ import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
 export class PointCloudNode {
-    nodeName: string;
+    nodeName: OctreePath;
     geometry: BufferGeometry;
     bounds: Box3;
     pco: Points;
 
-    constructor(name: string, geom: BufferGeometry, bounds: Box3) {
+    constructor(name: OctreePath, geom: BufferGeometry, bounds: Box3) {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
@@ -106,7 +106,7 @@ export class PointCloud {
         bounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        octreeInfo: OctreeInfo
+        octreeInfo: OctreeInfo,
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -178,7 +178,7 @@ export class PointCloud {
             const node = this.hierarchy.nodes[nname]!;
             const pointData = await getChunk(worker, this.source, node, this.offset.toArray());
 
-            const pcn = new PointCloudNode(nname, pointData.geometry, this.bounds);
+            const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
 
             this.loadedNodes.push(pcn);
 
@@ -190,45 +190,13 @@ export class PointCloud {
             loaded++;
         }
 
-        /*
-        for (const nnum of toLoad) {
-            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
-            if (loaded < 128) {
-                const nname = nnum.join("-");
-
-                if (frustum.intersectsBox(bbox)) {
-                    console.log(this.name, "LOAD", nname);
-                    const node = this.hierarchy.nodes[nname]!;
-                    const data = await getData(worker, this.source, node, this.offset.toArray());
-
-                    const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
-
-                    this.loadedNodes.push(pcn);
-
-                    this.viewer.scene.add(pcn.pco);
-                    this.viewer.objects.push(pcn.pco);
-                }
-                loaded++;
-            }
-
-            if (frustum.intersectsBox(bbox)) {
-                const _dist = this.viewer.camera.position.distanceTo(bbox.getCenter(new Vector3()));
-                // console.log(dist);
-                inview++;
-            }
-
-            // this.viewer.scene.add(bbox);
-            // await new Promise((resolve) => setTimeout(resolve, 50));
-        }
-        */
-
         console.log(
             this.name,
             "load ratio",
             inview,
             "/",
             toLoad.length,
-            ((100 * inview) / toLoad.length).toFixed(1) + "%"
+            ((100 * inview) / toLoad.length).toFixed(1) + "%",
         );
 
         worker.terminate();
@@ -313,10 +281,10 @@ export class PointCloud {
             bounds,
             offset,
             { pages: {}, nodes: {} },
-            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 }
+            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 },
         );
 
-        pc.loadedNodes.push(new PointCloudNode("0-0-0-0", geometry, bounds));
+        pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, bounds));
 
         return pc;
     }

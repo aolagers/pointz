@@ -3,6 +3,7 @@ import {
     Clock,
     Color,
     DepthTexture,
+    Frustum,
     Line,
     LineBasicMaterial,
     NearestFilter,
@@ -18,9 +19,9 @@ import {
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
-import { PointCloud } from "./pointcloud";
+import { PointCloud, PointCloudNode } from "./pointcloud";
 import { pointer, updateValues } from "./materials";
-import { createTightBounds, printVec } from "./utils";
+import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
 const points = [];
@@ -153,6 +154,10 @@ export class Viewer {
                 });
             }
         });
+
+        setInterval(() => {
+            this.updateVisibile();
+        }, 2000);
     }
 
     renderLoop() {
@@ -200,6 +205,31 @@ export class Viewer {
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
 
         requestAnimationFrame(() => this.renderLoop());
+    }
+
+    updateVisibile() {
+        const frustum = new Frustum();
+        frustum.setFromProjectionMatrix(this.camera.projectionMatrix);
+        frustum.planes.forEach((plane) => {
+            plane.applyMatrix4(this.camera.matrixWorld);
+        });
+
+        const toDrop: [PointCloud, PointCloudNode][] = [];
+        for (const pc of this.pclouds) {
+            for (const node of pc.loadedNodes) {
+                const bbox = createCubeBoundsBox(pc.octreeInfo.cube, node.nodeName, pc.offset);
+                const visible = frustum.intersectsBox(bbox);
+                if (!visible) {
+                    toDrop.push([pc, node]);
+                }
+            }
+        }
+
+        for (const [pc, n] of toDrop) {
+            console.log("drop", pc.name, n.nodeName);
+            this.scene.remove(n.pco);
+            pc.loadedNodes.splice(pc.loadedNodes.indexOf(n), 1);
+        }
     }
 
     onWindowResize() {
