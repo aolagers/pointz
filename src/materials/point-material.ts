@@ -7,10 +7,11 @@ let ptSize = 6.0;
 
 export class PointMaterial extends ShaderMaterial {
     constructor(pick: boolean) {
+        const colorMode: keyof typeof COLOR_MODE = (localStorage.getItem("COLOR_MODE") as any) || "RGB";
         super({
             glslVersion: "300 es",
             defines: {
-                COLOR_MODE: COLOR_MODE.RGB,
+                COLOR_MODE: COLOR_MODE[colorMode],
                 PICK: pick ? true : false,
             },
             uniforms: {
@@ -49,6 +50,7 @@ export class PointMaterial extends ShaderMaterial {
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {
+        localStorage.setItem("COLOR_MODE", color);
         this.defines.COLOR_MODE = COLOR_MODE[color];
         this.needsUpdate = true;
     }
