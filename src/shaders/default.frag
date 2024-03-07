@@ -1,8 +1,12 @@
+#define INTENSITY false
+
 uniform vec3 uColor;
 
 flat varying uint cls;
 flat varying vec2 mouse;
 flat varying vec3 rgbColor;
+
+flat varying float fintensity;
 
 flat varying float custom1;
 flat varying float custom2;
@@ -19,13 +23,13 @@ void main() {
     // round points
     float u = 2.0 * gl_PointCoord.x - 1.0;
     float v = 2.0 * gl_PointCoord.y - 1.0;
-    float cc = u*u + v*v;
-    if(cc > 1.0) {
+    if (u*u + v*v > 1.0) {
         discard;
     }
 
-    // rgb color
-    if (rgbColor.xyz != vec3(0.0, 0.0, 0.0)) {
+    if (INTENSITY) {
+        gl_FragColor = vec4(vec3(fintensity), 1.0);
+    } else {
         gl_FragColor = vec4(rgbColor, 1.0);
     }
 }
