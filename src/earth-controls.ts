@@ -18,6 +18,7 @@ const unitZ = new Vector3(0, 0, 1);
 // see: https://www.redblobgames.com/making-of/draggable/
 
 // TODO: doubleclick zoom
+// TODO: remove allocation from move handler
 
 export class EarthControls {
     camera: PerspectiveCamera;
