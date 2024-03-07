@@ -1,42 +1,56 @@
-import { Color, ShaderMaterial, Vector2 } from "three";
+import { Color, Material, ShaderMaterial, Vector2 } from "three";
 import { COLOR_MODE } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
-export const pointMaterialPool = {
-    stash: [] as PointMaterial[],
-    rented: [] as PointMaterial[],
-    all: [] as PointMaterial[],
+class MaterialPool {
+    stash: PointMaterial[] = [];
+    all: PointMaterial[] = [];
+
+    pick: boolean;
+
+    constructor(pick: boolean) {
+        this.pick = pick;
+    }
 
     getMaterial() {
         let m: PointMaterial;
         if (this.stash.length) {
             m = this.stash.pop()!;
         } else {
-            m = new PointMaterial(false);
+            m = new PointMaterial(this.pick);
             this.all.push(m);
         }
-        this.rented.push(m);
         return m;
-    },
+    }
 
-    returnMaterial(mat: PointMaterial) {
-        this.rented.splice(this.rented.indexOf(mat), 1);
-        this.stash.push(mat);
-    },
-};
+    returnMaterial(mat: Material | Material[]) {
+        if (mat instanceof PointMaterial) {
+            this.stash.push(mat);
+        } else {
+            throw new Error("Expected a PointMaterial");
+        }
+    }
+}
+
+export const pointMaterialPool = new MaterialPool(false);
+export const pickMaterialPool = new MaterialPool(true);
 
 const DEFAULT_PT_SIZE = 6.0;
+
 export class PointMaterial extends ShaderMaterial {
     nodeIndex = 0;
 
+    isPickMaterial: boolean;
+
     ptSize = DEFAULT_PT_SIZE;
 
-    constructor(pick: boolean, nodeIndex = 0) {
+    constructor(pick: boolean) {
         const colorMode: keyof typeof COLOR_MODE = (localStorage.getItem("COLOR_MODE") as any) || "RGB";
         super({
             glslVersion: "300 es",
             defines: {
+                // TODO: combine pick option into color mode?
                 COLOR_MODE: COLOR_MODE[colorMode],
                 PICK: pick ? true : false,
             },
@@ -44,7 +58,6 @@ export class PointMaterial extends ShaderMaterial {
                 uColor: { value: new Color(3403332) },
                 uMouse: { value: new Vector2(0, 0) },
                 ptSize: { value: DEFAULT_PT_SIZE },
-                // uClassMask: { value: 0xffff & ~(1 << 2) },
                 uClassMask: { value: 0xffff },
                 uNodeIndex: { value: 0 },
             },
@@ -52,10 +65,15 @@ export class PointMaterial extends ShaderMaterial {
             fragmentShader: defaultFrag,
         });
 
-        this.updateNodeIndex(nodeIndex);
+        this.isPickMaterial = pick;
     }
 
     updateNodeIndex(nodeIndex: number) {
+        if (!this.isPickMaterial) {
+            console.warn("not pick material");
+            return;
+        }
+
         if (nodeIndex !== this.nodeIndex) {
             this.uniforms.uNodeIndex.value = nodeIndex;
             this.nodeIndex = nodeIndex;
@@ -71,11 +89,6 @@ export class PointMaterial extends ShaderMaterial {
             uc1.value = this.ptSize;
         }
         this.needsUpdate = true;
-    }
-
-    setPointer(pointer: Vector2) {
-        const uc1 = this.uniforms.uMouse;
-        if (uc1) uc1.value = pointer;
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {

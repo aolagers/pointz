@@ -12,7 +12,8 @@ export class PointCloudNode {
     nodeName: OctreePath;
     bounds: Box3;
     pco: Points;
-    visibleIndex: number;
+
+    pcIndex: number;
 
     debugMesh: Mesh;
 
@@ -36,7 +37,9 @@ export class PointCloudNode {
         this.nodeName = name;
         this.bounds = bounds;
 
-        this.pco = new Points(geom, pointMaterialPool.getMaterial());
+        const mat = pointMaterialPool.getMaterial();
+
+        this.pco = new Points(geom, mat);
         this.pco.matrixAutoUpdate = false;
 
         this.pointCount = pointCount;
@@ -49,8 +52,11 @@ export class PointCloudNode {
             cube.scale.set(0.99, 0.99, 0.99);
         }
         this.debugMesh = cube;
-        this.visibleIndex = idx;
+        this.pcIndex = idx;
         this.spacing = spacing;
+
+        // TODO: dont use userData, it's ugly
+        this.pco.userData.nodeIndex = idx;
     }
 
     get depth() {

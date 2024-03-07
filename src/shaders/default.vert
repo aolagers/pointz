@@ -5,8 +5,7 @@ in float intensity;
 in vec3 color;
 in int ptIndex;
 
-in float visibleIndex;
-
+uniform float uNodeIndex;
 uniform float ptSize;
 uniform int uClassMask;
 
@@ -68,7 +67,7 @@ void main() {
     float b = float(data & 0xff) / 255.0;
     // TODO: why is this inverted? is it?
     // float a = 1.0 - visibleIndex;
-    float a = visibleIndex;
+    float a = uNodeIndex / 255.0;
 
     rgbColor = vec4(r, g, b, a);
         //rgbColor = vec4(vec3(visibleIndex), 1.0);
