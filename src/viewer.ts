@@ -78,9 +78,13 @@ export class Viewer {
     width: number = 0;
     height: number = 0;
 
+    renderRequested: boolean;
+
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         this.width = width;
         this.height = height;
+
+        this.renderRequested = false;
 
         this.renderer = new WebGLRenderer({
             canvas: canvasElement,
@@ -155,6 +159,8 @@ export class Viewer {
         this.controls.addEventListener("change", (e) => {
             debug.target = printVec(e.target.target);
             debug.camera = printVec(this.camera.position);
+
+            this.requestRender();
         });
 
         document.addEventListener("dragover", (ev) => {
@@ -201,16 +207,26 @@ export class Viewer {
         // setInterval(() => { this.updateVisibile(); }, 2000);
     }
 
-    renderLoop() {
+    requestRender() {
+        if (!this.renderRequested) {
+            this.renderRequested = true;
+            requestAnimationFrame(() => this.render());
+        }
+    }
+
+    private render() {
+        this.renderRequested = false;
+
         this.stats.update();
         const delta = clock.getDelta();
 
         /*
         if (this.objects.length > 0) {
+            let hit = false;
             raycaster.setFromCamera(pointer, this.camera);
-            const intersections = raycaster.intersectObject(this.objects[0]!, false);
+            const intersections = raycaster.intersectObjects(this.objects, false);
 
-            if (intersections.length > 0 && intersections[0]) {
+            for (const intersection of intersections) {
                 line.visible = true;
                 const pos = line.geometry.attributes.position!;
                 const verts = pos.array;
@@ -221,7 +237,9 @@ export class Viewer {
 
                 pos.needsUpdate = true;
                 document.body.style.cursor = "crosshair";
-            } else {
+            }
+
+            if (hit) {
                 document.body.style.cursor = "auto";
                 line.visible = false;
             }
@@ -267,8 +285,17 @@ export class Viewer {
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
 
         this.renderer.info.reset();
+    }
 
+    renderLoop() {
+        this.render();
         requestAnimationFrame(() => this.renderLoop());
+    }
+
+    addObject(o: Points) {
+        this.scene.add(o);
+        this.objects.push(o);
+        this.requestRender();
     }
 
     updateVisibile() {

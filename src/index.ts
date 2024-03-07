@@ -10,7 +10,8 @@ const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
 viewer.init();
 
-viewer.renderLoop();
+viewer.requestRender();
+// viewer.renderLoop();
 
 viewer.addDemo();
 // viewer.addLAZ("http://localhost:5173/copc.copc.laz");
