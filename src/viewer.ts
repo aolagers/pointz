@@ -23,7 +23,7 @@ import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer
 
 import { EarthControls } from "./earth-controls";
 import { PointCloud } from "./pointcloud";
-import { PointCloudNode, workerPool } from "./pointcloud-node";
+import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, printVec, stringifyError } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
@@ -306,7 +306,7 @@ export class Viewer {
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
-        debug.pool = ` ${workerPool.running()} ${workerPool.queued()} (${workerPool.tasksFinished})`;
+        debug.pool = ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queued()} (${pointsWorkerPool.tasksFinished})`;
 
         debug.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
@@ -402,11 +402,13 @@ export class Viewer {
 
         let visiblePoints = 0;
 
+        const ERROR_LIMIT = 0.001;
+
         while (!pq.isEmpty()) {
             const node = pq.popOrThrow();
             const err = node.estimateNodeError(this.camera);
 
-            const shouldBeShown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > 0.001);
+            const shouldBeShown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > ERROR_LIMIT);
 
             switch (node.state) {
                 case "visible":
@@ -423,7 +425,7 @@ export class Viewer {
                     if (shouldBeShown) {
                         console.log("LOAD", node.nodeName, err);
                         loads++;
-                        visiblePoints += node.pointCount;
+                        // visiblePoints += node.pointCount;
 
                         node.load(this)
                             .then((_nd) => {
@@ -438,13 +440,29 @@ export class Viewer {
 
                 case "loading":
                     // TODO: how to cancel?
-                    visiblePoints += node.pointCount;
+                    // visiblePoints += node.pointCount;
                     break;
 
                 case "error":
                     // TODO: how to retry?
                     break;
             }
+        }
+
+        if (pointsWorkerPool.queued() > 0) {
+            pointsWorkerPool.rescore((x) => {
+                const score = x.info.node.estimateNodeError(this.camera);
+
+                if (score > ERROR_LIMIT && visiblePoints < POINT_BUDGET) {
+                    visiblePoints += x.info.node.pointCount;
+                    return score;
+                } else {
+                    console.log("RESCORE DROP", x.info.node.nodeName, score, visiblePoints);
+
+                    x.info.node.unload(this);
+                    return null;
+                }
+            });
         }
 
         this.requestRender();
