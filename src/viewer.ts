@@ -139,29 +139,17 @@ export class Viewer {
     }
 
     async addDemo() {
-        const demo = PointCloud.loadDemo();
+        const demo = PointCloud.loadDemo(this);
         this.pclouds.push(demo);
-
-        for (const node of demo.nodes) {
-            const pco1 = new Points(node.geometry, MATERIALS.POINT);
-            this.objects.push(pco1);
-            this.scene.add(pco1);
-        }
-
+        demo.loadFake();
         const cube = Viewer.createBounds(demo);
         this.scene.add(cube);
     }
 
     async addLAZ(what: string | File) {
-        const pc = await PointCloud.loadLAZ(what);
+        const pc = await PointCloud.loadLAZ(this, what);
         this.pclouds.push(pc);
-
-        for (const node of pc.nodes) {
-            const pco = new Points(node.geometry, MATERIALS.POINT);
-            this.objects.push(pco);
-            this.scene.add(pco);
-        }
-
+        pc.load();
         const cube = Viewer.createBounds(pc);
         this.scene.add(cube);
     }
