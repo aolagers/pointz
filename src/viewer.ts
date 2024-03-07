@@ -302,11 +302,10 @@ export class Viewer {
             for (const node of pc.loadedNodes) {
                 const inFrustum = frustum.intersectsBox(node.bounds);
                 if (inFrustum) {
-                    // node.debugMesh.material = new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true });
                     node.pco.visible = true;
                     pq.push(node);
                 } else {
-                    // node.debugMesh.material = new MeshBasicMaterial({ color: 0xcc33ff, wireframe: true });
+                    node.debugMesh.material = new MeshBasicMaterial({ color: 0xff0077, wireframe: true });
                     node.pco.visible = false;
                 }
             }
