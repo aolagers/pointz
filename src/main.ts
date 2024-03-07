@@ -1,5 +1,6 @@
 import {
     BufferGeometry,
+    Clock,
     Color,
     Float32BufferAttribute,
     Line,
@@ -15,6 +16,10 @@ import {
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
+import { FlyControls } from 'three/addons/controls/FlyControls.js';
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+
+
 import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
 import { Copc } from "copc";
@@ -156,12 +161,17 @@ const renderer = new WebGLRenderer({
 });
 
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.up.set(0,0,1);
+
 
 camera.position.set(0, -100, 50);
+camera.lookAt(0,0,0);
 
 const controls = new MapControls(camera, renderer.domElement);
-
+// const controls = new FlyControls(camera, renderer.domElement);
+// const controls = new FirstPersonControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.dampingFactor = 0.20;
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -200,6 +210,8 @@ function loop() {
     requestAnimationFrame(loop);
 
     // world.update(camera);
+    //
+    const delta = clock.getDelta();
 
     raycaster.setFromCamera(pointer, camera);
     const intersections = raycaster.intersectObject(world.pcloud, false);
@@ -218,6 +230,7 @@ function loop() {
         line.visible = false;
     }
 
+    controls.update(delta);
     renderer.render(world.scene, camera);
 }
 
@@ -244,6 +257,8 @@ function onPointerMove(event: PointerEvent) {
         `mx: ${mouseX.toFixed(2)} my: ${mouseY.toFixed(2)}<br>` +
         `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
 }
+
+const clock = new Clock();
 
 async function start() {
     await world.load();
