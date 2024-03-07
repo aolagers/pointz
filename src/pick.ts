@@ -52,22 +52,21 @@ export function getMouseIntersection(
     const ray = getMouseRay(pointer, camera);
     const hitNodes = [];
     let hid = 1;
+
     // TODO: proper octree traversal
-    for (const pc of viewer.pointClouds) {
-        for (const node of pc.nodes) {
-            const isHit = ray.intersectsBox(node.bounds);
+    for (const node of viewer.getVisibleNodes()) {
+        const isHit = ray.intersectsBox(node.bounds);
 
-            if (isHit) {
-                if (node.data) {
-                    hitNodes.push(node);
-                    node.data.pickIndex = hid;
-                    hid++;
+        if (isHit) {
+            if (node.data) {
+                hitNodes.push(node);
+                node.data.pickIndex = hid;
+                hid++;
 
-                    node.data.pco.userData.pointMaterial = node.data.pco.material;
-                    const pmat = pickMaterialPool.getMaterial();
-                    pmat.updateNodeIndex(node.data.pickIndex);
-                    node.data.pco.material = pmat;
-                }
+                node.data.pco.userData.pointMaterial = node.data.pco.material;
+                const pmat = pickMaterialPool.getMaterial();
+                pmat.updateNodeIndex(node.data.pickIndex);
+                node.data.pco.material = pmat;
             }
         }
     }
