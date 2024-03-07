@@ -49,3 +49,7 @@ https://threejs.org/examples/webgl_postprocessing_outline.html
 Implementing text labels
 https://threejs.org/docs/#manual/en/introduction/Creating-text
 https://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+
+
+Optimization?
+https://www.khronos.org/opengl/wiki/Buffer_Object#Buffer_Object_Usage

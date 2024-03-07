@@ -54,10 +54,10 @@ void main() {
         + max(0.0, d4 - dm);
 
     if (ddif > 1.000 ) {
-        FragColor = vec4(color.xyz * max(0.1, (1.0 - ddif/30.0)), 1.0);
+        FragColor = vec4(color.xyz * max(0.1, (1.0 - ddif/30.0)), color.a);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
-        FragColor = vec4(color.xyz, 1.0);
+        FragColor = vec4(color.xyz, color.a);
     }
 
     // Fog

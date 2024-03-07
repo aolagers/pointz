@@ -1,16 +1,18 @@
 uniform vec2 uMouse;
 
-in uint classification;
+in int classification;
 in float intensity;
 in vec3 color;
-in uint indices;
+in int ptIndex;
+
+in float visibleIndex;
 
 uniform float ptSize;
 uniform float uCustom1;
 uniform float uCustom2;
 
-out vec3 rgbColor;
-flat out uint cls;
+out vec4 rgbColor;
+flat out int vClass;
 
 out float custom1;
 out float custom2;
@@ -22,8 +24,8 @@ out vec2 mouse;
 out float depth;
 
 void main() {
-    cls = classification;
-    rgbColor = color;
+    vClass = classification;
+    rgbColor = vec4(color, 4);
 
     mouse = uMouse;
 
@@ -44,6 +46,7 @@ void main() {
 
     gl_Position = screenPosition;
 
+    /*
     vec4 mpos = screenPosition / screenPosition.w;
 
     float mDist = distance(mouse, mpos.xy);
@@ -51,10 +54,22 @@ void main() {
     if (mDist < 0.01) {
         gl_PointSize = 2.0 + gl_PointSize * 2.0;
     }
+    */
 
 #if defined(PICK)
-        gl_PointSize=1.0;
-        return;
+    gl_PointSize=4.0;
+
+    int data = ptIndex;
+
+    float r = float((data >> 16) & 0xff) / 255.0;
+    float g = float((data >> 8) & 0xff) / 255.0;
+    float b = float(data & 0xff) / 255.0;
+    // TODO: why is this inverted? is it?
+    // float a = 1.0 - visibleIndex;
+    float a = visibleIndex;
+
+    rgbColor = vec4(r, g, b, a);
+        //rgbColor = vec4(vec3(visibleIndex), 1.0);
 #endif
 
 }

@@ -3,9 +3,10 @@ import {
     BufferGeometry,
     Float32BufferAttribute,
     Frustum,
+    Int32BufferAttribute,
+    IntType,
     Points,
     Uint16BufferAttribute,
-    Uint32BufferAttribute,
     Uint8BufferAttribute,
     Vector3,
 } from "three";
@@ -22,7 +23,7 @@ import type {
 import { WorkerPool } from "./worker-pool";
 import { PointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { createCubeBoundsBox } from "./utils";
+import { createCubeMesh, createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
@@ -38,11 +39,14 @@ export class PointCloudNode {
     geometry: BufferGeometry;
     bounds: Box3;
     pco: Points;
+    visibleIndex: number;
 
     constructor(name: OctreePath, geom: BufferGeometry, bounds: Box3) {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
+
+        this.visibleIndex = 0;
 
         this.pco = new Points(this.geometry, PointCloud.material);
         this.pco.matrixAutoUpdate = false;
@@ -71,9 +75,21 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
 
     geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
     geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-    geometry.setAttribute("classification", new Uint32BufferAttribute(data.classifications, 1));
     geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
-    geometry.setAttribute("indices", new Uint32BufferAttribute(data.indices, 1));
+
+    const vis = new Uint8Array(data.pointCount);
+    const visibleIndex = new Uint8BufferAttribute(vis, 1, true);
+    // visibleIndex.gpuType = IntType;
+
+    geometry.setAttribute("visibleIndex", visibleIndex);
+
+    const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
+    classificationAttribute.gpuType = IntType;
+    geometry.setAttribute("classification", classificationAttribute);
+
+    const ptIndexAttribute = new Int32BufferAttribute(data.indices, 1);
+    ptIndexAttribute.gpuType = IntType;
+    geometry.setAttribute("ptIndex", ptIndexAttribute);
 
     return { geometry: geometry, pointCount: data.pointCount };
 }
@@ -116,7 +132,6 @@ export class PointCloud {
     async loadFake() {
         const pcn = this.loadedNodes[0]!;
 
-        this.loadedNodes.push(pcn);
         this.viewer.addObject(pcn.pco);
     }
 
@@ -170,11 +185,14 @@ export class PointCloud {
             const node = this.hierarchy.nodes[nname]!;
 
             getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
-                const pcn = new PointCloudNode(n, pointData.geometry, this.bounds);
+                const bbox = createCubeBoundsBox(this.octreeInfo.cube, n, this.offset);
+                const pcn = new PointCloudNode(n, pointData.geometry, bbox);
 
                 this.loadedNodes.push(pcn);
 
                 this.viewer.addObject(pcn.pco);
+
+                // this.viewer.scene.add(createCubeMesh(this.octreeInfo.cube, n, this.offset));
 
                 this.pointsLoaded += pointData.pointCount;
                 // await new Promise((resolve) => setTimeout(resolve, 100));
@@ -220,6 +238,8 @@ export class PointCloud {
         const colors = [];
 
         const classes = [];
+        const indices = [];
+        let indice = 0;
         const ints = [];
         const C = 0.2;
 
@@ -229,14 +249,17 @@ export class PointCloud {
             return 2 * (Math.random() - 0.5);
         }
         // gnd
-        for (let i = 0; i < 50_000; i++) {
-            const x = r() * 50;
-            const y = r() * 50;
+        for (let i = 0; i < 10_000; i++) {
+            const x = -50 + (i % 100);
+            // const x = r() * 50;
+            const y = -50 + Math.floor(i / 100);
+            // const y = r() * 50;
             const z = 2 * Math.sin(x / 10) + 1 * Math.sin(y / 5);
             vertices.push(x, y, z);
             colors.push(0.4 + Math.random() * C, 0.15 + Math.random() * C, 0 + Math.random() * C);
             classes.push(0);
             ints.push(Math.floor(200 * (x + y + 100)));
+            indices.push(indice++);
         }
 
         // trees
@@ -252,6 +275,7 @@ export class PointCloud {
                 colors.push(0.1 + Math.random() * C, 0.7 + Math.random() * C, 0.1 + Math.random() * C);
                 classes.push(1);
                 ints.push(i * 1000);
+                indices.push(indice++);
             }
         }
 
@@ -263,7 +287,16 @@ export class PointCloud {
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
         geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
         geometry.setAttribute("intensity", new Uint16BufferAttribute(ints, 1, true));
-        geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
+        geometry.setAttribute("classification", new Int32BufferAttribute(classes, 1));
+
+        const vis = new Uint8Array(classes.length);
+        const visibleIndex = new Uint8BufferAttribute(vis, 1, true);
+        // visibleIndex.gpuType = IntType;
+        geometry.setAttribute("visibleIndex", visibleIndex);
+
+        const ptIndexAttribute = new Int32BufferAttribute(indices, 1);
+        ptIndexAttribute.gpuType = IntType;
+        geometry.setAttribute("ptIndex", ptIndexAttribute);
 
         const pc = new PointCloud(
             viewer,
@@ -272,8 +305,12 @@ export class PointCloud {
             bounds,
             offset,
             { pages: {}, nodes: {} },
-            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 }
+            { cube: [bounds.min.x, bounds.min.y, bounds.min.z, bounds.max.x, bounds.max.y, bounds.max.z], spacing: 0 }
         );
+        // console.log("DEMO", bounds, pc.octreeInfo.cube, {
+        //     cube: [bounds.min.x, bounds.min.y, bounds.min.z, bounds.max.x, bounds.max.y, bounds.max.z],
+        //     spacing: 0,
+        // });
 
         pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, bounds));
 
