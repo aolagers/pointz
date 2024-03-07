@@ -23,6 +23,7 @@ type QueuedItem<Req, Resp> = {
 export class WorkerPool<Input extends Request, Output extends { msgType: string }> {
     pool: Wrapper[] = [];
     queue = new PriorityQueue<QueuedItem<Input, Output>>((a, b) => b.request.info.score - a.request.info.score);
+    active: Set<Input> = new Set();
 
     maxWorkers: number;
     workerUrl: string;
@@ -33,7 +34,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         return this.pool.filter((w) => w.busy).length;
     }
 
-    queued() {
+    get queueLength() {
         return this.queue.count();
     }
 
@@ -59,6 +60,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         const next = this.queue.pop();
         if (next) {
             w.worker.onmessage = (e: MessageEvent<Output>) => {
+                this.active.delete(next.request);
                 if (e.data.msgType === "error") {
                     next.reject(e.data);
                 } else {
@@ -66,6 +68,8 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
                 }
                 this.onTaskFinished(w);
             };
+
+            this.active.add(next.request);
             w.worker.postMessage(next.request.command);
         } else {
             w.busy = false;
@@ -96,6 +100,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
             available.busy = true;
             return new Promise<Output>((resolve, reject) => {
                 available.worker.onmessage = (e: MessageEvent<Output>) => {
+                    this.active.delete(req);
                     if (e.data.msgType === "error") {
                         reject(e.data);
                     } else {
@@ -105,6 +110,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
                     this.onTaskFinished(available);
                 };
 
+                this.active.add(req);
                 available.worker.postMessage(req.command);
             });
         } else {
