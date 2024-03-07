@@ -37,7 +37,9 @@ void main() {
     custom1 = uCustom1;
     custom2 = uCustom2;
 
-    gl_PointSize = max(ptSize, 150.0/dist) + uCustom1/10.0;
+    //gl_PointSize = max(ptSize, 150.0/dist) + uCustom1/10.0;
+
+    gl_PointSize = ptSize;
 
     gl_Position = screenPosition;
 

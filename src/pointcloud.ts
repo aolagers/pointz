@@ -21,7 +21,7 @@ import type {
     OctreeInfo,
 } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
-import { MATERIALS } from "./materials";
+import { getPointMaterial } from "./materials";
 import { Viewer } from "./viewer";
 import { createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
@@ -34,6 +34,8 @@ type RespMap = {
 
 export const pool = new WorkerPool<RespMap>(workerUrl, 8);
 
+const pointMaterial = getPointMaterial();
+
 export class PointCloudNode {
     nodeName: OctreePath;
     geometry: BufferGeometry;
@@ -44,7 +46,7 @@ export class PointCloudNode {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
-        this.pco = new Points(this.geometry, MATERIALS.POINT);
+        this.pco = new Points(this.geometry, pointMaterial);
     }
 }
 
@@ -159,7 +161,7 @@ export class PointCloud {
             }
         }
 
-        while (!pq.isEmpty() && loaded < 128) {
+        while (!pq.isEmpty() && loaded < 64) {
             const n = pq.pop()!;
             const nname = n.join("-");
             console.log(this.name, "LOAD", nname);
