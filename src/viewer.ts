@@ -2,13 +2,18 @@ import {
     BufferGeometry,
     Clock,
     Color,
+    DepthTexture,
     Line,
     LineBasicMaterial,
+    NearestFilter,
     PerspectiveCamera,
     Points,
+    RGBAFormat,
     Raycaster,
     Scene,
+    UnsignedShortType,
     Vector3,
+    WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
@@ -51,8 +56,25 @@ export class Viewer {
     stats: Stats;
     gpuPanel: GPUStatsPanel;
 
+    frame: number = 0;
+    rt2: WebGLRenderTarget;
+
     constructor() {
         this.renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+
+        this.renderer.autoClear = true;
+        this.renderer.autoClearDepth = false;
+
+        this.rt2 = new WebGLRenderTarget(1024, 1024, {
+            format: RGBAFormat,
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            depthBuffer: true,
+            stencilBuffer: false,
+            depthTexture: new DepthTexture(1024, 1024, UnsignedShortType),
+        });
+
+        console.log("CAPS", this.renderer.capabilities);
 
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100_000);
         this.camera.up.set(0, 0, 1);
