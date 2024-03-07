@@ -225,6 +225,11 @@ export class Viewer {
     private render() {
         const frameStart = performance.now();
         this.renderRequested = false;
+
+        if (ALWAYS_RENDER) {
+            this.requestRender();
+        }
+
         this.stats.update();
         const delta = clock.getDelta();
 
