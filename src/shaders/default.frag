@@ -57,6 +57,13 @@ void main() {
     } else if (COLOR_MODE == 2) {
         // RGB
         FragColor = vec4(vColor.rgb, alpha);
+    } else if (COLOR_MODE == 3) {
+        // RGB_AND_CLASS
+        FragColor = mix(
+            vec4(CLASS_COLORS[uint(vClass) % N_CLASSES], alpha),
+            vec4(vColor.rgb, alpha),
+            0.7
+        );
     } else {
         // what??
         FragColor = vec4(1.0, 0.0, 1.0, alpha);

@@ -189,6 +189,9 @@ export class Viewer {
                 if (ev.key === "3") {
                     ptmat.changeColorMode("RGB");
                 }
+                if (ev.key === "4") {
+                    ptmat.changeColorMode("RGB_AND_CLASS");
+                }
                 if (ev.key === "+") {
                     ptmat.updatePointSize(+1);
                 }
