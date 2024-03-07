@@ -52,5 +52,5 @@ void main() {
     }
 
     // fix colors when rendering to a texture
-    gl_FragColor = toLinear(gl_FragColor);
+    // gl_FragColor = toLinear(gl_FragColor);
 }
