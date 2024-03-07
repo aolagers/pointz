@@ -4,90 +4,32 @@ import {
     Clock,
     Color,
     Line,
-    LineBasicMaterial,
     Mesh,
-    MeshBasicMaterial,
     PerspectiveCamera,
     Points,
     Raycaster,
     Scene,
-    ShaderMaterial,
-    Vector2,
     Vector3,
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
 import { PointCloud } from "./pointcloud";
-import fragment from "./fragment.glsl";
-import vertex from "./vertex.glsl";
-
-const pointer = new Vector2();
-
-class World {
-    viewer: Viewer;
-    scene: Scene;
-    pclouds: PointCloud[] = [];
-    objects: Points[] = [];
-
-    constructor(viewer: Viewer) {
-        this.viewer = viewer;
-        this.scene = new Scene();
-        this.scene.background = new Color(0x202020);
-    }
-
-    async addDemo() {
-        const demo = PointCloud.loadDemo();
-        this.pclouds.push(demo);
-
-        const pco1 = new Points(demo.geometry, pointMaterial);
-        this.objects.push(pco1);
-        this.scene.add(pco1);
-    }
-
-    async addLAZ(what: string | File) {
-        const testLaz = await PointCloud.loadLAZ(what);
-        this.pclouds.push(testLaz);
-        const pco2 = new Points(testLaz.geometry, pointMaterial);
-        this.objects.push(pco2);
-        this.scene.add(pco2);
-
-        if (testLaz.bounds) {
-            const size = [
-                testLaz.bounds.max.x - testLaz.bounds.min.x,
-                testLaz.bounds.max.y - testLaz.bounds.min.y,
-                testLaz.bounds.max.z - testLaz.bounds.min.z,
-            ];
-            const boundGeom = new BoxGeometry(...size);
-            const mat = new MeshBasicMaterial({ color: "red", wireframe: true });
-            const cube = new Mesh(boundGeom, mat);
-            const halfSize = size.map((x) => x / 2);
-            const midP = new Vector3().subVectors(testLaz.bounds.min, testLaz.offset);
-            cube.position.copy(midP).add(new Vector3(...halfSize));
-            this.scene.add(cube);
-
-            console.log(midP);
-
-            midP.add(new Vector3(...halfSize));
-
-            // this.viewer.camera.position.set(midP.x, midP.y - 100, midP.z + 50);
-            // this.viewer.camera.lookAt(0, 0, 0);
-            // this.viewer.camera.lookAt(midP);
-            this.viewer.controls.target = midP;
-        }
-    }
-}
+import { MATERIALS, pointer } from "./materials";
 
 const points = [];
 points.push(new Vector3(0, 0, 100));
 points.push(new Vector3(1, 1, 1));
 const lineGeom = new BufferGeometry().setFromPoints(points);
-const line = new Line(lineGeom, new LineBasicMaterial({ color: 0xff0000 }));
+const line = new Line(lineGeom, MATERIALS.LINE);
 
 export class Viewer {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
     controls: MapControls;
-    world: World;
+
+    scene: Scene;
+    pclouds: PointCloud[] = [];
+    objects: Points[] = [];
 
     constructor() {
         this.renderer = new WebGLRenderer({ antialias: true });
@@ -104,9 +46,10 @@ export class Viewer {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
-        this.world = new World(this);
+        this.scene = new Scene();
+        this.scene.background = new Color(0x202020);
 
-        this.world.scene.add(line);
+        this.scene.add(line);
     }
 
     init() {
@@ -119,9 +62,9 @@ export class Viewer {
     loop() {
         const delta = clock.getDelta();
 
-        if (this.world.objects.length > 0) {
+        if (this.objects.length > 0) {
             raycaster.setFromCamera(pointer, this.camera);
-            const intersections = raycaster.intersectObject(this.world.objects[0]!, false);
+            const intersections = raycaster.intersectObject(this.objects[0]!, false);
 
             if (intersections.length > 0 && intersections[0]) {
                 line.visible = true;
@@ -142,15 +85,15 @@ export class Viewer {
         }
 
         this.controls.update(delta);
-        this.renderer.render(this.world.scene, this.camera);
+        this.renderer.render(this.scene, this.camera);
 
         requestAnimationFrame(() => this.loop());
     }
 
     async start() {
-        this.world.addDemo();
-        this.world.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
-        // world.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+        this.addDemo();
+        this.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
+        // this.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
 
         document.addEventListener("dragover", (ev) => {
             ev.preventDefault();
@@ -167,7 +110,7 @@ export class Viewer {
                         const file = item.getAsFile();
                         if (file) {
                             console.log(`… file[${i}].name = ${file.name}`);
-                            this.world.addLAZ(file!);
+                            this.addLAZ(file!);
                         }
                     }
                 });
@@ -192,28 +135,63 @@ export class Viewer {
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        debug.innerHTML =
-            // `mx: ${mouseX.toFixed(2)} my: ${mouseY.toFixed(2)}<br>` +
-            `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
+        debug.innerHTML = `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
+    }
+
+    async addDemo() {
+        const demo = PointCloud.loadDemo();
+        this.pclouds.push(demo);
+
+        for (const node of demo.nodes) {
+            const pco1 = new Points(node.geometry, MATERIALS.POINT);
+            this.objects.push(pco1);
+            this.scene.add(pco1);
+        }
+
+        const cube = Viewer.createBounds(demo);
+        this.scene.add(cube);
+    }
+
+    async addLAZ(what: string | File) {
+        const pc = await PointCloud.loadLAZ(what);
+        this.pclouds.push(pc);
+
+        for (const node of pc.nodes) {
+            const pco = new Points(node.geometry, MATERIALS.POINT);
+            this.objects.push(pco);
+            this.scene.add(pco);
+        }
+
+        const cube = Viewer.createBounds(pc);
+        this.scene.add(cube);
+    }
+
+    static createBounds(pc: PointCloud) {
+        const size = new Vector3().subVectors(pc.bounds.max, pc.bounds.min);
+        const boundGeom = new BoxGeometry(...size.toArray());
+        const cube = new Mesh(boundGeom, MATERIALS.BBOX);
+        const halfSize = new Vector3().copy(size).divideScalar(2);
+        const midP = new Vector3().subVectors(pc.bounds.min, pc.offset);
+        cube.position.copy(midP).add(new Vector3(...halfSize));
+
+        return cube;
+
+        /*
+            this.scene.add(cube);
+
+            console.log(midP);
+
+            midP.add(new Vector3(...halfSize));
+
+            // this.viewer.camera.position.set(midP.x, midP.y - 100, midP.z + 50);
+            // this.viewer.camera.lookAt(0, 0, 0);
+            // this.viewer.camera.lookAt(midP);
+            this.viewer.controls.target = midP;
+        */
     }
 }
 
-const pointMaterial = new ShaderMaterial({
-    uniforms: {
-        uColor: { value: new Color(3403332) },
-        uMouse: { value: pointer },
-    },
-    vertexShader: vertex,
-    fragmentShader: fragment,
-});
-
 const debug = document.getElementById("debug")!;
-
-// let mouseX = 0;
-// let mouseY = 0;
-
-// let windowHalfX = window.innerWidth / 2;
-// let windowHalfY = window.innerHeight / 2;
 
 const raycaster = new Raycaster();
 raycaster.params.Points.threshold = 0.5;
