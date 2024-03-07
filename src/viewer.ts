@@ -2,12 +2,12 @@ import {
     BufferGeometry,
     Clock,
     Color,
+    DepthFormat,
     DepthTexture,
     Frustum,
     Line,
     LineBasicMaterial,
     Mesh,
-    MeshBasicMaterial,
     NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
@@ -16,7 +16,8 @@ import {
     RGBAFormat,
     Raycaster,
     Scene,
-    UnsignedShortType,
+    UnsignedIntType,
+    Vector2,
     Vector3,
     WebGLRenderTarget,
     WebGLRenderer,
@@ -24,11 +25,15 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { createEDLMaterial, pointer, updateValues } from "./materials";
+import { createEDLMaterial, updateMaterials } from "./materials";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
+import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
 const points = [];
+
+const pointer = new Vector2(0, 0);
+
 points.push(new Vector3(0, 0, 200));
 points.push(new Vector3(1, 1, 1));
 const lineGeom = new BufferGeometry().setFromPoints(points);
@@ -68,9 +73,12 @@ export class Viewer {
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
 
-
     constructor() {
-        this.renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        this.renderer = new WebGLRenderer({
+            antialias: true,
+            powerPreference: "high-performance",
+            logarithmicDepthBuffer: false,
+        });
 
         this.renderer.autoClear = true;
         this.renderer.autoClearDepth = false;
@@ -81,12 +89,10 @@ export class Viewer {
             magFilter: NearestFilter,
             depthBuffer: true,
             stencilBuffer: false,
-            depthTexture: new DepthTexture(1024, 1024, UnsignedShortType),
+            depthTexture: new DepthTexture(window.innerWidth, window.innerHeight, UnsignedIntType),
         });
 
-        // console.log("CAPS", this.renderer.capabilities);
-
-        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100_000);
+        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -100, 50);
         this.camera.lookAt(0, 0, 0);
@@ -107,14 +113,7 @@ export class Viewer {
         this.stats.addPanel(this.gpuPanel);
         this.stats.showPanel(0);
 
-        // const gl = this.renderer.getContext();
-        // const f = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE);
-        // const e = gl.getExtension("WEBGL_depth_texture");
-        // const sup = gl.getSupportedExtensions();
-        // console.log({ ALIASED_POINT_SIZE_RANGE: f, WEBGL_depth_texture: e, sup });
-        
-        // const tmaterial = new MeshBasicMaterial({ map: this.renderTarget.texture });
-        const tmaterial = createEDLMaterial(this.renderTarget.texture);
+        const tmaterial = createEDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
         const tquad = new Mesh(new PlaneGeometry(2, 2), tmaterial);
         this.sceneOrtho = new Scene();
         this.sceneOrtho.add(tquad); // Scene for orthographic display
@@ -135,12 +134,12 @@ export class Viewer {
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
             debug.slider1 = sliders[0].toFixed(2);
-            updateValues(sliders[0], sliders[1]);
+            updateMaterials(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
             debug.slider2 = sliders[1].toFixed(2);
-            updateValues(sliders[0], sliders[1]);
+            updateMaterials(sliders[0], sliders[1]);
         });
 
         window.addEventListener("resize", () => this.onWindowResize());
@@ -172,9 +171,7 @@ export class Viewer {
             }
         });
 
-        setInterval(() => {
-            this.updateVisibile();
-        }, 2000);
+        // setInterval(() => { this.updateVisibile(); }, 2000);
     }
 
     renderLoop() {
@@ -234,6 +231,8 @@ export class Viewer {
             .join("<br>");
 
         // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
+
+        this.frame++;
 
         requestAnimationFrame(() => this.renderLoop());
     }

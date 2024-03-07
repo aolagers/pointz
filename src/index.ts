@@ -1,5 +1,9 @@
 import { Viewer } from "./viewer";
 
+window.onerror = (message, source, lineno, colno, error) => {
+    document.body.innerHTML = `<pre>${message}\n${source} ${lineno}:${colno}\n${error}</pre>`;
+};
+
 const viewer = new Viewer();
 
 viewer.init();
