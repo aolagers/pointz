@@ -28,6 +28,10 @@ export default defineConfig({
             {
                 src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
                 dest: "./src",
+            },
+            {
+                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
+                dest: "./assets",
             }
         ]
     })],
