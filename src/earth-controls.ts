@@ -77,7 +77,7 @@ export class EarthControls {
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
 
             if (pt) {
-                this.zoomTo(pt.position, 1.0 + deltaY / 30);
+                this.zoomTo(pt.position, 1.0 + deltaY / 20);
             } else {
                 // TODO: what to do if no point was hit? error flash?
                 this.changed();
@@ -128,7 +128,7 @@ export class EarthControls {
             this.pivot.position.copy(pt.position);
             this.pivot.visible = true;
             const dst = pt.position.clone().sub(this.camera.position).length();
-            const scl = 0.3 + dst / 40;
+            const scl = 0.1 + dst / 40;
             this.pivot.scale.set(scl, scl, scl);
             // console.log("!!HIT!!", pt, scl, pt.position);
         } else {
@@ -230,6 +230,8 @@ export class EarthControls {
             return;
         }
 
+        const sensitivity = e.pointerType === "touch" ? 0.4 : 0.8;
+
         if (e.isPrimary) {
             const dp = this.pointer.clone().sub(this.start.mouse);
 
@@ -237,8 +239,8 @@ export class EarthControls {
                 // PITCH & YAW
 
                 this.setCursor("grab");
-                const ax = dp.x * 2 * Math.PI;
-                const ay = dp.y * 2 * Math.PI;
+                const ax = dp.x * 2 * Math.PI * sensitivity;
+                const ay = dp.y * 2 * Math.PI * sensitivity;
 
                 const dx = this.prevAngle.x - ax;
                 let dy = this.prevAngle.y - ay;
