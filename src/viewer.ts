@@ -297,7 +297,8 @@ export class Viewer {
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
-        debug.pool = ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queued()} (${pointsWorkerPool.tasksFinished})`;
+        debug.pool =
+            ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queueLength}` + ` (${pointsWorkerPool.tasksFinished})`;
 
         debug.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
@@ -367,7 +368,9 @@ export class Viewer {
     private lastLoaded = 0;
 
     loadMoreNodesThrottled() {
-        if (this.lastLoaded === 0) {
+        const min_interval_ms = 300;
+
+        if (this.lastLoaded === 0 || performance.now() - this.lastLoaded > min_interval_ms) {
             this.loadMoreNodes();
             this.lastLoaded = performance.now();
         } else {
@@ -377,13 +380,12 @@ export class Viewer {
                     this.loadMoreNodes();
                     this.lastLoaded = performance.now();
                 },
-                300 - (performance.now() - this.lastLoaded)
+                min_interval_ms - (performance.now() - this.lastLoaded)
             );
         }
     }
 
     loadMoreNodes() {
-        let loads = 0;
         const frustum = getCameraFrustum(this.camera);
 
         const pq = new PriorityQueue<PointCloudNode>(
@@ -434,8 +436,6 @@ export class Viewer {
                 case "unloaded":
                     if (shouldBeShown) {
                         console.log("LOAD", node.nodeName, err);
-                        loads++;
-                        // visiblePoints += node.pointCount;
 
                         node.load(this)
                             .then((_nd) => {
@@ -459,7 +459,12 @@ export class Viewer {
             }
         }
 
-        if (pointsWorkerPool.queued() > 0) {
+        // TODO: how to count in-progress node points?
+        for (const r of pointsWorkerPool.active) {
+            visiblePoints += r.info.node.pointCount;
+        }
+
+        if (pointsWorkerPool.queueLength > 0) {
             pointsWorkerPool.rescore((x) => {
                 const score = x.info.node.estimateNodeError(this.camera);
 
@@ -476,8 +481,6 @@ export class Viewer {
         }
 
         this.requestRender();
-
-        return loads;
     }
 
     mats = {
