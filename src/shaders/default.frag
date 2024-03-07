@@ -11,14 +11,31 @@ in float custom2;
 
 out vec4 FragColor;
 
-const uint N_CLASSES = 6u;
+const uint N_CLASSES = 10u;
 const vec3 CLASS_COLORS[N_CLASSES] = vec3[](
-        vec3(0.4, 0.4, 0.4),
-        vec3(0.8, 0.8, 0.8),
-        vec3(1.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
-        vec3(0.0, 0.0, 1.0),
-        vec3(1.0, 0.0, 1.0));
+        vec3(0.4, 0.4, 0.4), // 0: never classified
+        vec3(0.8, 0.8, 0.8), // 1: unassigned
+        vec3(117.0/255.0, 59.0/255.0, 36.0/255.0), // 2: ground
+
+        vec3(25.0/255.0, 170.0/255.0, 70.0/255.0), // 3: low vege
+        vec3(15.0/255.0, 125.0/255.0, 30.0/255.0), // 4: med vege
+        vec3(30.0/255.0, 239.0/255.0, 31.0/255.0), // 5: high vege
+
+        vec3(1.0, 1.0, 0.0), // 6: building
+        vec3(0.0, 1.0, 1.0), // 7: noise
+        vec3(1.0, 0.0, 1.0), // 8: model key / reserved
+                            
+        vec3(0.3, 0.3, 1.0) // 9: water
+        // 10: rail
+        // 11: road surface
+        // 12: overlap / reserved
+        // 13: wire - guard
+        // 14: wire - conductor
+        // 15: transmission tower
+        // 16: wire - connector
+        // 17: bridge deck
+        // 18: high noise
+        );
 
 void main() {
 

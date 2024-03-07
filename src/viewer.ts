@@ -204,6 +204,7 @@ export class Viewer {
 
         this.econtrols.init();
 
+        // TODO: base on updates, not on timer
         setInterval(() => {
             this.updateVisibile();
         }, 1000);
