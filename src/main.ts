@@ -24,14 +24,7 @@ import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
 import { Copc } from "copc";
 
-import { createLazPerf } from "laz-perf";
-
 async function loadPoints() {
-    // const LazPef = await createLazPerf();
-    // const laszip = new LazPef.LASZip();
-    // console.log({ laszip });
-
-    // return;
     const url = "http://localhost:5173/lion_takanawa.copc.laz";
     const copc = await Copc.create(url);
 
