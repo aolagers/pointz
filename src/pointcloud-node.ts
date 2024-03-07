@@ -126,8 +126,6 @@ export class PointCloudNode {
             };
 
             this.data.pco.matrixAutoUpdate = false;
-            // TODO: dont use userData, it's ugly
-            this.data.pco.userData.nodeIndex = this.data.pickIndex;
 
             this.setState("visible");
 
