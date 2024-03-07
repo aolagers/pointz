@@ -75,8 +75,15 @@ export class Viewer {
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
 
-    constructor() {
+    width: number = 0;
+    height: number = 0;
+
+    constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
+        this.width = width;
+        this.height = height;
+
         this.renderer = new WebGLRenderer({
+            canvas: canvasElement,
             antialias: false,
             alpha: false,
             stencil: false,
@@ -84,17 +91,19 @@ export class Viewer {
             logarithmicDepthBuffer: false,
         });
 
+        this.renderer.setSize(this.width, this.height, false);
+
         this.renderer.info.autoReset = false;
 
-        this.renderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+        this.renderTarget = new WebGLRenderTarget(this.width, this.height, {
             format: RGBAFormat,
             minFilter: NearestFilter,
             magFilter: NearestFilter,
             stencilBuffer: false,
-            depthTexture: new DepthTexture(window.innerWidth, window.innerHeight, UnsignedIntType),
+            depthTexture: new DepthTexture(this.width, this.height, UnsignedIntType),
         });
 
-        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, CAMERA_NEAR, CAMERA_FAR);
+        this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -100, 50);
         this.camera.lookAt(0, 0, 0);
@@ -102,9 +111,6 @@ export class Viewer {
         this.controls = new MapControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.2;
-
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(PIXEL_RATIO);
 
         this.scene = new Scene();
         // this.scene.background = new Color(0x505050);
@@ -145,8 +151,6 @@ export class Viewer {
             debug.slider2 = sliders[1].toFixed(2);
             updateSliders(sliders[0], sliders[1]);
         });
-
-        window.addEventListener("resize", () => this.onWindowResize());
 
         this.controls.addEventListener("change", (e) => {
             debug.target = printVec(e.target.target);
@@ -292,14 +296,18 @@ export class Viewer {
         }
     }
 
-    onWindowResize() {
-        if (!this.camera || !this.renderer) return;
-        console.log("resize!", window.innerWidth, window.innerHeight);
-
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+    setSize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        const pr = 1.0;//window.devicePixelRatio;
+        this.renderTarget.setSize(this.width * pr, this.height * pr);
+        this.renderer.setSize(this.width * pr, this.height * pr, false);
+        this.camera.aspect = this.width / this.height;
         this.camera.updateProjectionMatrix();
-        this.renderTarget.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        const sz = new Vector2();
+        this.renderer.getDrawingBufferSize(sz);
+        // this.renderer.domElement.style.width = `${this.width}px`;
+        // console.log(this.width, sz);
     }
 
     onPointerMove(event: PointerEvent) {
