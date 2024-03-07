@@ -81,6 +81,7 @@ export class Viewer {
     initialized = false;
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (window as any).viewer = this;
 
         this.width = width;
@@ -176,7 +177,7 @@ export class Viewer {
                         const file = item.getAsFile();
                         if (file) {
                             console.log(`… file[${i}].name = ${file.name}`);
-                            this.addLAZ(file!, true);
+                            void this.addLAZ(file, true);
                         }
                     }
                 });
@@ -309,6 +310,7 @@ export class Viewer {
 
         debug.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         debug.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
 
         debugEl.innerHTML = Object.entries(debug)

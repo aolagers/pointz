@@ -1,8 +1,10 @@
 import { Viewer } from "./viewer";
-import { loadDemo } from "./demo";
+import { stringifyError } from "./utils";
 
 window.onerror = (message, source, lineno, colno, error) => {
-    document.body.innerHTML = `<pre>${message}\n${source} ${lineno}:${colno}\n${error}</pre>`;
+    document.body.innerHTML =
+        `<pre>${JSON.stringify(message)}\n${source} ${lineno}:${colno}` +
+        `\n${error ? stringifyError(error) : "-"}</pre>`;
 };
 
 const canvas = document.querySelector("#viewer") as HTMLCanvasElement;
@@ -20,7 +22,7 @@ document.querySelector("#reset-cam")!.addEventListener("click", () => viewer.eco
 // viewer.addPointCloud(loadDemo(viewer));
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
-viewer.addLAZ(here + "/lion_takanawa.copc.laz");
+void viewer.addLAZ(here + "/lion_takanawa.copc.laz");
 
 if (window.location.hostname === "localhost") {
     viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
