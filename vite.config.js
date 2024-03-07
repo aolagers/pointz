@@ -1,6 +1,7 @@
 import glsl from "vite-plugin-glsl";
 import { defineConfig } from "vite";
 import { createReadStream } from "node:fs";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const wasmInterceptor = {
     name: "wasm-interceptor-plugin",
@@ -18,7 +19,18 @@ const wasmInterceptor = {
 };
 
 export default defineConfig({
-    plugins: [glsl(), wasmInterceptor],
+    plugins: [glsl(), wasmInterceptor, viteStaticCopy({
+        targets: [
+            {
+                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
+                dest: ".",
+            },
+            {
+                src: "./node_modules/copc/node_modules/laz-perf/lib/laz-perf.wasm",
+                dest: "./src",
+            }
+        ]
+    })],
     base: "",
     test: {
         includeSource: ["src/**/*.ts"],
