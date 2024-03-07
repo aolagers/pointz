@@ -62,7 +62,7 @@ export class Viewer {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
 
-    controls: MapControls;
+    // controls: MapControls;
     econtrols: EarthControls;
 
     scene: Scene;
@@ -124,13 +124,14 @@ export class Viewer {
             depthTexture: new DepthTexture(this.width, this.height, UnsignedIntType),
         });
 
-        this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
+        this.camera = new PerspectiveCamera(60, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
-        this.camera.position.set(0, -10, 5);
+        this.camera.position.set(0, -50, 25);
+        this.camera.lookAt(0, 0, 0);
 
-        this.controls = new MapControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.2;
+        // this.controls = new MapControls(this.camera, this.renderer.domElement);
+        // this.controls.enableDamping = true;
+        // this.controls.dampingFactor = 0.2;
 
         this.econtrols = new EarthControls(this.camera, this.renderer.domElement, this);
 
@@ -173,12 +174,18 @@ export class Viewer {
             PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
 
+        /*
         this.controls.addEventListener("change", (e) => {
             debug.target = printVec(e.target.target);
             debug.camera = printVec(this.camera.position);
 
             this.requestRender();
         });
+        */
+        this.econtrols.onChange = () => {
+            debug.camera = printVec(this.camera.position);
+            this.requestRender();
+        };
 
         document.addEventListener("mousedown", (_ev) => {
             this.clicked = true;
@@ -275,7 +282,7 @@ export class Viewer {
         this.stats.update();
         const delta = clock.getDelta();
 
-        this.controls.update(delta);
+        // this.controls.update(delta);
         this.econtrols.update(delta);
 
         this.gpuPanel.startQuery();
@@ -423,14 +430,7 @@ export class Viewer {
         pc.load();
 
         if (center) {
-            const cpos = pc.octreeBounds.getCenter(new Vector3());
-
-            const size = pc.octreeBounds.getSize(new Vector3()).x;
-            console.log(cpos);
-
-            this.camera.position.copy(cpos).add(new Vector3(0, size, size / 2));
-            this.controls.target.copy(cpos);
-            this.controls.update();
+            this.econtrols.showPointCloud(pc);
         }
     }
 }

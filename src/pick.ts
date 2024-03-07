@@ -51,7 +51,7 @@ export function getMouseIntersection(
             if (isHit) {
                 // console.log("RAY", ray, node.bounds);
 
-                node.debugMesh.material = new MeshBasicMaterial({ color: "pink", wireframe: true });
+                // node.debugMesh.material = new MeshBasicMaterial({ color: "pink", wireframe: true });
                 // node.visibleIndex = hitIdx;
                 // for (let pidx = 0; pidx < attr.count; pidx++) {
                 //     attr.setW(pidx, hitIdx);
@@ -61,7 +61,7 @@ export function getMouseIntersection(
                 hits++;
                 // attr.needsUpdate = true;
             } else {
-                node.debugMesh.material = new MeshBasicMaterial({ color: "gray", wireframe: true });
+                // node.debugMesh.material = new MeshBasicMaterial({ color: "gray", wireframe: true });
                 // node.visibleIndex = -1;
             }
         }
