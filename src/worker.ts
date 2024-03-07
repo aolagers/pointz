@@ -10,23 +10,27 @@ export type WorkerInfoRequest = {
     source: LazSource;
 };
 
+export type Hierarchy = Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
+
 export type WorkerInfoResponse = {
     msgType: "info";
     header: PointCloudHeader;
-    hierarchy: Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
+    info: CopcType["info"];
+    hierarchy: Hierarchy;
 };
 
 type WorkerRequest = WorkerInfoRequest | WorkerPointsRequest;
 
+export type CopcNodeInfo = {
+    pointCount: number;
+    pointDataOffset: number;
+    pointDataLength: number;
+};
 export type WorkerPointsRequest = {
     command: "load-node";
     source: LazSource;
     offset: number[];
-    node: {
-        pointCount: number;
-        pointDataOffset: number;
-        pointDataLength: number;
-    };
+    node: CopcNodeInfo;
 };
 
 export type WorkerPointsResponse = {
@@ -60,12 +64,13 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
     const copc = await Copc.create(getter);
 
     if (e.data.command === "info") {
-        log("READ INFO", e.data, getter, copc);
+        log("READ INFO", copc);
 
         const copcHierarchy = await Copc.loadHierarchyPage(getter, copc.info.rootHierarchyPage);
 
         const response: WorkerInfoResponse = {
             msgType: "info",
+            info: copc.info,
             header: copc.header,
             hierarchy: copcHierarchy,
         };
