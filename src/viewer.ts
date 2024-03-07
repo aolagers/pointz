@@ -24,13 +24,20 @@ points.push(new Vector3(1, 1, 1));
 const lineGeom = new BufferGeometry().setFromPoints(points);
 const line = new Line(lineGeom, new LineBasicMaterial({ color: 0x00ee00 }));
 
+const debugEl = document.getElementById("debug")!;
 const debug = {
     mouse: "",
     camera: "",
     target: "",
     slider1: "",
     slider2: "",
+    pts: "",
 };
+
+const raycaster = new Raycaster();
+raycaster.params.Points.threshold = 0.5;
+
+const clock = new Clock();
 
 export class Viewer {
     renderer: WebGLRenderer;
@@ -155,6 +162,14 @@ export class Viewer {
         this.renderer.render(this.scene, this.camera);
         this.gpuPanel.endQuery();
 
+        let totalPts = 0;
+
+        for (const pc of this.pclouds) {
+            totalPts += pc.pointsLoaded;
+        }
+
+        debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
+
         debugEl.innerHTML = Object.entries(debug)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
             .join("<br>");
@@ -202,10 +217,3 @@ export class Viewer {
         this.controls.target.copy(cube.position);
     }
 }
-
-const debugEl = document.getElementById("debug")!;
-
-const raycaster = new Raycaster();
-raycaster.params.Points.threshold = 0.5;
-
-const clock = new Clock();
