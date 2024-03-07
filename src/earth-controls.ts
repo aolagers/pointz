@@ -49,7 +49,7 @@ export class EarthControls {
         secondary: false,
     };
 
-    onChange: null | (() => void) = null;
+    onChange: null | ((why: string) => void) = null;
 
     constructor(camera: PerspectiveCamera, element: HTMLElement, viewer: Viewer) {
         this.camera = camera;
@@ -88,13 +88,13 @@ export class EarthControls {
                 this.zoomTo(pt.position, 1.0 + deltaY / 20);
             } else {
                 // TODO: what to do if no point was hit? error flash?
-                this.changed();
+                this.changed("wheel");
             }
         });
     }
 
-    changed() {
-        this.onChange?.();
+    changed(why: string) {
+        this.onChange?.(why);
     }
 
     init() {
@@ -109,7 +109,7 @@ export class EarthControls {
         const targetToCam = new Vector3().subVectors(this.camera.position, target);
         this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
         this.saveCamera();
-        this.changed();
+        this.changed("zoomTo");
     }
 
     isZooming = false;
@@ -144,7 +144,7 @@ export class EarthControls {
             this.pivot.visible = false;
         }
 
-        this.changed();
+        this.changed("pointerStart");
 
         if (!pt) {
             return;
@@ -176,7 +176,7 @@ export class EarthControls {
         this.start.mouse.copy(this.pointer);
         this.prevAngle.set(0, 0);
 
-        console.log("pointer DOWN", this.dragging, e);
+        // console.log("pointer DOWN", this.dragging, e);
     }
 
     pointerUp(e: PointerEvent) {
@@ -209,7 +209,7 @@ export class EarthControls {
         }
         this.dragging = null;
         this.pivot.visible = false;
-        this.changed();
+        this.changed("pointerEnd");
     }
 
     prevAngle = new Vector2(0, 0);
@@ -312,7 +312,7 @@ export class EarthControls {
         */
 
         this.saveCamera();
-        this.changed();
+        this.changed("pointerMove");
     }
 
     update(_delta: number) {}
@@ -355,7 +355,7 @@ export class EarthControls {
             const camJSON = JSON.parse(camText) as CameraPosition;
             this.camera.position.copy(new Vector3().fromArray(camJSON.position));
             this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
-            this.changed();
+            this.changed("restoreCam");
             return true;
         } catch (e) {
             console.error("Error restoring camera", e);
@@ -373,7 +373,7 @@ export class EarthControls {
         console.log("cam", this.camera.position);
 
         this.saveCamera();
-        this.changed();
+        this.changed("showBox");
     }
 
     showPointCloud(pc: PointCloud) {

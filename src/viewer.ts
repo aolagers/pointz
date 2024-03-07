@@ -143,11 +143,11 @@ export class Viewer {
     init() {
         document.body.appendChild(this.stats.dom);
 
-        this.econtrols.onChange = () => {
+        this.econtrols.onChange = (why) => {
             debug.camera = printVec(this.camera.position);
 
             this.loadMoreNodesThrottled();
-            this.requestRender();
+            this.requestRender("controls " + why);
         };
 
         document.addEventListener("dragover", (ev) => {
@@ -210,7 +210,7 @@ export class Viewer {
                 this.dropWorstNodes();
             }
 
-            this.requestRender();
+            this.requestRender("keydown");
         });
 
         this.econtrols.init();
@@ -227,7 +227,7 @@ export class Viewer {
         this.econtrols.restoreCamera();
 
         this.initialized = true;
-        this.requestRender();
+        this.requestRender("init");
     }
 
     addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
@@ -253,19 +253,21 @@ export class Viewer {
 
     labelRenderer = new CSS2DRenderer();
 
-    requestRender() {
+    prevCam = new Vector3();
+
+    requestRender(why: string) {
         if (!this.renderRequested) {
             this.renderRequested = true;
-            requestAnimationFrame(() => this.render());
+            requestAnimationFrame(() => this.render(why));
         }
     }
 
-    private render() {
+    private render(why: string) {
         const frameStart = performance.now();
         this.renderRequested = false;
 
         if (ALWAYS_RENDER) {
-            this.requestRender();
+            this.requestRender("loop");
         }
 
         this.stats.update();
@@ -314,13 +316,14 @@ export class Viewer {
         this.frameTime = frameEnd - frameStart;
 
         this.labelRenderer.render(this.scene, this.camera);
+        this.prevCam.copy(this.camera.position);
     }
 
     addNode(n: PointCloudNode) {
         if (n.state === "loading") {
             const o = n.data!.pco;
             this.scene.add(o);
-            this.requestRender();
+            this.requestRender("new node");
         } else {
             throw new Error("cannot add node that is not loaded");
         }
@@ -356,7 +359,7 @@ export class Viewer {
             node.unload(this);
         }
 
-        this.requestRender();
+        this.requestRender("drop worst");
     }
 
     loadMoreNodesThrottled = throttle(300, () => {
@@ -407,7 +410,7 @@ export class Viewer {
                         // all good
                         visiblePoints += node.pointCount;
                     } else {
-                        console.log("CACHE", node.nodeName, err);
+                        // console.log("CACHE", node.nodeName, err);
                         // node.unload(this);
                         node.cache();
                     }
@@ -422,7 +425,7 @@ export class Viewer {
 
                 case "unloaded":
                     if (shouldBeShown) {
-                        console.log("LOAD", node.nodeName, err);
+                        // console.log("LOAD", node.nodeName, err);
 
                         node.load(this)
                             .then((_nd) => {
@@ -466,7 +469,7 @@ export class Viewer {
             });
         }
 
-        this.requestRender();
+        this.requestRender("load more");
     }
 
     mats = {
@@ -494,7 +497,7 @@ export class Viewer {
 
         this.labelRenderer.setSize(this.width, this.height);
         this.setError("resizing", false);
-        this.requestRender();
+        this.requestRender("resize");
     });
 
     private setError(k: keyof typeof this.errors, set_to: boolean) {
