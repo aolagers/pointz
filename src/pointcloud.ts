@@ -21,7 +21,6 @@ export class PointCloud {
     hierarchy: Hierarchy;
     nodes: PointCloudNode[];
     rootSpacing: number;
-    pointsLoaded: number = 0;
 
     isDemo = false;
 
