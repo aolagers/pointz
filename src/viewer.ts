@@ -33,15 +33,17 @@ class World {
         this.scene.background = new Color(0x202020);
     }
 
-    async load() {
-        const demo = await PointCloud.loadDemo();
+    async addDemo() {
+        const demo = PointCloud.loadDemo();
         this.pclouds.push(demo);
 
         const pco1 = new Points(demo.geometry, pointMaterial);
         this.objects.push(pco1);
         this.scene.add(pco1);
+    }
 
-        const testLaz = await PointCloud.loadLAZ();
+    async addLAZ(url: string) {
+        const testLaz = await PointCloud.loadLAZ(url);
         this.pclouds.push(testLaz);
         const pco2 = new Points(testLaz.geometry, pointMaterial);
         this.objects.push(pco2);
@@ -53,7 +55,6 @@ class World {
                 testLaz.bounds.max.y - testLaz.bounds.min.y,
                 testLaz.bounds.max.z - testLaz.bounds.min.z,
             ];
-            console.log("lion", size);
             const boundGeom = new BoxGeometry(...size);
             const mat = new MeshBasicMaterial({ color: "red", wireframe: true });
             const cube = new Mesh(boundGeom, mat);
@@ -97,21 +98,23 @@ export class Viewer {
     loop() {
         const delta = clock.getDelta();
 
-        raycaster.setFromCamera(pointer, this.camera);
-        const intersections = raycaster.intersectObject(world.objects[0]!, false);
+        if (world.objects.length > 0) {
+            raycaster.setFromCamera(pointer, this.camera);
+            const intersections = raycaster.intersectObject(world.objects[0]!, false);
 
-        if (intersections.length > 0 && intersections[0]) {
-            line.visible = true;
-            const pos = line.geometry.attributes.position!;
-            const verts = pos.array;
+            if (intersections.length > 0 && intersections[0]) {
+                line.visible = true;
+                const pos = line.geometry.attributes.position!;
+                const verts = pos.array;
 
-            verts[3] = intersections[0].point.x;
-            verts[4] = intersections[0].point.y;
-            verts[5] = intersections[0].point.z;
+                verts[3] = intersections[0].point.x;
+                verts[4] = intersections[0].point.y;
+                verts[5] = intersections[0].point.z;
 
-            pos.needsUpdate = true;
-        } else {
-            line.visible = false;
+                pos.needsUpdate = true;
+            } else {
+                line.visible = false;
+            }
         }
 
         this.controls.update(delta);
@@ -121,7 +124,10 @@ export class Viewer {
     }
 
     async start() {
-        await world.load();
+        world.addDemo();
+        world.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
+        world.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+
         this.loop();
     }
 

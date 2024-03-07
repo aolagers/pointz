@@ -1,5 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute, Uint16BufferAttribute, Uint32BufferAttribute, Vector3 } from "three";
-import { Copc } from "copc";
+import { BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, Uint8BufferAttribute, Vector3 } from "three";
 import workerUrl from "./worker?worker&url";
 
 export class PointCloud {
@@ -13,36 +12,17 @@ export class PointCloud {
         this.offset = offset;
     }
 
-    static async loadLAZ() {
-        const copcData = await loadCOPC();
+    static async loadLAZ(url: string) {
+        const copcData = await loadCOPC(url);
 
         const geometry = new BufferGeometry();
 
-        const classes = [];
+        const classes = Array(copcData.pointCount).fill(2);
 
-        const pos = [];
-        const col = [];
+        console.log("LAZ", copcData.pointCount, copcData.positions.length);
 
-        for (let i = 0; i < copcData.pointCount; i++) {
-            classes.push(2);
-            pos.push(copcData.positions[i * 3 + 0]!);
-            pos.push(copcData.positions[i * 3 + 1]!);
-            pos.push(copcData.positions[i * 3 + 2]!);
-            col.push(copcData.colors[i * 3 + 0]! / 256);
-            col.push(copcData.colors[i * 3 + 1]! / 256);
-            col.push(copcData.colors[i * 3 + 2]! / 256);
-        }
-
-        for (let i = 0; i < 1_000; i++) {
-            console.log(col[i]);
-        }
-
-        console.log("LAZ", copcData.positions.length, pos.length);
-
-        geometry.setAttribute("position", new Float32BufferAttribute(pos, 3));
-        geometry.setAttribute("color", new Float32BufferAttribute(col, 3, false));
-        // geometry.setAttribute("position", new Float32BufferAttribute(copcData.positions, 3));
-        // geometry.setAttribute("color", new Float32BufferAttribute(copcData.colors, 3));
+        geometry.setAttribute("position", new Float32BufferAttribute(copcData.positions, 3));
+        geometry.setAttribute("color", new Uint8BufferAttribute(copcData.colors, 3, true));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
 
         return new PointCloud(
@@ -97,10 +77,7 @@ export class PointCloud {
     }
 }
 
-async function loadCOPC() {
-    // const url = "http://localhost:5173/lion_takanawa.copc.laz";
-    const url = "http://localhost:5173/autzen-classified.copc.laz";
-
+async function loadCOPC(url: string) {
     const worker = new Worker(workerUrl, { type: "module" });
 
     return new Promise<{
@@ -108,7 +85,7 @@ async function loadCOPC() {
         bounds: { min: number[]; max: number[] };
         offset: number[];
         positions: Float32Array;
-        colors: Float32Array;
+        colors: Uint8Array;
     }>((resolve) => {
         worker.onmessage = (e) => {
             console.log("FROM WORKER", e.data);
@@ -120,13 +97,6 @@ async function loadCOPC() {
                 colors: e.data.colors,
             });
         };
-        // resolve({
-        //     pointCount: 0,
-        //     bounds: { min: [0, 0, 0], max: [1, 1, 1] },
-        //     offset: [1, 1, 1],
-        //     positions: [],
-        //     colors: [],
-        // });
         worker.postMessage(url);
     });
 

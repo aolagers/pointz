@@ -22,22 +22,22 @@ onmessage = async function (e: MessageEvent<string>) {
 
     const copcHierarchy = await Copc.loadHierarchyPage(url, copc.info.rootHierarchyPage);
 
-    const MAX = Math.min(2_000_000, copc.header.pointCount);
+    const MAX = Math.min(6_000_000, copc.header.pointCount);
     const positions = new Float32Array(MAX * 3);
-    const colors = new Float32Array(MAX * 3);
-
-    const points = [];
+    const colors = new Uint8Array(MAX * 3);
 
     let ptCount = 0;
     let pIdx = 0;
     let cIdx = 0;
+
+    // TODO: parse classification, pointSource and intensity
 
     for (const key in copcHierarchy.nodes) {
         const node = copcHierarchy.nodes[key];
         // log("LOAD", key, node);
         if (!node) continue;
 
-        log("node", key, points.at(-1), node);
+        log("node", key, node);
 
         const view = await Copc.loadPointDataView(url, copc, node);
         const getters = {
@@ -50,31 +50,22 @@ onmessage = async function (e: MessageEvent<string>) {
         };
 
         for (let i = 0; i < view.pointCount; i++) {
-            const point = [
-                getters.x(i),
-                getters.y(i),
-                getters.z(i),
-                getters.r(i) / 256,
-                getters.g(i) / 256,
-                getters.b(i) / 256,
-            ] as const;
-
-            points.push(point);
 
             positions[pIdx++] = getters.x(i) - offset[0]!;
             positions[pIdx++] = getters.y(i) - offset[1]!;
             positions[pIdx++] = getters.z(i) - offset[2]!;
 
+            // TODO: recognize if 16bit colors or not
             colors[cIdx++] = getters.r(i) / 256;
             colors[cIdx++] = getters.g(i) / 256;
             colors[cIdx++] = getters.b(i) / 256;
 
             ptCount++;
-            if (ptCount > MAX) {
+            if (ptCount >= MAX) {
                 break;
             }
         }
-        if (ptCount > MAX) {
+        if (ptCount >= MAX) {
             break;
         }
     }
