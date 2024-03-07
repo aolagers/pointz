@@ -15,9 +15,11 @@ import type {
     LazSource,
     CopcNodeInfo,
     Hierarchy,
+    OctreeInfo,
 } from "./worker";
 import { MATERIALS } from "./materials";
 import { Viewer } from "./viewer";
+import { createCubeBounds } from "./utils";
 
 export class PointCloudNode {
     nodeName: string;
@@ -89,6 +91,7 @@ export class PointCloud {
     bounds: { min: Vector3; max: Vector3 };
     hierarchy: Hierarchy;
     loadedNodes: PointCloudNode[];
+    octreeInfo: OctreeInfo;
 
     constructor(
         viewer: Viewer,
@@ -97,6 +100,7 @@ export class PointCloud {
         bounds: { min: Vector3; max: Vector3 },
         offset: Vector3,
         hierarchy: Hierarchy,
+        octreeInfo: OctreeInfo,
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -105,6 +109,9 @@ export class PointCloud {
         this.bounds = bounds;
         this.loadedNodes = [];
         this.hierarchy = hierarchy;
+        this.octreeInfo = octreeInfo;
+
+        console.log({ octreeInfo });
     }
 
     async loadFake() {
@@ -130,36 +137,47 @@ export class PointCloud {
         });
 
         console.log({ toLoad, l: toLoad.length });
-        for (const N of toLoad.slice(0, 100).map((a) => a.join("-"))) {
-            console.log("LOAD", N);
-            const node = this.hierarchy.nodes[N]!;
-            const data = await getData(worker, this.source, node, this.offset.toArray());
 
-            const pcn = new PointCloudNode(N, data.geometry, this.bounds);
+        let ldd = 0;
 
-            this.loadedNodes.push(pcn);
+        for (const nnum of toLoad) {
+            if (ldd < 5) {
+                const nname = nnum.join("-");
 
-            this.viewer.scene.add(pcn.pco);
-            this.viewer.objects.push(pcn.pco);
+                console.log("LOAD", nname);
+                const node = this.hierarchy.nodes[nname]!;
+                const data = await getData(worker, this.source, node, this.offset.toArray());
 
-            await new Promise((resolve) => setTimeout(resolve, 200));
+                const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
+
+                this.loadedNodes.push(pcn);
+
+                this.viewer.scene.add(pcn.pco);
+                this.viewer.objects.push(pcn.pco);
+            }
+            ldd++;
+
+            const bbox = createCubeBounds(this.octreeInfo.cube, nnum, this.offset);
+            this.viewer.scene.add(bbox);
+
+            await new Promise((resolve) => setTimeout(resolve, 50));
         }
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
-        const info = await PointCloud.loadInfo(source);
+        const details = await PointCloud.loadInfo(source);
 
-        if (info.msgType !== "info") {
+        if (details.msgType !== "info") {
             throw new Error("not info");
         }
 
-        const offset = new Vector3(...info.header.offset);
+        const offset = new Vector3(...details.header.offset);
         const bounds = {
-            min: new Vector3(...info.header.min),
-            max: new Vector3(...info.header.max),
+            min: new Vector3(...details.header.min),
+            max: new Vector3(...details.header.max),
         };
 
-        const pc = new PointCloud(viewer, "pc-1", source, bounds, offset, info.hierarchy);
+        const pc = new PointCloud(viewer, "pc-1", source, bounds, offset, details.hierarchy, details.info);
 
         return pc;
     }
@@ -228,7 +246,15 @@ export class PointCloud {
 
         const bounds = { min, max };
 
-        const pc = new PointCloud(viewer, "demodata", "", bounds, offset, { pages: {}, nodes: {} });
+        const pc = new PointCloud(
+            viewer,
+            "demodata",
+            "",
+            bounds,
+            offset,
+            { pages: {}, nodes: {} },
+            { cube: [0, 0, 0, 0, 0, 0], spacing: 0 },
+        );
 
         pc.loadedNodes.push(new PointCloudNode("0-0-0-0", geometry, bounds));
 

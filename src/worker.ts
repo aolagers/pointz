@@ -10,6 +10,7 @@ export type WorkerInfoRequest = {
     source: LazSource;
 };
 
+export type OctreeInfo = Pick<CopcType["info"], "cube" | "spacing">;
 export type Hierarchy = Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
 
 export type WorkerInfoResponse = {
