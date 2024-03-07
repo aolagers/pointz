@@ -226,10 +226,12 @@ export class Viewer {
 
         this.econtrols.init();
 
+        const rect = this.renderer.domElement.getBoundingClientRect();
+
         this.labelRenderer.setSize(this.width, this.height);
         this.labelRenderer.domElement.style.position = "absolute";
-        this.labelRenderer.domElement.style.top = "0px";
-        // this.labelRenderer.domElement.style.pointerEvents = "none";
+        this.labelRenderer.domElement.style.top = rect.y + "px";
+        this.labelRenderer.domElement.style.left = rect.x + "px";
 
         document.body.appendChild(this.labelRenderer.domElement);
 
