@@ -6,6 +6,7 @@ import {
     Frustum,
     Line,
     LineBasicMaterial,
+    LinearSRGBColorSpace,
     Mesh,
     NearestFilter,
     OrthographicCamera,
@@ -105,7 +106,9 @@ export class Viewer {
         this.renderer.setPixelRatio(PIXEL_RATIO);
 
         this.scene = new Scene();
-        this.scene.background = new Color(0x202020);
+        // this.scene.background = new Color(0x505050);
+        // this.scene.background = new Color(0x4485b4);
+        this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace);
         this.scene.add(line);
 
         this.stats = new Stats();
