@@ -115,12 +115,11 @@ export function getMouseIntersection(
         const idx = r * 256 * 256 + g * 256 + b;
         let nodehit = null;
         let pchit = null;
-        for (const pc of viewer.pointClouds) {
-            for (const lnode of pc.nodes) {
-                if (lnode.data?.pickIndex === a) {
-                    nodehit = lnode;
-                    pchit = pc;
-                }
+
+        for (const n of hitNodes) {
+            if (n.data?.pickIndex === a) {
+                nodehit = n;
+                pchit = n.parent;
             }
         }
 
