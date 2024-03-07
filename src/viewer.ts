@@ -26,7 +26,7 @@ import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { PointMaterial } from "./materials/point-material";
-import { createEDLMaterial } from "./materials/edl-material";
+import { EDLMaterial } from "./materials/edl-material";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
@@ -127,8 +127,10 @@ export class Viewer {
         this.stats.addPanel(this.gpuPanel);
         this.stats.showPanel(0);
 
-        const tmaterial = createEDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
-        const tquad = new Mesh(new PlaneGeometry(2, 2), tmaterial);
+        const tquad = new Mesh(
+            new PlaneGeometry(2, 2),
+            new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture),
+        );
         this.sceneOrtho = new Scene();
         this.sceneOrtho.add(tquad); // Scene for orthographic display
 
