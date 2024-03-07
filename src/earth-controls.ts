@@ -14,10 +14,13 @@ export class EarthControls {
     pivot: Mesh;
 
     pointer = new Vector2(0, 0);
+    secondPointer = new Vector2(0, 0);
 
     dragging: "left" | "right" | "mid" | null = null;
 
-    lastClick = Date.now();
+    touchCount = 0;
+
+    lastClick = performance.now();
 
     start = {
         mouse: new Vector2(),
@@ -43,6 +46,11 @@ export class EarthControls {
         this.domElement.addEventListener("pointercancel", (e) => this.pointerEnd(e));
         this.domElement.addEventListener("pointermove", (e) => this.pointerMove(e));
 
+        this.domElement.addEventListener("pointerenter", (_e) => {});
+        this.domElement.addEventListener("pointerleave", (_e) => {
+            this.touchCount = Math.max(0, this.touchCount - 1);
+        });
+
         this.domElement.addEventListener("wheel", (e) => {
             e.preventDefault();
 
@@ -52,9 +60,7 @@ export class EarthControls {
             if (pt) {
                 this.zoomTo(pt.position, -deltaY / 30);
             } else {
-                // const step = Math.sign(deltaY) * Math.sqrt(Math.abs(deltaY));
-                // const dir = this.camera.getWorldDirection(new Vector3());
-                // this.camera.position.add(dir.multiplyScalar(-step));
+                // TODO: what to do if no point was hit? error flash?
                 this.onChange?.();
             }
         });
@@ -71,11 +77,14 @@ export class EarthControls {
     }
 
     pointerStart(e: PointerEvent) {
+        this.touchCount++;
+        const rect = this.domElement.getBoundingClientRect();
         if (!e.isPrimary) {
+            this.secondPointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
+            this.secondPointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
             return;
         }
 
-        const rect = this.domElement.getBoundingClientRect();
         this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
         this.pointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
 
@@ -87,9 +96,9 @@ export class EarthControls {
             const dst = pt.position.clone().sub(this.camera.position).length();
             const scl = 0.3 + dst / 40;
             this.pivot.scale.set(scl, scl, scl);
-            console.log("!!HIT!!", pt, scl, pt.position);
+            // console.log("!!HIT!!", pt, scl, pt.position);
         } else {
-            console.log("miss");
+            // console.log("miss");
             this.pivot.visible = false;
         }
 
@@ -99,12 +108,12 @@ export class EarthControls {
             return;
         }
 
-        if (Date.now() - this.lastClick < 200) {
+        if (performance.now() - this.lastClick < 200) {
             this.zoomTo(pt.position, 0.5);
             return;
         }
 
-        this.lastClick = Date.now();
+        this.lastClick = performance.now();
 
         if (e.button === 0) {
             this.dragging = "left";
@@ -125,6 +134,7 @@ export class EarthControls {
     }
 
     pointerEnd(e: PointerEvent) {
+        this.touchCount = Math.max(0, this.touchCount - 1);
         if (!e.isPrimary) {
             return;
         }
@@ -149,17 +159,7 @@ export class EarthControls {
 
         const dp = this.pointer.clone().sub(this.start.mouse);
 
-        if (this.dragging === "left") {
-            // PAN
-
-            const plane = new Plane().setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
-            const ray = getMouseRay(this.pointer, this.camera);
-            const intersection = ray.intersectPlane(plane, new Vector3());
-            if (intersection) {
-                const intersectionToPivot = new Vector3().subVectors(this.pivot.position, intersection);
-                this.camera.position.add(intersectionToPivot);
-            }
-        } else if (this.dragging === "right") {
+        if (this.dragging === "right" || this.touchCount > 1) {
             // PITCH & YAW
 
             const ax = dp.x * 2 * Math.PI;
@@ -175,14 +175,23 @@ export class EarthControls {
             pivotToCam.applyAxisAngle(right, -dy);
             pivotToCam.applyAxisAngle(unitZ, dx);
 
-            const newPos = new Vector3().addVectors(this.pivot.position, pivotToCam);
-
-            this.camera.position.copy(newPos);
+            // update camera position
+            this.camera.position.addVectors(this.pivot.position, pivotToCam);
 
             this.camera.rotateOnWorldAxis(right, -dy);
             this.camera.rotateOnWorldAxis(unitZ, dx);
 
             this.prevAngle.set(ax, ay);
+        } else if (this.dragging === "left") {
+            // PAN
+
+            const plane = new Plane().setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
+            const ray = getMouseRay(this.pointer, this.camera);
+            const intersection = ray.intersectPlane(plane, new Vector3());
+            if (intersection) {
+                const intersectionToPivot = new Vector3().subVectors(this.pivot.position, intersection);
+                this.camera.position.add(intersectionToPivot);
+            }
         }
 
         this.onChange?.();

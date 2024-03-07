@@ -31,9 +31,10 @@ const debugEl = document.getElementById("debug")!;
 const debug = {
     mouse: "",
     camera: "",
-    target: "",
-    slider1: "",
-    slider2: "",
+    // target: "",
+    // slider1: "",
+    // slider2: "",
+    touchCount: "",
     pts: "",
     pool: "",
     render: "",
@@ -139,12 +140,12 @@ export class Viewer {
         const sliders: [number, number] = [0, 0];
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
-            debug.slider1 = sliders[0].toFixed(2);
+            // debug.slider1 = sliders[0].toFixed(2);
             PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
-            debug.slider2 = sliders[1].toFixed(2);
+            // debug.slider2 = sliders[1].toFixed(2);
             PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
 
@@ -247,17 +248,17 @@ export class Viewer {
 
         this.frame++;
 
-        if (this.frame % 60 === 0) {
-            debug.render =
-                `calls: ${this.renderer.info.render.calls}, ` +
-                `pts: ${(this.renderer.info.render.points / 1000).toFixed(0)}k`;
-        }
+        debug.render =
+            `calls: ${this.renderer.info.render.calls}, ` +
+            `pts: ${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
         debug.pool = ` ${pool.running()} ${pool.queued()} (${pool.tasksFinished})`;
+
+        debug.touchCount = ` ${this.econtrols.touchCount}`;
 
         debugEl.innerHTML = Object.entries(debug)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
