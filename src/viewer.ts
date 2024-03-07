@@ -25,7 +25,7 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { updateMaterials1, updateMaterials2 } from "./materials/point-material";
+import { updateSliders, changeColorMode, updatePointSize } from "./materials/point-material";
 import { createEDLMaterial } from "./materials/edl-material";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
@@ -138,12 +138,12 @@ export class Viewer {
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
             debug.slider1 = sliders[0].toFixed(2);
-            updateMaterials1(sliders[0], sliders[1]);
+            updateSliders(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
             debug.slider2 = sliders[1].toFixed(2);
-            updateMaterials1(sliders[0], sliders[1]);
+            updateSliders(sliders[0], sliders[1]);
         });
 
         window.addEventListener("resize", () => this.onWindowResize());
@@ -178,13 +178,19 @@ export class Viewer {
         document.addEventListener("keydown", (ev) => {
             // if number one
             if (ev.key === "1") {
-                updateMaterials2("INTENSITY");
+                changeColorMode("INTENSITY");
             }
             if (ev.key === "2") {
-                updateMaterials2("CLASSIFICATION");
+                changeColorMode("CLASSIFICATION");
             }
             if (ev.key === "3") {
-                updateMaterials2("RGB");
+                changeColorMode("RGB");
+            }
+            if (ev.key === "+") {
+                updatePointSize(+1);
+            }
+            if (ev.key === "-") {
+                updatePointSize(-1);
             }
         });
 
