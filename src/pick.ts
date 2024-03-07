@@ -71,11 +71,15 @@ export function getMouseIntersection(
         }
     }
 
+    // hide all extra objects that should not be picked
     camera.layers.disable(1);
 
     // render to pick buffer
     renderer.setRenderTarget(pickRenderTarget);
     renderer.render(viewer.scene, camera);
+
+    // turn extra objects back on
+    camera.layers.enable(1);
 
     let pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
 
