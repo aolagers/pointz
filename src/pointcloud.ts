@@ -77,6 +77,9 @@ export class PointCloud {
         const offset = new Vector3(...details.header.offset);
 
         const tightBounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
+        tightBounds.min.sub(offset);
+        tightBounds.max.sub(offset);
+
         const octreeBounds = new Box3().setFromArray(details.info.cube);
 
         octreeBounds.translate(offset.clone().negate());

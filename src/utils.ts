@@ -13,7 +13,7 @@ export function createTightBounds(pc: PointCloud) {
     const halfSize = size.clone().divideScalar(2);
     const boundGeom = new BoxGeometry(...size);
     const cube = new Mesh(boundGeom, tightBboxMaterial);
-    cube.position.copy(pc.tightBounds.min).sub(pc.offset).add(halfSize);
+    cube.position.copy(pc.tightBounds.min).add(halfSize);
 
     return cube;
 }
