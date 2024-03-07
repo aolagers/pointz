@@ -30,7 +30,7 @@ export const pointsWorkerPool = new WorkerPool<
     WorkerPointsResponse
 >(workerUrl, 4);
 
-type NodeState = "unloaded" | "loading" | "visible" | "error";
+type NodeState = "unloaded" | "loading" | "visible" | "cache" | "error";
 
 export class PointCloudNode {
     parent: PointCloud;
@@ -106,8 +106,36 @@ export class PointCloudNode {
         return angle;
     }
 
-    setState(state: NodeState) {
-        this.state = state;
+    setState(set_to: NodeState): NodeState {
+        const err = () => new Error(`Invalid state change ${this.state} => ${set_to}`);
+        switch (this.state) {
+            case "unloaded":
+                if (set_to === "loading") {
+                    return (this.state = set_to);
+                }
+                throw err();
+            case "loading":
+                if (set_to === "visible" || set_to === "error") {
+                    return (this.state = set_to);
+                }
+                throw err();
+            case "error":
+                if (set_to === "loading" || set_to === "unloaded") {
+                    return (this.state = set_to);
+                }
+                throw err();
+            case "visible":
+                // TODO: visible nodes should always go to cahce first
+                if (set_to === "cache" || set_to === "unloaded") {
+                    return (this.state = set_to);
+                }
+                throw err();
+            case "cache":
+                if (set_to === "visible" || set_to === "unloaded") {
+                    return (this.state = set_to);
+                }
+                throw err();
+        }
     }
 
     async load(viewer: Viewer) {
