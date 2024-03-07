@@ -21,11 +21,20 @@
                 right: 20px;
                 text-align: right;
             }
+            #sliders {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+            }
         </style>
     </head>
 
     <body>
         <div id="debug">debug</div>
+        <div id="sliders">
+            <input id="sl1" type="range" min="-100" max="100" value="0" /> <br />
+            <input id="sl2" type="range" min="-100" max="100" value="0" />
+        </div>
         <script type="module" src="/src/index.ts"></script>
     </body>
 </html>

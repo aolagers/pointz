@@ -4,11 +4,18 @@ attribute uint classification;
 attribute vec3 color;
 
 uniform float ptSize;
+uniform float uCustom1;
+uniform float uCustom2;
 
 flat varying vec3 rgbColor;
 flat varying uint cls;
 
+flat varying float custom1;
+flat varying float custom2;
+
 flat varying vec2 mouse;
+
+flat varying float depth;
 
 void main() {
     cls = classification;
@@ -19,11 +26,13 @@ void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vec4 screenPosition = projectionMatrix * mvPosition;
 
-    vec2 screenNorm = mvPosition.xy;
-
     float dist = distance(cameraPosition, position);
 
-    gl_PointSize = max(ptSize, 150.0/dist);
+    depth = dist;
+    custom1 = uCustom1;
+    custom2 = uCustom2;
+
+    gl_PointSize = max(ptSize, 150.0/dist) + uCustom1/10.0;
 
     gl_Position = screenPosition;
 
@@ -34,8 +43,4 @@ void main() {
     if (mDist < 0.01) {
         gl_PointSize = 2.0 + gl_PointSize * 2.0;
     }
-
-    //if (gl_FragDepth < 0.5) {
-        //gl_PointSize = 1.0;
-    //}
 }
