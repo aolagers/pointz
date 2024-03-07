@@ -19,4 +19,7 @@ const wasmInterceptor = {
 
 export default defineConfig({
     plugins: [glsl(), wasmInterceptor],
+    test: {
+        includeSource: ["src/**/*.ts"],
+    },
 });
