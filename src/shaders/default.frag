@@ -1,8 +1,8 @@
 uniform vec3 uColor;
 
-flat in uint cls;
+flat in int vClass;
 in vec2 mouse;
-in vec3 rgbColor;
+in vec4 rgbColor;
 
 in float fintensity;
 
@@ -22,6 +22,7 @@ const vec3 CLASS_COLORS[N_CLASSES] = vec3[](
 
 void main() {
 
+    uint cls = uint(vClass);
     // classification color
     if (cls == 0u) {
         FragColor = vec4(0.5, 0.25, 0.1, 1.0);
@@ -37,7 +38,14 @@ void main() {
     }
 
     // TODO: replace ugly hack by passing material id in some other way
+    //float alpha = 1.0;
     float alpha = 0.998;
+
+#if defined(PICK)
+        FragColor = rgbColor; 
+        //FragColor = vec4(1.0, 1.0, 0.0, rgbColor.a); 
+        return;
+#endif
 
     if (COLOR_MODE == 0) {
         // intensity
@@ -47,7 +55,7 @@ void main() {
         FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], alpha);
     } else if (COLOR_MODE == 2) {
         // RGB
-        FragColor = vec4(rgbColor, alpha);
+        FragColor = vec4(rgbColor.rgb, alpha);
     } else {
         FragColor = vec4(0.0, 0.0, 1.0, alpha);
     }

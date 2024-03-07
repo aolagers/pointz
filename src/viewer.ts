@@ -3,10 +3,12 @@ import {
     Clock,
     Color,
     DepthTexture,
+    Frustum,
     Line,
     LineBasicMaterial,
     LinearSRGBColorSpace,
     Mesh,
+    MeshBasicMaterial,
     NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
@@ -15,6 +17,7 @@ import {
     RGBAFormat,
     Raycaster,
     Scene,
+    SphereGeometry,
     UnsignedIntType,
     Vector2,
     Vector3,
@@ -25,7 +28,7 @@ import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, printVec } from "./utils";
+import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
@@ -53,6 +56,8 @@ const debug = {
     frames: "",
 };
 
+let lastlog = Date.now();
+
 const raycaster = new Raycaster();
 raycaster.params.Points.threshold = 0.5;
 
@@ -73,6 +78,7 @@ export class Viewer {
     frame: number = 0;
     frameTime: number = 0;
     renderTarget: WebGLRenderTarget;
+    pickTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
@@ -83,23 +89,32 @@ export class Viewer {
     renderRequested: boolean;
 
     edlMaterial: EDLMaterial;
+    marker: Mesh;
+
+    clicked: boolean;
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
+        (window as any).viewer = this;
+
         this.width = width;
         this.height = height;
 
         this.renderRequested = false;
+        this.clicked = false;
 
         this.renderer = new WebGLRenderer({
             canvas: canvasElement,
-            antialias: false,
-            alpha: false,
+            // antialias: false,
+            // alpha: false,
+            // premultipliedAlpha: true,
             stencil: false,
             powerPreference: "high-performance",
             logarithmicDepthBuffer: false,
         });
 
-        this.renderer.autoClearColor = false;
+        this.renderer.setClearColor(new Color(0x000000), 0.0);
+        // this.renderer.setClearAlpha(0.0);
+        // this.renderer.autoClearColor = false;
 
         this.renderer.setSize(this.width, this.height, false);
 
@@ -113,6 +128,12 @@ export class Viewer {
             depthTexture: new DepthTexture(this.width, this.height, UnsignedIntType),
         });
 
+        this.pickTarget = new WebGLRenderTarget(pickWindow, pickWindow, {
+            format: RGBAFormat,
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+        });
+
         this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -100, 50);
@@ -123,9 +144,6 @@ export class Viewer {
         this.controls.dampingFactor = 0.2;
 
         this.scene = new Scene();
-        // this.scene.background = new Color(0x505050);
-        // this.scene.background = new Color(0x4485b4);
-        this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace).convertSRGBToLinear();
         this.scene.add(line);
 
         this.stats = new Stats();
@@ -141,6 +159,18 @@ export class Viewer {
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
+        this.marker = new Mesh(
+            new SphereGeometry(0.5, 16, 16),
+            new MeshBasicMaterial({ color: "red", opacity: 0.8, transparent: true, wireframe: false }),
+        );
+        this.scene.add(this.marker);
+
+        // this.scene.background = new Color(0x505050);
+        // this.scene.background = new Color(0x4485b4);
+        //this.scene.background = new Color().setStyle("rgb(80,120,180)", LinearSRGBColorSpace).convertSRGBToLinear();
+        // this.sceneOrtho.background = new Color()
+        //     .setStyle("rgb(80,120,180)", LinearSRGBColorSpace)
+        //     .convertSRGBToLinear();
         this.setSize(this.width, this.height);
     }
 
@@ -171,9 +201,15 @@ export class Viewer {
             this.requestRender();
         });
 
+        document.addEventListener("mousedown", (ev) => {
+            this.clicked = true;
+            this.requestRender();
+        });
+
         document.addEventListener("dragover", (ev) => {
             ev.preventDefault();
         });
+
         document.addEventListener("drop", (ev) => {
             console.log("dropped", ev);
             ev.preventDefault();
@@ -234,7 +270,6 @@ export class Viewer {
         /*
         if (this.objects.length > 0) {
             let hit = false;
-            raycaster.setFromCamera(pointer, this.camera);
             const intersections = raycaster.intersectObjects(this.objects, false);
 
             for (const intersection of intersections) {
@@ -263,7 +298,7 @@ export class Viewer {
 
         // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
-        this.renderer.clear();
+        // this.renderer.setRenderTarget(null);
         this.renderer.render(this.scene, this.camera);
 
         // render to screen quad
@@ -271,7 +306,41 @@ export class Viewer {
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
         // Picking
-        if (true) {
+        if (this.clicked) {
+            raycaster.setFromCamera(pointer, this.camera);
+            const ray = raycaster.ray;
+            /*
+            const frustum = new Frustum();
+            frustum.setFromProjectionMatrix(this.camera.projectionMatrix);
+            frustum.planes.forEach((plane) => {
+                plane.applyMatrix4(this.camera.matrixWorld);
+            });
+            */
+
+            let vi = 0;
+            for (const pc of this.pclouds) {
+                for (const node of pc.loadedNodes) {
+                    const bbox = createCubeBoundsBox(pc.octreeInfo.cube, node.nodeName, pc.offset);
+                    const visible = ray.intersectsBox(bbox);
+                    console.log("RAY", ray, bbox.getCenter(new Vector3()), visible, pc.octreeInfo.cube, pc.offset);
+                    const attr = node.geometry.getAttribute("visibleIndex");
+
+                    if (visible) {
+                        for (let pidx = 0; pidx < attr.count; pidx++) {
+                            attr.setW(pidx, vi);
+                        }
+
+                        node.visibleIndex = vi;
+                        console.log("SET", node, vi);
+                        vi++;
+                    } else {
+                        node.visibleIndex = -1;
+                    }
+                    attr.needsUpdate = true;
+                }
+            }
+
+            // limit rendering to area around mouse
             this.camera.setViewOffset(
                 this.width,
                 this.height,
@@ -285,10 +354,95 @@ export class Viewer {
                 o.material = PointCloud.pickMaterial;
             }
 
+            // render to pick buffer
+            this.renderer.setRenderTarget(this.pickTarget);
+            // this.renderer.clear();
+            this.renderer.render(this.scene, this.camera);
+
+            let pbuf = new Uint8Array(4 * pickWindow * pickWindow);
+
+            // if (Date.now() - lastlog > 1000)
+            if (true) {
+                this.renderer.readRenderTargetPixels(this.pickTarget, 0, 0, pickWindow, pickWindow, pbuf);
+                // console.log(pbuf.slice(0, 4).join("/"), pbuf.slice(4, 8).join("/"));
+                lastlog = Date.now();
+                let closest = Infinity;
+                let best = 0;
+
+                for (let i = 0; i < pbuf.length / 4; i++) {
+                    const x = i % pickWindow;
+                    const y = Math.floor(i / pickWindow);
+                    const sqdist = (x - pickWindow / 2) ** 2 + (y - pickWindow / 2) ** 2;
+
+                    const r = pbuf[i * 4 + 0];
+                    const g = pbuf[i * 4 + 1];
+                    const b = pbuf[i * 4 + 2];
+                    const a = pbuf[i * 4 + 3];
+                    if ((r || g || b) && a != 255) {
+                        if (sqdist < closest) {
+                            closest = sqdist;
+                            best = i;
+                        }
+                    }
+                }
+
+                if (closest < Infinity) {
+                    // const x = best % pickWindow;
+                    // const y = Math.floor(best / pickWindow);
+                    const vals = pbuf.slice(best * 4, best * 4 + 4);
+                    const r = pbuf[best * 4 + 0];
+                    const g = pbuf[best * 4 + 1];
+                    const b = pbuf[best * 4 + 2];
+                    const a = pbuf[best * 4 + 3];
+                    const idx = r * 256 * 256 + g * 256 + b;
+                    let n = null;
+                    let pchit = null;
+                    for (const pc of this.pclouds) {
+                        for (const node of pc.loadedNodes) {
+                            // console.log(node.visibleIndex);
+                            if (node.visibleIndex === a) {
+                                n = node;
+                                pchit = pc;
+                            }
+                        }
+                    }
+                    console.log("HIT!!", a, vals.join("/"), "frustum:", vi);
+
+                    if (n && pchit) {
+                        const attrs = n.geometry.getAttribute("position");
+
+                        const X = attrs.array[idx * 3 + 0];
+                        const Y = attrs.array[idx * 3 + 1];
+                        const Z = attrs.array[idx * 3 + 2];
+
+                        // const cent = n.bounds.getCenter(new Vector3());
+                        // cent.sub(pchit.offset);
+                        // console.log("CENTER", cent);
+
+                        this.marker.position.set(X, Y, Z);
+
+                        /*
+                        n.bounds.getCenter(this.marker.position);
+
+                        this.marker.position.sub(pchit.offset);
+
+                        console.log("move", this.marker.position);
+                        */
+
+                        console.log("HIT", a, idx, n, attrs, X, Y, Z);
+                    }
+                }
+            }
+
+            // render to output canvas
+
+            /*
             this.renderer.setRenderTarget(null);
             this.renderer.setViewport(0, 0, pickWindow, pickWindow);
             this.renderer.render(this.scene, this.camera);
+            */
 
+            // reset rendering
             this.camera.clearViewOffset();
             this.renderer.setViewport(0, 0, this.width, this.height);
 
@@ -296,6 +450,9 @@ export class Viewer {
                 o.material = PointCloud.material;
             }
         }
+
+        // this.renderer.render(this.scene, this.camera);
+        // this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
         this.gpuPanel.endQuery();
 
@@ -313,7 +470,7 @@ export class Viewer {
                 `pts: ${(this.renderer.info.render.points / 1000).toFixed(0)}k`;
         }
 
-        debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms}`;
+        debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
@@ -328,6 +485,11 @@ export class Viewer {
         this.renderer.info.reset();
         const frameEnd = performance.now();
         this.frameTime = frameEnd - frameStart;
+
+        if (this.clicked) {
+            this.requestRender();
+            this.clicked = false;
+        }
     }
 
     renderLoop() {

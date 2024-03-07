@@ -27,10 +27,6 @@ export class WorkerPool<R extends Record<string, any>> {
             };
             this.pool.push(w);
         }
-
-        for (const w of this.pool) {
-            console.log("worker", w.id, "busy", w.busy);
-        }
     }
 
     private onTaskFinished(w: Wrapper) {

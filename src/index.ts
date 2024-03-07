@@ -10,7 +10,7 @@ const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
 viewer.init();
 
-viewer.requestRender();
+//viewer.requestRender();
 // viewer.renderLoop();
 
 viewer.addDemo();
