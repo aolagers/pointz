@@ -206,7 +206,8 @@ export class PointCloud {
                 this.loadedNodes.push(pcn);
 
                 this.viewer.addObject(pcn.pco);
-                this.viewer.scene.add(pcn.debugMesh);
+
+                this.viewer.addExtraStuff(pcn.debugMesh);
 
                 this.pointsLoaded += pointData.pointCount;
 
