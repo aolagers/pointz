@@ -63,6 +63,11 @@ export function loadDemo(viewer: Viewer) {
         tightBounds.expandByPoint(new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]));
     }
 
+    const cnt = tightBounds.getCenter(new Vector3());
+    const sz = tightBounds.getSize(new Vector3());
+    const halfSize = Math.max(sz.x, sz.y, sz.z) / 2;
+    const cubeBounds = new Box3(cnt.clone().subScalar(halfSize), cnt.clone().addScalar(halfSize));
+
     geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
     geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
     geometry.setAttribute("intensity", new Uint16BufferAttribute(ints, 1, true));
@@ -72,12 +77,12 @@ export function loadDemo(viewer: Viewer) {
     ptIndexAttribute.gpuType = IntType;
     geometry.setAttribute("ptIndex", ptIndexAttribute);
 
-    const pc = new PointCloud(viewer, "demodata", "", tightBounds, tightBounds, offset, { pages: {}, nodes: {} }, 1.0);
+    const pc = new PointCloud(viewer, "demodata", "", tightBounds, cubeBounds, offset, { pages: {}, nodes: {} }, 1.0);
 
     pc.isDemo = true;
 
     pc.loadedNodes.push(
-        new PointCloudNode(pc, [0, 0, 0, 0], geometry, tightBounds, getChunkID(), pc.rootSpacing, indice)
+        new PointCloudNode(pc, [0, 0, 0, 0], geometry, cubeBounds, getChunkID(), pc.rootSpacing, indice)
     );
 
     return pc;
