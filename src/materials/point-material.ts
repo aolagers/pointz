@@ -25,7 +25,9 @@ class MaterialPool {
     }
 
     returnMaterial(mat: Material | Material[]) {
-        if (mat instanceof PointMaterial) {
+        if (mat === DEFAULT_POINT_MATERIAL) {
+            // no-op
+        } else if (mat instanceof PointMaterial) {
             this.stash.push(mat);
         } else {
             throw new Error("Expected a PointMaterial");
@@ -92,3 +94,5 @@ export class PointMaterial extends ShaderMaterial {
         this.needsUpdate = true;
     }
 }
+
+export const DEFAULT_POINT_MATERIAL = new PointMaterial(false);
