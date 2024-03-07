@@ -131,11 +131,23 @@ export class Viewer {
         this.setSize(this.width, this.height);
     }
 
+    loadHandle = 0;
+
     init() {
         document.body.appendChild(this.stats.dom);
 
         this.econtrols.onChange = () => {
             debug.camera = printVec(this.camera.position);
+
+            if (this.loadHandle > 0) {
+                clearTimeout(this.loadHandle);
+            }
+
+            this.loadHandle = setTimeout(() => {
+                this.loadMoreNodes();
+                this.loadHandle = 0;
+            }, 200);
+
             this.requestRender();
         };
 
@@ -195,11 +207,6 @@ export class Viewer {
         });
 
         this.econtrols.init();
-
-        // TODO: base on updates, not on timer
-        // setInterval(() => {
-        //     this.updateVisibile();
-        // }, 1000);
 
         this.labelRenderer.setSize(this.width, this.height);
         this.labelRenderer.domElement.style.position = "absolute";
