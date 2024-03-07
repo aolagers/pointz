@@ -6,20 +6,22 @@ uniform sampler2D depthTexture;
 uniform float cameraNear;
 uniform float cameraFar;
 
-varying vec2 vUv;
+in vec2 vUv;
+
+out vec4 FragColor;
 
 float readDepth(sampler2D depthSampler, vec2 coord) {
-    float fragCoordZ = texture2D(depthSampler, coord).x;
+    float fragCoordZ = texture(depthSampler, coord).x;
     float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
     return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
 }
 
 void main() {
-    vec4 color = texture2D(colorTexture, vUv);
+    vec4 color = texture(colorTexture, vUv);
 
     if (color.a == 1.0) {
         // material is not pointcloud, skip EDL
-        gl_FragColor = vec4(color.xyz, 1.0);
+        FragColor = vec4(color.xyz, 1.0);
         return;
     }
 
@@ -52,10 +54,10 @@ void main() {
         //depth3 > depth+dz ||
         //depth4 > depth+dz
     if (ddif > 3.000 ) {
-        gl_FragColor = vec4(color.xyz * max(0.3, (1.0 - ddif/50.0)), 1.0);
+        FragColor = vec4(color.xyz * max(0.3, (1.0 - ddif/50.0)), 1.0);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
-        gl_FragColor = vec4(color.xyz, 1.0);
+        FragColor = vec4(color.xyz, 1.0);
     }
 
     // Fog

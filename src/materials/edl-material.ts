@@ -5,6 +5,7 @@ import edlVert from "../shaders/edl.vert";
 
 export function createEDLMaterial(colorTexture: Texture, depthTexture: DepthTexture) {
     const edlMaterial = new ShaderMaterial({
+        glslVersion: "300 es",
         uniforms: {
             cameraNear: { value: CAMERA_NEAR },
             cameraFar: { value: CAMERA_FAR },
