@@ -175,7 +175,7 @@ export class EarthControls {
                 let dy = this.prevAngle.y - ay;
 
                 const cameraDir = this.camera.getWorldDirection(new Vector3());
-                const pitch = Math.acos(cameraDir.dot(unitZ));
+                const pitch = cameraDir.angleTo(unitZ);
 
                 // limit pitch angle to 0..PI to prevent flipping upside down
                 if (pitch + dy > Math.PI) {
@@ -215,7 +215,7 @@ export class EarthControls {
         if (this.touchCount == 2) {
             const pinchDist = new Vector2().subVectors(this.pointer, this.secondPointer).length();
 
-            const eps = 0.05;
+            const eps = 0.02;
             if (this.prevPinch > 0) {
                 if (pinchDist > this.prevPinch) {
                     this.zoomTo(this.pivot.position, 1 - eps);
