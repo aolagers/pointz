@@ -149,6 +149,8 @@ export class Viewer {
     async addLAZ(what: string | File) {
         const pc = await PointCloud.loadLAZ(this, what);
         this.pclouds.push(pc);
+
+        console.log("NODES", pc.hierarchy.nodes);
         pc.load();
         const cube = Viewer.createBounds(pc);
         this.scene.add(cube);

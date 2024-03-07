@@ -64,7 +64,6 @@ function getData(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: 
                 geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
                 const classes = Array(data.pointCount).fill(2);
                 geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
-                worker.terminate();
                 resolve({
                     geometry: geometry,
                 });
@@ -117,16 +116,34 @@ export class PointCloud {
     async load() {
         const worker = new Worker(workerUrl, { type: "module" });
 
-        const N = "0-0-0-0";
-        console.log("HIER", this.hierarchy.nodes, this.hierarchy.nodes[N]);
-        const data = await getData(worker, this.source, this.hierarchy.nodes[N]!, this.offset.toArray());
+        const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number));
 
-        const pcn = new PointCloudNode(N, data.geometry, this.bounds);
+        toLoad.sort((a: number[], b: number[]) => {
+            for (let i = 0; i < 4; i++) {
+                if (a[i]! < b[i]!) {
+                    return -1;
+                } else if (a[i]! > b[i]!) {
+                    return 1;
+                }
+            }
+            return 0;
+        });
 
-        this.loadedNodes.push(pcn);
+        console.log({ toLoad, l: toLoad.length });
+        for (const N of toLoad.slice(0, 100).map((a) => a.join("-"))) {
+            console.log("LOAD", N);
+            const node = this.hierarchy.nodes[N]!;
+            const data = await getData(worker, this.source, node, this.offset.toArray());
 
-        this.viewer.scene.add(pcn.pco);
-        this.viewer.objects.push(pcn.pco);
+            const pcn = new PointCloudNode(N, data.geometry, this.bounds);
+
+            this.loadedNodes.push(pcn);
+
+            this.viewer.scene.add(pcn.pco);
+            this.viewer.objects.push(pcn.pco);
+
+            await new Promise((resolve) => setTimeout(resolve, 200));
+        }
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {

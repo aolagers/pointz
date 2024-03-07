@@ -81,7 +81,6 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
 
     if (e.data.command === "load-node") {
         const node = e.data.node;
-        console.log("LOAD NODE", e.data);
 
         const view = await Copc.loadPointDataView(getter, copc, node);
 
