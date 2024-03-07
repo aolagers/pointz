@@ -12,13 +12,11 @@ import {
 import { Viewer } from "./viewer";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
-import { PointMaterial } from "./materials/point-material";
+import { pickMaterialPool } from "./materials/point-material";
 
 const raycaster = new Raycaster();
 
 const PICK_WINDOW = 31;
-
-const pickMaterial = new PointMaterial(true);
 
 const pickRenderTarget = new WebGLRenderTarget(PICK_WINDOW, PICK_WINDOW, {
     format: RGBAFormat,
@@ -67,7 +65,10 @@ export function getMouseIntersection(
     // TODO: only matching objects
     for (const o of viewer.pointObjects) {
         o.userData.pointMaterial = o.material;
-        o.material = pickMaterial;
+
+        const pmat = pickMaterialPool.getMaterial();
+        pmat.updateNodeIndex(o.userData.nodeIndex);
+        o.material = pmat;
     }
 
     // render to pick buffer
@@ -111,8 +112,7 @@ export function getMouseIntersection(
         let pchit = null;
         for (const pc of viewer.pointClouds) {
             for (const lnode of pc.loadedNodes) {
-                // console.log(node.visibleIndex);
-                if (lnode.visibleIndex === a) {
+                if (lnode.pcIndex === a) {
                     nodehit = lnode;
                     pchit = pc;
                 }
@@ -154,6 +154,7 @@ export function getMouseIntersection(
     renderer.setViewport(0, 0, viewer.width, viewer.height);
 
     for (const o of viewer.pointObjects) {
+        pickMaterialPool.returnMaterial(o.material);
         o.material = o.userData.pointMaterial;
     }
 

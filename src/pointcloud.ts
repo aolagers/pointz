@@ -57,11 +57,7 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
     geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
     geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
-    const vis = new Uint8Array(data.pointCount);
     const cid = ++chunkId;
-    vis.fill(cid);
-    const visibleIndexAttribute = new Uint8BufferAttribute(vis, 1, true);
-    geometry.setAttribute("visibleIndex", visibleIndexAttribute);
 
     const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
     classificationAttribute.gpuType = IntType;
@@ -270,13 +266,7 @@ export class PointCloud {
         geometry.setAttribute("intensity", new Uint16BufferAttribute(ints, 1, true));
         geometry.setAttribute("classification", new Int32BufferAttribute(classes, 1));
 
-        const vis = new Uint8Array(classes.length);
-
         const cid = ++chunkId;
-        vis.fill(cid);
-        const visibleIndex = new Uint8BufferAttribute(vis, 1, true);
-        // visibleIndex.gpuType = IntType;
-        geometry.setAttribute("visibleIndex", visibleIndex);
 
         const ptIndexAttribute = new Int32BufferAttribute(indices, 1);
         ptIndexAttribute.gpuType = IntType;
