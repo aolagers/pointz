@@ -7,10 +7,6 @@ const unitZ = new Vector3(0, 0, 1);
 
 // see: https://www.redblobgames.com/making-of/draggable/
 
-// TODO: remove allocation from move handler
-// TODO: try zooming to mouse position, not center
-// TODO: run animations
-
 export class EarthControls {
     camera: PerspectiveCamera;
     domElement: HTMLCanvasElement;
@@ -46,29 +42,31 @@ export class EarthControls {
         this.domElement.addEventListener("pointerup", (e) => this.pointerEnd(e));
         this.domElement.addEventListener("pointercancel", (e) => this.pointerEnd(e));
         this.domElement.addEventListener("pointermove", (e) => this.pointerMove(e));
+
         this.domElement.addEventListener("wheel", (e) => {
-            this.zoom(e.deltaY);
             e.preventDefault();
+
+            const deltaY = e.deltaY;
+            const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
+
+            if (pt) {
+                this.zoomTo(pt.position, -deltaY / 30);
+            } else {
+                // const step = Math.sign(deltaY) * Math.sqrt(Math.abs(deltaY));
+                // const dir = this.camera.getWorldDirection(new Vector3());
+                // this.camera.position.add(dir.multiplyScalar(-step));
+            }
+            this.onChange?.();
         });
-
-        // this.domElement.addEventListener("touchstart", (e) => e.preventDefault());
-    }
-
-    zoom(deltaY: number) {
-        const step = Math.sign(deltaY) * Math.sqrt(Math.abs(deltaY));
-        console.log("zoom", deltaY);
-        const dir = this.camera.getWorldDirection(new Vector3());
-        this.camera.position.add(dir.multiplyScalar(-step));
-        this.onChange?.();
     }
 
     init() {
         this.viewer.addExtraStuff(this.pivot);
     }
 
-    zoomTo(target: Vector3) {
+    zoomTo(target: Vector3, amount: number) {
         const camToTarget = new Vector3().subVectors(target, this.camera.position);
-        this.camera.position.add(camToTarget.multiplyScalar(0.5));
+        this.camera.position.add(camToTarget.multiplyScalar(amount));
     }
 
     pointerStart(e: PointerEvent) {
@@ -101,7 +99,7 @@ export class EarthControls {
         }
 
         if (Date.now() - this.lastClick < 200) {
-            this.zoomTo(pt.position);
+            this.zoomTo(pt.position, 0.5);
             return;
         }
 
@@ -179,8 +177,8 @@ export class EarthControls {
 
             this.camera.position.copy(newPos);
 
-            this.camera.rotateOnWorldAxis(unitZ, dx);
             this.camera.rotateOnWorldAxis(right, dy);
+            this.camera.rotateOnWorldAxis(unitZ, dx);
 
             this.prevAngle.set(ax, ay);
         }
