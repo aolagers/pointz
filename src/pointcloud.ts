@@ -1,6 +1,6 @@
 import { BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, Uint8BufferAttribute, Vector3 } from "three";
 import workerUrl from "./worker?worker&url";
-import type { WorkerRequest, WorkerResponse } from "./worker";
+import type { WorkerInfoRequest, WorkerInfoResponse, WorkerPointsRequest, WorkerPointsResponse, LazSource } from "./worker";
 
 export class PointCloudNode {
     nodeName: string;
@@ -14,12 +14,32 @@ export class PointCloudNode {
     }
 }
 
+function getInfo(worker: Worker, source: LazSource) {
+    return new Promise<WorkerInfoResponse>((resolve, reject) => {
+        worker.onmessage = (e) => {
+            console.log("FROM WORKER", e.data);
+            const data = e.data as WorkerInfoResponse;
+            if (data.msgType === "info") {
+                resolve(data);
+            } else {
+                reject("not info");
+            }
+        };
+
+        const req: WorkerInfoRequest = {
+            command: "info",
+            source: source,
+        };
+
+        worker.postMessage(req);
+    });
+}
+
 export class PointCloud {
     // geometry: BufferGeometry;
     name: string;
     source: string | File;
     offset: Vector3;
-    worker: Worker | undefined;
     bounds: { min: Vector3; max: Vector3 };
 
     nodes: PointCloudNode[];
@@ -35,7 +55,8 @@ export class PointCloud {
     }
 
     static async loadLAZ(source: string | File) {
-        const { msg: info, worker } = await PointCloud.loadInfo(source);
+        const info = await PointCloud.loadInfo(source);
+
 
         if (info.msgType !== "info") {
             throw new Error("not info");
@@ -49,12 +70,12 @@ export class PointCloud {
 
         const pc = new PointCloud("pc-1", source, bounds, offset);
 
-        pc.worker = worker;
+        const worker = new Worker(workerUrl, { type: "module" });
 
         return new Promise<PointCloud>((resolve, reject) => {
             worker.onmessage = (e) => {
                 console.log("FROM WORKER", e.data);
-                const data = e.data as WorkerResponse;
+                const data = e.data as WorkerPointsResponse;
                 if (data.msgType === "points") {
                     const geometry = new BufferGeometry();
                     geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
@@ -65,13 +86,14 @@ export class PointCloud {
                     // geometry.setAttribute("classification", new Uint8BufferAttribute(data.classifications, 1));
                     const rootNode = new PointCloudNode("0-0-0-0", geometry, bounds);
                     pc.nodes.push(rootNode);
+                    worker.terminate();
                     resolve(pc);
                 } else {
                     reject("not points");
                 }
             };
 
-            const req: WorkerRequest = {
+            const req: WorkerPointsRequest = {
                 command: "load-node",
                 source: source,
                 node: info.hierarchy.nodes["0-0-0-0"]!,
@@ -82,27 +104,11 @@ export class PointCloud {
         });
     }
 
-    static async loadInfo(source: string | File) {
+    static async loadInfo(source: LazSource) {
         const worker = new Worker(workerUrl, { type: "module" });
-
-        return new Promise<{ msg: WorkerResponse; worker: Worker }>((resolve, reject) => {
-            worker.onmessage = (e) => {
-                console.log("FROM WORKER", e.data);
-                const data = e.data as WorkerResponse;
-                if (data.msgType === "info") {
-                    resolve({ msg: data, worker: worker });
-                } else {
-                    reject("not info");
-                }
-            };
-
-            const req: WorkerRequest = {
-                command: "info",
-                source: source,
-            };
-
-            worker.postMessage(req);
-        });
+        const info = await getInfo(worker, source);
+        worker.terminate();
+        return info;
     }
 
     static loadDemo() {

@@ -1,43 +1,45 @@
 import { Copc } from "copc";
 import type { Copc as CopcType } from "copc";
 
+export type LazSource = string | File;
+
+export type PointCloudHeader = Pick<CopcType["header"], "min" | "max" | "offset">;
+
+export type WorkerInfoRequest = {
+    command: "info";
+    source: LazSource;
+};
+
+export type WorkerInfoResponse = {
+    msgType: "info";
+    header: PointCloudHeader;
+    hierarchy: Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
+};
+
+type WorkerRequest = WorkerInfoRequest | WorkerPointsRequest;
+
+export type WorkerPointsRequest = {
+    command: "load-node";
+    source: LazSource;
+    offset: number[];
+    node: {
+        pointCount: number;
+        pointDataOffset: number;
+        pointDataLength: number;
+    };
+};
+
+export type WorkerPointsResponse = {
+    msgType: "points";
+    pointCount: number;
+    positions: Float32Array;
+    colors: Uint8Array;
+    classifications: Uint8Array;
+};
+
 function log(...args: any[]) {
     console.log("%c!! WORKER !!", "color: cyan; font-weight: bold;", ...args);
 }
-
-export type PointCloudHeader = CopcType["header"];
-
-export type WorkerResponse =
-    | {
-          msgType: "info";
-          header: PointCloudHeader;
-          hierarchy: Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
-      }
-    | {
-          msgType: "points";
-          pointCount: number;
-          positions: Float32Array;
-          colors: Uint8Array;
-          classifications: Uint8Array;
-      };
-
-type LazSource = string | File;
-
-export type WorkerRequest =
-    | {
-          command: "info";
-          source: LazSource;
-      }
-    | {
-          command: "load-node";
-          source: LazSource;
-          offset: number[];
-          node: {
-              pointCount: number;
-              pointDataOffset: number;
-              pointDataLength: number;
-          };
-      };
 
 function getGetter(source: LazSource) {
     if (typeof source === "string") {
@@ -62,7 +64,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
 
         const copcHierarchy = await Copc.loadHierarchyPage(getter, copc.info.rootHierarchyPage);
 
-        const response: WorkerResponse = {
+        const response: WorkerInfoResponse = {
             msgType: "info",
             header: copc.header,
             hierarchy: copcHierarchy,
@@ -116,7 +118,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             classifications[i] = 0;
         }
 
-        const response: WorkerResponse = {
+        const response: WorkerPointsResponse = {
             msgType: "points",
             pointCount: view.pointCount,
             positions,
