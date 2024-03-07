@@ -375,7 +375,7 @@ export class Viewer {
         // check node visibility
         for (const pc of this.pointClouds) {
             for (const node of pc.nodes) {
-                if (frustum.intersectsBox(node.bounds)) {
+                if (node.depth === 0 || frustum.intersectsBox(node.bounds)) {
                     pq.push(node);
                 } else {
                     nonVisibleNodes.push(node);
@@ -446,7 +446,7 @@ export class Viewer {
             pointsWorkerPool.rescore((x) => {
                 const score = x.info.node.estimateNodeError(this.camera);
 
-                if (score > ERROR_LIMIT && visiblePoints < POINT_BUDGET) {
+                if (x.info.node.depth === 0 || (score > ERROR_LIMIT && visiblePoints < POINT_BUDGET)) {
                     visiblePoints += x.info.node.pointCount;
                     return score;
                 } else {
