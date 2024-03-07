@@ -102,7 +102,8 @@ export class Viewer {
             debug.slider2 = sliders[1].toFixed(2);
             updateValues(sliders[0], sliders[1]);
         });
-        window.addEventListener("resize", this.onWindowResize);
+
+        window.addEventListener("resize", () => this.onWindowResize());
 
         this.controls.addEventListener("change", (e) => {
             debug.target = printVec(e.target.target);
@@ -181,10 +182,10 @@ export class Viewer {
 
     onWindowResize() {
         if (!this.camera || !this.renderer) return;
+        console.log("resize!", window.innerWidth, window.innerHeight);
 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
-
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
