@@ -3,6 +3,8 @@ uniform vec2 uMouse;
 attribute uint classification;
 attribute vec3 color;
 
+attribute float pointSize;
+
 flat varying vec3 rgbColor;
 flat varying uint cls;
 

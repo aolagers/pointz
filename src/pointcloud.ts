@@ -12,8 +12,8 @@ export class PointCloud {
         this.offset = offset;
     }
 
-    static async loadLAZ(url: string) {
-        const copcData = await loadCOPC(url);
+    static async loadLAZ(what: string | File) {
+        const copcData = await loadCOPC(what);
 
         const geometry = new BufferGeometry();
 
@@ -77,7 +77,7 @@ export class PointCloud {
     }
 }
 
-async function loadCOPC(url: string) {
+async function loadCOPC(what: string | File) {
     const worker = new Worker(workerUrl, { type: "module" });
 
     return new Promise<{
@@ -97,7 +97,11 @@ async function loadCOPC(url: string) {
                 colors: e.data.colors,
             });
         };
-        worker.postMessage(url);
+        if (typeof what === "string") {
+            worker.postMessage({ type: "url", url: what });
+        } else {
+            worker.postMessage({ type: "file", file: what });
+        }
     });
 
     /*
