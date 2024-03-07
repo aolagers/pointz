@@ -18,8 +18,8 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
-import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
-import Stats from "three/addons/libs/stats.module.js";
+// import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
+// import Stats from "three/addons/libs/stats.module.js";
 import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 
 import { EarthControls } from "./earth-controls";
@@ -60,8 +60,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     pointClouds: PointCloud[] = [];
 
-    stats: Stats;
-    gpuPanel: GPUStatsPanel;
+    // stats: Stats;
+    // gpuPanel: GPUStatsPanel;
 
     frame = 0;
     frameTime = 0;
@@ -128,10 +128,10 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.scene = new Scene();
 
-        this.stats = new Stats();
-        this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
-        this.stats.addPanel(this.gpuPanel);
-        this.stats.showPanel(0);
+        // this.stats = new Stats();
+        // this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
+        // this.stats.addPanel(this.gpuPanel);
+        // this.stats.showPanel(0);
 
         this.edlMaterial = new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
 
@@ -147,7 +147,7 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     init() {
-        document.body.appendChild(this.stats.dom);
+        // document.body.appendChild(this.stats.dom);
 
         this.econtrols.onChange = (why) => {
             debug.camera = printVec(this.camera.position);
@@ -281,13 +281,13 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.requestRender("loop");
         }
 
-        this.stats.update();
+        // this.stats.update();
         const delta = clock.getDelta();
 
         // this.controls.update(delta);
         this.econtrols.update(delta);
 
-        this.gpuPanel.startQuery();
+        // this.gpuPanel.startQuery();
 
         // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
@@ -298,7 +298,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.renderer.setRenderTarget(null);
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
-        this.gpuPanel.endQuery();
+        // this.gpuPanel.endQuery();
 
         this.frame++;
 
