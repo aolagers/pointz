@@ -41,24 +41,26 @@ class World {
         this.objects.push(pco1);
         this.scene.add(pco1);
 
-        const lion = await PointCloud.loadLion();
-        this.pclouds.push(lion);
-        const pco2 = new Points(lion.geometry, pointMaterial);
+        const testLaz = await PointCloud.loadLAZ();
+        this.pclouds.push(testLaz);
+        const pco2 = new Points(testLaz.geometry, pointMaterial);
         this.objects.push(pco2);
         this.scene.add(pco2);
 
-        if (lion.bounds) {
+        if (testLaz.bounds) {
             const size = [
-                lion.bounds.max.x - lion.bounds.min.x,
-                lion.bounds.max.y - lion.bounds.min.y,
-                lion.bounds.max.z - lion.bounds.min.z,
+                testLaz.bounds.max.x - testLaz.bounds.min.x,
+                testLaz.bounds.max.y - testLaz.bounds.min.y,
+                testLaz.bounds.max.z - testLaz.bounds.min.z,
             ];
             console.log("lion", size);
             const boundGeom = new BoxGeometry(...size);
             const mat = new MeshBasicMaterial({ color: "red", wireframe: true });
             const cube = new Mesh(boundGeom, mat);
             const halfSize = size.map((x) => x / 2);
-            cube.position.copy(lion.bounds.min).add(new Vector3(...halfSize));
+            cube.position
+                .copy(new Vector3().subVectors(testLaz.bounds.min, testLaz.offset))
+                .add(new Vector3(...halfSize));
             this.scene.add(cube);
         }
     }
@@ -72,7 +74,7 @@ export class Viewer {
     constructor() {
         this.renderer = new WebGLRenderer({ antialias: true });
 
-        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10_000);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -100, 50);
         this.camera.lookAt(0, 0, 0);
@@ -124,8 +126,7 @@ export class Viewer {
     }
 
     onWindowResize() {
-        // windowHalfX = window.innerWidth / 2;
-        // windowHalfY = window.innerHeight / 2;
+        if (!this.camera || !this.renderer) return;
 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
@@ -135,9 +136,6 @@ export class Viewer {
 
     onPointerMove(event: PointerEvent) {
         if (event.isPrimary === false) return;
-
-        // mouseX = event.clientX - windowHalfX;
-        // mouseY = event.clientY - windowHalfY;
 
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
