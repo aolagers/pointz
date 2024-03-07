@@ -340,9 +340,13 @@ export class Viewer {
             if (node.state === "unloaded") {
                 console.log("load", node);
                 maxLoads--;
-                node.load(this).then((nd) => {
-                    console.log("node laod finishz", nd);
-                });
+                node.load(this)
+                    .then((nd) => {
+                        console.log("node laod finishz", nd);
+                    })
+                    .catch((e) => {
+                        console.error("oh no, load error", e);
+                    });
             } else {
                 console.log("node already loaded", node.state);
             }

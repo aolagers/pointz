@@ -2,6 +2,8 @@ import { Box3, BoxGeometry, Camera, Frustum, Matrix4, Mesh, MeshBasicMaterial, V
 import { PointCloud } from "./pointcloud";
 import { OctreePath } from "./octree";
 
+const tightBboxMaterial = new MeshBasicMaterial({ color: "lightgreen", wireframe: true });
+
 const redBboxMaterial = new MeshBasicMaterial({ color: "red", wireframe: true });
 const greenBboxMaterial = new MeshBasicMaterial({ color: "green", wireframe: true });
 const blueBboxMaterial = new MeshBasicMaterial({ color: "blue", wireframe: true });
@@ -10,7 +12,7 @@ export function createTightBounds(pc: PointCloud) {
     const size = pc.tightBounds.getSize(new Vector3());
     const halfSize = size.clone().divideScalar(2);
     const boundGeom = new BoxGeometry(...size);
-    const cube = new Mesh(boundGeom, redBboxMaterial);
+    const cube = new Mesh(boundGeom, tightBboxMaterial);
     cube.position.copy(pc.tightBounds.min).sub(pc.offset).add(halfSize);
 
     return cube;

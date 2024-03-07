@@ -6,6 +6,7 @@ import {
     Int32BufferAttribute,
     IntType,
     Mesh,
+    MeshBasicMaterial,
     Points,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
@@ -15,7 +16,7 @@ import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud, getChunkID } from "./pointcloud";
 import { Viewer } from "./viewer";
-import { CopcNodeInfo, LazSource, WorkerInfoRequest, WorkerInfoResponse, WorkerPointsResponse } from "./copc-loader";
+import { CopcNodeInfo, LazSource, WorkerInfoResponse, WorkerPointsResponse } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
 
@@ -26,7 +27,7 @@ type RespMap = {
 
 export const workerPool = new WorkerPool<RespMap>(workerUrl, 4);
 
-type NodeState = "unloaded" | "loading" | "visible";
+type NodeState = "unloaded" | "loading" | "visible" | "error";
 
 export class PointCloudNode {
     parent: PointCloud;
@@ -47,6 +48,8 @@ export class PointCloudNode {
         pickIndex: number;
     };
 
+    isDemo: boolean = false;
+
     constructor(parent: PointCloud, name: OctreePath, bounds: Box3, spacing: number) {
         this.parent = parent;
         this.nodeName = name;
@@ -57,25 +60,29 @@ export class PointCloudNode {
         this.data = null;
 
         this.copcInfo = this.parent.hierarchy.nodes[this.nodeName.join("-")]!;
-        this.pointCount = this.copcInfo.pointCount;
-
-        /*
-        this.pco = new Points(geom, mat);
-        this.pco.matrixAutoUpdate = false;
-        this.pointCount = pointCount;
-        // TODO: dont use userData, it's ugly
-        */
+        this.pointCount = this.copcInfo?.pointCount ?? 0;
 
         const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
         if (name[0] === 0) {
             cube.scale.set(1.02, 1.02, 1.02);
         }
         if (name[0] === 1) {
+            cube.scale.set(1.0, 1.0, 1.0);
+        }
+        if (name[0] === 2) {
             cube.scale.set(0.99, 0.99, 0.99);
+        }
+        if (name[0] > 2) {
+            cube.scale.set(0.98, 0.98, 0.98);
         }
         this.debugMesh = cube;
 
+        this.debugMesh.visible = false;
         // this.parent.viewer.scene.add(this.debugMesh);
+    }
+
+    get sizeBytes() {
+        return this.copcInfo.pointDataLength;
     }
 
     get depth() {
@@ -84,11 +91,14 @@ export class PointCloudNode {
 
     getNodeVisibilityRating(camera: Camera) {
         // TODO: Add preference to points in the screen middle
-        // TODO: Add preference to zero-level nodes
         // IDEA: use bounding sphere instead of box?
+
         const dist = this.bounds.distanceToPoint(camera.position);
-        const screenRes = this.spacing / dist;
-        return -screenRes;
+        // const screenRes = this.spacing / dist;
+
+        const angle = Math.atan(this.spacing / dist);
+
+        return -angle;
     }
 
     setState(state: NodeState) {
@@ -103,22 +113,30 @@ export class PointCloudNode {
 
         this.setState("loading");
 
-        const pointData = await getChunk(this.parent.source, this.copcInfo, this.parent.offset.toArray());
+        try {
+            const pointData = await getChunk(this.parent.source, this.copcInfo, this.parent.offset.toArray());
 
-        this.data = {
-            pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
-            pickIndex: pointData.chunkId,
-        };
+            this.data = {
+                pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
+                pickIndex: pointData.chunkId,
+            };
 
-        this.data.pco.matrixAutoUpdate = false;
-        this.data.pco.userData.nodeIndex = this.data.pickIndex;
+            this.data.pco.matrixAutoUpdate = false;
+            // TODO: dont use userData, it's ugly
+            this.data.pco.userData.nodeIndex = this.data.pickIndex;
 
-        this.setState("visible");
+            this.setState("visible");
 
-        // add object
-        viewer.addNode(this);
+            viewer.addNode(this);
 
-        return this.data;
+            return this.data;
+        } catch (e) {
+            // TODO: retry
+            this.state === "error";
+            this.debugMesh.visible = true;
+            this.debugMesh.material = new MeshBasicMaterial({ color: "red", wireframe: true });
+            throw e;
+        }
     }
 
     unload(viewer: Viewer) {
@@ -142,18 +160,6 @@ export class PointCloudNode {
     }
 }
 
-// TODO: move to own file
-export async function getInfo(source: LazSource) {
-    const req: WorkerInfoRequest = {
-        command: "info",
-        source: source,
-    };
-
-    const res = await workerPool.runTask(req);
-    return res;
-}
-
-// TODO: move to own file
 async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
     const data = await workerPool.runTask({
         command: "points",
