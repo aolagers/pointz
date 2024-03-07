@@ -17,9 +17,64 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
+import { Copc } from "copc";
+
+import { createLazPerf } from "laz-perf";
+
+async function loadPoints() {
+    // const LazPef = await createLazPerf();
+    // const laszip = new LazPef.LASZip();
+    // console.log({ laszip });
+
+    // return;
+    const url = "http://localhost:5173/lion_takanawa.copc.laz";
+    const copc = await Copc.create(url);
+
+    console.log(copc);
+    const { nodes, pages } = await Copc.loadHierarchyPage(url, copc.info.rootHierarchyPage);
+
+    console.log(nodes);
+
+    console.log("pages", pages);
+
+    type Point = [number, number, number, number, number, number];
+    const points: Point[] = [];
+
+    for (const key in nodes) {
+        const node = nodes[key];
+        // console.log("LOAD", key, node);
+        if (!node) continue;
+
+        const view = await Copc.loadPointDataView(url, copc, node);
+        const getters = {
+            x: view.getter("X"),
+            y: view.getter("Y"),
+            z: view.getter("Z"),
+            r: view.getter("Red"),
+            g: view.getter("Green"),
+            b: view.getter("Blue"),
+        };
+
+        for (let i = 0; i < view.pointCount; i++) {
+            const point = [
+                getters.x(i),
+                getters.y(i),
+                getters.z(i),
+                getters.r(i) / 256,
+                getters.g(i) / 256,
+                getters.b(i) / 256,
+            ];
+
+            points.push(point);
+        }
+        console.log(points.at(-1));
+    }
+    console.log("loaded points:", points.length);
+    return points;
+}
 
 class PointCloud {
-    static load() {
+    static async load() {
         const geometry = new BufferGeometry();
         const vertices = [];
         const colors = [];
@@ -49,6 +104,15 @@ class PointCloud {
             }
         }
 
+        // lion
+        const pts = await loadPoints();
+
+        for (const pt of pts) {
+            vertices.push(5 * pt[0], 5 * pt[1], 5 * pt[2]);
+            colors.push(pt[3] / 255, pt[4] / 255, pt[5] / 255);
+            classes.push(2);
+        }
+
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
         geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
@@ -72,13 +136,16 @@ class PointCloud {
 
 class World {
     scene: Scene;
-    pcloud: Points;
+    pcloud: Points | null;
 
     constructor() {
         this.scene = new Scene();
         this.scene.background = new Color(0x202020);
+        this.pcloud = null;
+    }
 
-        const bgeom = PointCloud.load();
+    async load() {
+        const bgeom = await PointCloud.load();
         this.pcloud = new Points(bgeom, PointCloud.getMaterial());
         this.scene.add(this.pcloud);
     }
@@ -173,7 +240,14 @@ function onPointerMove(event: PointerEvent) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    debug.innerHTML = `mx: ${mouseX} my: ${mouseY}<br>x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
+    debug.innerHTML =
+        `mx: ${mouseX.toFixed(2)} my: ${mouseY.toFixed(2)}<br>` +
+        `x: ${pointer.x.toFixed(2)}, y: ${pointer.y.toFixed(2)}`;
 }
 
-loop();
+async function start() {
+    await world.load();
+    loop();
+}
+
+start();
