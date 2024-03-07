@@ -8,6 +8,8 @@ export class WorkerPool<R extends Record<string, any>> {
     pool: Wrapper[] = [];
     queue: { request: any; resolve: (resp: any) => void }[] = [];
 
+    tasksFinished: number = 0;
+
     running() {
         return this.pool.filter((w) => w.busy).length;
     }
@@ -32,6 +34,7 @@ export class WorkerPool<R extends Record<string, any>> {
     }
 
     private onTaskFinished(w: Wrapper) {
+        this.tasksFinished++;
         const next = this.queue.shift();
         if (next) {
             w.worker.onmessage = async (e) => {
