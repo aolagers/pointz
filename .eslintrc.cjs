@@ -10,6 +10,8 @@ module.exports = {
         project: true,
         tsconfigRootDir: __dirname,
     },
+
+    ignorePatterns: [".eslintrc.cjs", "vite.config.js", "dist", "node_modules"],
     rules: {
         "@typescript-eslint/no-unused-vars": [
             "error",

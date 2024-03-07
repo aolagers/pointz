@@ -49,14 +49,12 @@ stateDiagram-v2
 - If shrinking the browser window results in massive speed gains, consider using a half-resolution framebuffer during mouse interaction.
 
 - FXAA/SMAA post-processing step?
-
   - https://threejs.org/examples/webgl_postprocessing_fxaa.html
   - https://threejs.org/examples/#webgl_postprocessing_smaa
-
 - How to only draw EDL for points?
-
   - https://threejs.org/examples/webgl_postprocessing_unreal_bloom_selective.html
   - https://threejs.org/examples/webgl_postprocessing_outline.html
-
 - Other optimizations
   - https://www.khronos.org/opengl/wiki/Buffer_Object#Buffer_Object_Usage
+- Mobile and touch event stuff
+  - https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Pinch_zoom_gestures

@@ -1,5 +1,5 @@
 import { Material, ShaderMaterial } from "three";
-import { COLOR_MODE } from "../settings";
+import { COLOR_MODE, LOCALSTORAGE_KEYS } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
@@ -49,7 +49,7 @@ export class PointMaterial extends ShaderMaterial {
 
     constructor(pick: boolean) {
         const colorMode: keyof typeof COLOR_MODE =
-            (localStorage.getItem("COLOR_MODE") as keyof typeof COLOR_MODE) ?? "RGB";
+            (localStorage.getItem(LOCALSTORAGE_KEYS.COLOR_MODE) as keyof typeof COLOR_MODE) ?? "RGB";
         super({
             glslVersion: "300 es",
             defines: {
@@ -89,7 +89,7 @@ export class PointMaterial extends ShaderMaterial {
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {
-        localStorage.setItem("COLOR_MODE", color);
+        localStorage.setItem(LOCALSTORAGE_KEYS.COLOR_MODE, color);
         this.defines.COLOR_MODE = COLOR_MODE[color];
         this.needsUpdate = true;
     }

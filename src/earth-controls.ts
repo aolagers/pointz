@@ -14,6 +14,7 @@ import {
 import { Viewer } from "./viewer";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
+import { LOCALSTORAGE_KEYS } from "./settings";
 
 type CameraPosition = {
     position: Vector3Tuple;
@@ -339,13 +340,13 @@ export class EarthControls {
                 position: this.camera.position.toArray(),
                 rotation: this.camera.rotation.toArray(),
             } as CameraPosition;
-            localStorage.setItem("camera", JSON.stringify(campos));
+            localStorage.setItem(LOCALSTORAGE_KEYS.CAMERA, JSON.stringify(campos));
             this.saveHandle = 0;
         }, 100);
     }
 
     restoreCamera() {
-        const camText = localStorage.getItem("camera");
+        const camText = localStorage.getItem(LOCALSTORAGE_KEYS.CAMERA);
 
         if (!camText) {
             return false;
