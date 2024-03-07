@@ -1,10 +1,14 @@
+import { Copc } from "copc";
 import {
+    BoxGeometry,
     BufferGeometry,
     Clock,
     Color,
     Float32BufferAttribute,
     Line,
     LineBasicMaterial,
+    Mesh,
+    MeshBasicMaterial,
     PerspectiveCamera,
     Points,
     Raycaster,
@@ -16,26 +20,29 @@ import {
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
-import { FlyControls } from 'three/addons/controls/FlyControls.js';
-import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
-
-
-import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
-import { Copc } from "copc";
+import vertex from "./vertex.glsl";
+
+const pointer = new Vector2();
 
 async function loadPoints() {
     const url = "http://localhost:5173/lion_takanawa.copc.laz";
     const copc = await Copc.create(url);
 
     console.log(copc);
+
+    const bounds = {
+        min: new Vector3(...copc.header.min),
+        max: new Vector3(...copc.header.max),
+    };
+
     const { nodes, pages } = await Copc.loadHierarchyPage(url, copc.info.rootHierarchyPage);
 
     console.log(nodes);
 
     console.log("pages", pages);
 
-    type Point = [number, number, number, number, number, number];
+    type Point = readonly [number, number, number, number, number, number];
     const points: Point[] = [];
 
     for (const key in nodes) {
@@ -61,18 +68,53 @@ async function loadPoints() {
                 getters.r(i) / 256,
                 getters.g(i) / 256,
                 getters.b(i) / 256,
-            ];
+            ] as const;
 
             points.push(point);
         }
         console.log(points.at(-1));
     }
     console.log("loaded points:", points.length);
-    return points;
+    return {
+        points,
+        bounds,
+    };
 }
 
 class PointCloud {
-    static async load() {
+    points: Points;
+    bounds: { min: Vector3; max: Vector3 } | null;
+
+    constructor(pts: Points, bounds: { min: Vector3; max: Vector3 } | null) {
+        this.points = pts;
+        this.bounds = bounds;
+    }
+
+    static async loadLion() {
+        const { points, bounds } = await loadPoints();
+
+        console.log({ bounds });
+
+        const geometry = new BufferGeometry();
+
+        const vertices = [];
+        const colors = [];
+
+        const classes = [];
+
+        for (const pt of points) {
+            vertices.push(pt[0], pt[1], pt[2]);
+            colors.push(pt[3] / 255, pt[4] / 255, pt[5] / 255);
+            classes.push(2);
+        }
+
+        geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
+        geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
+        return new PointCloud(new Points(geometry, PointCloud.pointMaterial), bounds);
+    }
+
+    static async loadDemo() {
         const geometry = new BufferGeometry();
         const vertices = [];
         const colors = [];
@@ -102,50 +144,55 @@ class PointCloud {
             }
         }
 
-        // lion
-        const pts = await loadPoints();
-
-        for (const pt of pts) {
-            vertices.push(5 * pt[0], 5 * pt[1], 5 * pt[2]);
-            colors.push(pt[3] / 255, pt[4] / 255, pt[5] / 255);
-            classes.push(2);
-        }
-
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
         geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
 
-        return geometry;
+        return new PointCloud(new Points(geometry, PointCloud.pointMaterial), null);
     }
 
-    static getMaterial() {
-        const material = new ShaderMaterial({
-            uniforms: {
-                uColor: { value: new Color(0x33ee44) },
-                uMouse: { value: pointer },
-            },
-            vertexShader: vertex,
-            fragmentShader: fragment,
-        });
-
-        return material;
-    }
+    static pointMaterial: ShaderMaterial = new ShaderMaterial({
+        uniforms: {
+            uColor: { value: new Color(0x33ee44) },
+            uMouse: { value: pointer },
+        },
+        vertexShader: vertex,
+        fragmentShader: fragment,
+    });
 }
 
 class World {
     scene: Scene;
-    pcloud: Points | null;
+    pclouds: PointCloud[] = [];
 
     constructor() {
         this.scene = new Scene();
         this.scene.background = new Color(0x202020);
-        this.pcloud = null;
     }
 
     async load() {
-        const bgeom = await PointCloud.load();
-        this.pcloud = new Points(bgeom, PointCloud.getMaterial());
-        this.scene.add(this.pcloud);
+        const demo = await PointCloud.loadDemo();
+        this.pclouds.push(demo);
+        this.scene.add(demo.points);
+
+        const lion = await PointCloud.loadLion();
+        this.pclouds.push(lion);
+        this.scene.add(lion.points);
+
+        if (lion.bounds) {
+            const size = [
+                lion.bounds.max.x - lion.bounds.min.x,
+                lion.bounds.max.y - lion.bounds.min.y,
+                lion.bounds.max.z - lion.bounds.min.z,
+            ];
+            console.log("lion", size);
+            const boundGeom = new BoxGeometry(...size);
+            const mat = new MeshBasicMaterial({ color: "red", wireframe: true });
+            const cube = new Mesh(boundGeom, mat);
+            const halfSize = size.map((x) => x / 2);
+            cube.position.copy(lion.bounds.min).add(new Vector3(...halfSize));
+            this.scene.add(cube);
+        }
     }
 }
 
@@ -154,17 +201,16 @@ const renderer = new WebGLRenderer({
 });
 
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.up.set(0,0,1);
-
+camera.up.set(0, 0, 1);
 
 camera.position.set(0, -100, 50);
-camera.lookAt(0,0,0);
+camera.lookAt(0, 0, 0);
 
 const controls = new MapControls(camera, renderer.domElement);
 // const controls = new FlyControls(camera, renderer.domElement);
 // const controls = new FirstPersonControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.20;
+controls.dampingFactor = 0.2;
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -178,7 +224,6 @@ window.addEventListener("resize", onWindowResize);
 
 const debug = document.getElementById("debug")!;
 
-const pointer = new Vector2();
 let mouseX = 0;
 let mouseY = 0;
 
@@ -207,7 +252,7 @@ function loop() {
     const delta = clock.getDelta();
 
     raycaster.setFromCamera(pointer, camera);
-    const intersections = raycaster.intersectObject(world.pcloud, false);
+    const intersections = raycaster.intersectObject(world.pclouds[0]!.points, false);
 
     if (intersections.length > 0 && intersections[0]) {
         line.visible = true;
