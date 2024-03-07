@@ -1,4 +1,5 @@
 #define INTENSITY false
+#define CLASSIFICATION false
 
 uniform vec3 uColor;
 
@@ -13,21 +14,24 @@ flat varying float custom2;
 
 vec4 fromLinear(vec4 linearRGB)
 {
-	bvec4 cutoff = lessThan(linearRGB, vec4(0.0031308));
-	vec4 higher = vec4(1.055)*pow(linearRGB, vec4(1.0/2.4)) - vec4(0.055);
-	vec4 lower = linearRGB * vec4(12.92);
+    bvec4 cutoff = lessThan(linearRGB, vec4(0.0031308));
+    vec4 higher = vec4(1.055)*pow(linearRGB, vec4(1.0/2.4)) - vec4(0.055);
+    vec4 lower = linearRGB * vec4(12.92);
 
-	return mix(higher, lower, cutoff);
+    return mix(higher, lower, cutoff);
 }
 
 vec4 toLinear(vec4 sRGB)
 {
-	bvec4 cutoff = lessThan(sRGB, vec4(0.04045));
-	vec4 higher = pow((sRGB + vec4(0.055))/vec4(1.055), vec4(2.4));
-	vec4 lower = sRGB/vec4(12.92);
+    bvec4 cutoff = lessThan(sRGB, vec4(0.04045));
+    vec4 higher = pow((sRGB + vec4(0.055))/vec4(1.055), vec4(2.4));
+    vec4 lower = sRGB/vec4(12.92);
 
-	return mix(higher, lower, cutoff);
+    return mix(higher, lower, cutoff);
 }
+
+const uint N_CLASSES = 6u;
+const vec3 CLASS_COLORS[N_CLASSES] = vec3[]( vec3(0.4, 0.4, 0.4), vec3(0.8, 0.8, 0.8), vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0), vec3(1.0, 0.0, 1.0));
 
 void main() {
 
@@ -47,6 +51,9 @@ void main() {
 
     if (INTENSITY) {
         gl_FragColor = vec4(vec3(fintensity), 1.0);
+    } else if (CLASSIFICATION) {
+        gl_FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], 1.0);
+        //if (cls == 0u) { gl_FragColor = vec4(rgbColor, 1.0); }
     } else {
         gl_FragColor = vec4(rgbColor, 1.0);
     }
