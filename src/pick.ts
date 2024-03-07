@@ -35,22 +35,21 @@ export function getMouseIntersection(
     renderer: WebGLRenderer,
     viewer: Viewer
 ) {
-    const ray = getMouseRay(pointer, camera);
-
     let point: null | { screenPosition: Vector2; position: Vector3; pointcloud: PointCloud; node: PointCloudNode } =
         null;
 
-    let hits = 0;
-    for (const pc of viewer.pointClouds) {
-        for (const node of pc.nodes) {
-            const isHit = ray.intersectsBox(node.bounds);
+    // const ray = getMouseRay(pointer, camera);
+    // let hits = 0;
+    // for (const pc of viewer.pointClouds) {
+    //     for (const node of pc.nodes) {
+    //         const isHit = ray.intersectsBox(node.bounds);
 
-            if (isHit) {
-                hits++;
-            } else {
-            }
-        }
-    }
+    //         if (isHit) {
+    //             hits++;
+    //         } else {
+    //         }
+    //     }
+    // }
 
     // limit rendering to area around mouse
     camera.setViewOffset(
@@ -62,26 +61,28 @@ export function getMouseIntersection(
         PICK_WINDOW
     );
 
-    // TODO: only matching objects
-    for (const o of viewer.pointObjects) {
-        o.userData.pointMaterial = o.material;
-
-        const pmat = pickMaterialPool.getMaterial();
-        pmat.updateNodeIndex(o.userData.nodeIndex);
-        o.material = pmat;
+    // TODO: modify only matching objects
+    for (const n of viewer.getVisibleNodes()) {
+        if (n.data) {
+            n.data.pco.userData.pointMaterial = n.data.pco.material;
+            const pmat = pickMaterialPool.getMaterial();
+            pmat.updateNodeIndex(n.data.pickIndex);
+            n.data.pco.material = pmat;
+        }
     }
 
     // render to pick buffer
     renderer.setRenderTarget(pickRenderTarget);
-    // this.renderer.clear();
     renderer.render(viewer.scene, camera);
 
     let pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
 
     renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, PICK_WINDOW, PICK_WINDOW, pbuf);
+
     let closest = Infinity;
     let best = 0;
 
+    // find closest point pixel
     for (let i = 0; i < pbuf.length / 4; i++) {
         const x = i % PICK_WINDOW;
         const y = Math.floor(i / PICK_WINDOW);
@@ -100,8 +101,6 @@ export function getMouseIntersection(
     }
 
     if (closest < Infinity) {
-        // const x = best % pickWindow;
-        // const y = Math.floor(best / pickWindow);
         const vals = pbuf.slice(best * 4, best * 4 + 4);
         const r = pbuf[best * 4 + 0];
         const g = pbuf[best * 4 + 1];
@@ -138,7 +137,7 @@ export function getMouseIntersection(
             //         `p:${X} ${Y} ${Z} pts:${attrs.count} idx:${idx}`
             // );
         } else {
-            console.warn("NOPE", a, vals.join("/"), idx, nodehit, "f:", hits);
+            console.warn("NOPE", a, vals.join("/"), idx, nodehit, "hit boxes: --");
         }
     }
 
@@ -153,9 +152,11 @@ export function getMouseIntersection(
     camera.clearViewOffset();
     renderer.setViewport(0, 0, viewer.width, viewer.height);
 
-    for (const o of viewer.pointObjects) {
-        pickMaterialPool.returnMaterial(o.material);
-        o.material = o.userData.pointMaterial;
+    for (const n of viewer.getVisibleNodes()) {
+        if (n.data) {
+            pickMaterialPool.returnMaterial(n.data.pco.material);
+            n.data.pco.material = n.data.pco.userData.pointMaterial;
+        }
     }
 
     return point;
