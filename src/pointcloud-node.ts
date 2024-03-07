@@ -22,7 +22,6 @@ import { Viewer } from "./viewer";
 import { CopcNodeInfo, WorkerPointsRequest, WorkerPointsResponse } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
-import { SHOW_LOADING } from "./settings";
 
 export const pointsWorkerPool = new WorkerPool<
     {
@@ -196,7 +195,7 @@ export class PointCloudNode {
         this.setState("loading");
 
         try {
-            this.debugMesh.visible = SHOW_LOADING;
+            this.debugMesh.visible = viewer.debug_mode;
             viewer.requestRender("start loading");
             const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
 
