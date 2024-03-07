@@ -1,6 +1,8 @@
-import { Color, LineBasicMaterial, MeshBasicMaterial, ShaderMaterial, Vector2 } from "three";
-import fragment from "./shaders/default.frag";
-import vertex from "./shaders/default.vert";
+import { Color, LineBasicMaterial, MeshBasicMaterial, ShaderMaterial, Texture, Vector2 } from "three";
+import defaultFrag from "./shaders/default.frag";
+import defaultVert from "./shaders/default.vert";
+import edlFrag from "./shaders/edl.frag";
+import edlVert from "./shaders/edl.vert";
 
 export const pointer = new Vector2();
 
@@ -25,9 +27,21 @@ const pointMaterial = new ShaderMaterial({
         uCustom1: { value: 0.0 },
         uCustom2: { value: 0.0 },
     },
-    vertexShader: vertex,
-    fragmentShader: fragment,
+    vertexShader: defaultVert,
+    fragmentShader: defaultFrag,
 });
+
+export function createEDLMaterial(tex: Texture) {
+    const edlMaterial = new ShaderMaterial({
+        uniforms: {
+            tx: { value: tex },
+        },
+        vertexShader: edlVert,
+        fragmentShader: edlFrag,
+    });
+
+    return edlMaterial;
+}
 
 export const MATERIALS = {
     LINE: lineMaterial,

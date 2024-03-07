@@ -24,7 +24,7 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { pointer, updateValues } from "./materials";
+import { createEDLMaterial, pointer, updateValues } from "./materials";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
@@ -67,8 +67,6 @@ export class Viewer {
 
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
-    tmaterial: MeshBasicMaterial;
-    tquad: Mesh;
 
 
     constructor() {
@@ -114,9 +112,13 @@ export class Viewer {
         // const e = gl.getExtension("WEBGL_depth_texture");
         // const sup = gl.getSupportedExtensions();
         // console.log({ ALIASED_POINT_SIZE_RANGE: f, WEBGL_depth_texture: e, sup });
+        
+        // const tmaterial = new MeshBasicMaterial({ map: this.renderTarget.texture });
+        const tmaterial = createEDLMaterial(this.renderTarget.texture);
+        const tquad = new Mesh(new PlaneGeometry(2, 2), tmaterial);
         this.sceneOrtho = new Scene();
-        this.tmaterial = new MeshBasicMaterial({ map: this.renderTarget.texture });
-        this.tquad = new Mesh(new PlaneGeometry(2, 2), this.tmaterial);
+        this.sceneOrtho.add(tquad); // Scene for orthographic display
+
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     }
 
@@ -211,7 +213,6 @@ export class Viewer {
         this.renderer.setRenderTarget(null);
         // console.log(this.rt2.depthTexture);
 
-        this.sceneOrtho.add(this.tquad); // Scene for orthographic display
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
         // this.renderer.render(this.scene, this.camera);
