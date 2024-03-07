@@ -16,7 +16,7 @@ import {
 import { PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
-import { PointCloud, getChunkID } from "./pointcloud";
+import { PointCloud } from "./pointcloud";
 import { Viewer } from "./viewer";
 import { CopcNodeInfo, WorkerPointsRequest, WorkerPointsResponse } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
@@ -128,7 +128,7 @@ export class PointCloudNode {
 
             this.data = {
                 pco: new Points(pointData.geometry, pointMaterialPool.getMaterial()),
-                pickIndex: pointData.chunkId,
+                pickIndex: 0,
             };
 
             this.data.pco.matrixAutoUpdate = false;
@@ -200,6 +200,6 @@ export class PointCloudNode {
         ptIndexAttribute.gpuType = IntType;
         geometry.setAttribute("ptIndex", ptIndexAttribute);
 
-        return { geometry: geometry, pointCount: data.pointCount, chunkId: getChunkID() };
+        return { geometry: geometry, pointCount: data.pointCount };
     }
 }

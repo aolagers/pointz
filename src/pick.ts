@@ -39,19 +39,6 @@ export function getMouseIntersection(
     let point: null | { screenPosition: Vector2; position: Vector3; pointcloud: PointCloud; node: PointCloudNode } =
         null;
 
-    // const ray = getMouseRay(pointer, camera);
-    // let hits = 0;
-    // for (const pc of viewer.pointClouds) {
-    //     for (const node of pc.nodes) {
-    //         const isHit = ray.intersectsBox(node.bounds);
-
-    //         if (isHit) {
-    //             hits++;
-    //         } else {
-    //         }
-    //     }
-    // }
-
     // limit rendering to area around mouse
     camera.setViewOffset(
         viewer.width,
@@ -62,13 +49,26 @@ export function getMouseIntersection(
         PICK_WINDOW
     );
 
-    // TODO: modify only matching objects
-    for (const n of viewer.getVisibleNodes()) {
-        if (n.data) {
-            n.data.pco.userData.pointMaterial = n.data.pco.material;
-            const pmat = pickMaterialPool.getMaterial();
-            pmat.updateNodeIndex(n.data.pickIndex);
-            n.data.pco.material = pmat;
+    const ray = getMouseRay(pointer, camera);
+    const hitNodes = [];
+    let hid = 1;
+    // TODO: proper octree traversal
+    for (const pc of viewer.pointClouds) {
+        for (const node of pc.nodes) {
+            const isHit = ray.intersectsBox(node.bounds);
+
+            if (isHit) {
+                if (node.data) {
+                    hitNodes.push(node);
+                    node.data.pickIndex = hid;
+                    hid++;
+
+                    node.data.pco.userData.pointMaterial = node.data.pco.material;
+                    const pmat = pickMaterialPool.getMaterial();
+                    pmat.updateNodeIndex(node.data.pickIndex);
+                    node.data.pco.material = pmat;
+                }
+            }
         }
     }
 
@@ -159,7 +159,7 @@ export function getMouseIntersection(
     camera.clearViewOffset();
     renderer.setViewport(0, 0, viewer.width, viewer.height);
 
-    for (const n of viewer.getVisibleNodes()) {
+    for (const n of hitNodes) {
         if (n.data) {
             pickMaterialPool.returnMaterial(n.data.pco.material);
             n.data.pco.material = n.data.pco.userData.pointMaterial as Material | Material[];
