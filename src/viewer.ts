@@ -25,7 +25,7 @@ import { EarthControls } from "./earth-controls";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, getCameraFrustum, printVec, stringifyError } from "./utils";
+import { createTightBounds, getCameraFrustum, printVec, stringifyError, throttle } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
@@ -316,11 +316,6 @@ export class Viewer {
         this.labelRenderer.render(this.scene, this.camera);
     }
 
-    renderLoop() {
-        this.render();
-        requestAnimationFrame(() => this.renderLoop());
-    }
-
     addNode(n: PointCloudNode) {
         if (n.state === "visible") {
             const o = n.data!.pco;
@@ -364,26 +359,9 @@ export class Viewer {
         this.requestRender();
     }
 
-    private loadHandle = 0;
-    private lastLoaded = 0;
-
-    loadMoreNodesThrottled() {
-        const min_interval_ms = 300;
-
-        if (this.lastLoaded === 0 || performance.now() - this.lastLoaded > min_interval_ms) {
-            this.loadMoreNodes();
-            this.lastLoaded = performance.now();
-        } else {
-            clearTimeout(this.loadHandle);
-            this.loadHandle = setTimeout(
-                () => {
-                    this.loadMoreNodes();
-                    this.lastLoaded = performance.now();
-                },
-                min_interval_ms - (performance.now() - this.lastLoaded)
-            );
-        }
-    }
+    loadMoreNodesThrottled = throttle(300, () => {
+        this.loadMoreNodes();
+    });
 
     loadMoreNodes() {
         const frustum = getCameraFrustum(this.camera);
@@ -489,36 +467,29 @@ export class Viewer {
         loaded: new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true }),
     };
 
-    resizeHandle = 0;
-
-    setSize(width: number, height: number) {
+    setSize = throttle(200, (width: number, height: number) => {
         this.setError("resizing", true);
-        if (this.resizeHandle > 0) {
-            clearTimeout(this.resizeHandle);
-        }
 
-        this.resizeHandle = setTimeout(() => {
-            this.width = width;
-            this.height = height;
-            const pr = 1.0; //window.devicePixelRatio;
+        this.width = width;
+        this.height = height;
+        const pr = 1.0; //window.devicePixelRatio;
 
-            this.edlMaterial.uniforms.uResolution.value = [width, height];
+        this.edlMaterial.uniforms.uResolution.value = [width, height];
 
-            this.renderTarget.setSize(this.width * pr, this.height * pr);
-            this.renderer.setSize(this.width * pr, this.height * pr, false);
-            this.camera.aspect = this.width / this.height;
-            this.camera.updateProjectionMatrix();
-            const sz = new Vector2();
-            this.renderer.getDrawingBufferSize(sz);
-            // this.renderer.domElement.style.width = `${this.width}px`;
+        this.renderTarget.setSize(this.width * pr, this.height * pr);
+        this.renderer.setSize(this.width * pr, this.height * pr, false);
+        this.camera.aspect = this.width / this.height;
+        this.camera.updateProjectionMatrix();
+        const sz = new Vector2();
+        this.renderer.getDrawingBufferSize(sz);
+        // this.renderer.domElement.style.width = `${this.width}px`;
 
-            this.labelRenderer.setSize(this.width, this.height);
-            this.setError("resizing", false);
-            this.requestRender();
-        }, 100);
-    }
+        this.labelRenderer.setSize(this.width, this.height);
+        this.setError("resizing", false);
+        this.requestRender();
+    });
 
-    setError(k: keyof typeof this.errors, set_to: boolean) {
+    private setError(k: keyof typeof this.errors, set_to: boolean) {
         if (!this.errorElement) {
             return;
         }
