@@ -29,7 +29,7 @@ import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
 
-const debugEl = document.getElementById("debug")!;
+const debugEl = document.querySelector("#debug")!;
 const debug = {
     mouse: "",
     camera: "",
@@ -312,18 +312,21 @@ export class Viewer {
             (a, b) => a.getNodeVisibilityRating(this.camera) - b.getNodeVisibilityRating(this.camera)
         );
 
+        let visiblePoints = 0;
+
         for (const pc of this.pointClouds) {
             for (const node of pc.nodes) {
                 const inFrustum = frustum.intersectsBox(node.bounds);
                 if (inFrustum) {
-                    if (node.state !== "visible") {
+                    if (node.state === "visible" || node.state === "loading") {
+                        visiblePoints += node.pointCount;
+                    } else {
                         pq.push(node);
                     }
                 }
             }
         }
 
-        let visiblePoints = 0;
         let maxLoads = 5;
 
         while (visiblePoints < POINT_BUDGET && !pq.isEmpty()) {
