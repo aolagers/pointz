@@ -44,6 +44,7 @@ export function getPointMaterial() {
     }
 
     pointMaterial = new ShaderMaterial({
+        glslVersion: "300 es",
         defines: {
             COLOR_MODE: COLOR_MODE.RGB,
         },
