@@ -44,8 +44,6 @@ export class PointMaterial extends ShaderMaterial {
                 uColor: { value: new Color(3403332) },
                 uMouse: { value: new Vector2(0, 0) },
                 ptSize: { value: DEFAULT_PT_SIZE },
-                uCustom1: { value: 0.0 },
-                uCustom2: { value: 0.0 },
                 // uClassMask: { value: 0xffff & ~(1 << 2) },
                 uClassMask: { value: 0xffff },
                 uNodeIndex: { value: 0 },
@@ -78,13 +76,6 @@ export class PointMaterial extends ShaderMaterial {
     setPointer(pointer: Vector2) {
         const uc1 = this.uniforms.uMouse;
         if (uc1) uc1.value = pointer;
-    }
-
-    updateSliders(c1: number, c2: number) {
-        const uc1 = this.uniforms.uCustom1;
-        const uc2 = this.uniforms.uCustom2;
-        if (uc1) uc1.value = c1;
-        if (uc2) uc2.value = c2;
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {

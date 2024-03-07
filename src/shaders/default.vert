@@ -8,8 +8,6 @@ in int ptIndex;
 in float visibleIndex;
 
 uniform float ptSize;
-uniform float uCustom1;
-uniform float uCustom2;
 uniform int uClassMask;
 
 out vec4 rgbColor;
@@ -43,8 +41,6 @@ void main() {
     //float dist = distance(cameraPosition, position);
 
     //depth = dist;
-    custom1 = uCustom1;
-    custom2 = uCustom2;
 
     //gl_PointSize = max(ptSize, 150.0/dist) + uCustom1/10.0;
 
