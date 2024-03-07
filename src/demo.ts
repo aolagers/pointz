@@ -6,10 +6,12 @@ import {
     Uint16BufferAttribute,
     Int32BufferAttribute,
     IntType,
+    Points,
 } from "three";
 import { PointCloud, getChunkID } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
 import { Viewer } from "./viewer";
+import { pointMaterialPool } from "./materials/point-material";
 
 export function loadDemo(viewer: Viewer) {
     const geometry = new BufferGeometry();
@@ -81,9 +83,14 @@ export function loadDemo(viewer: Viewer) {
 
     pc.isDemo = true;
 
-    pc.loadedNodes.push(
-        new PointCloudNode(pc, [0, 0, 0, 0], geometry, cubeBounds, getChunkID(), pc.rootSpacing, indice)
-    );
+    const node = new PointCloudNode(pc, [0, 0, 0, 0], cubeBounds, pc.rootSpacing);
+
+    node.data = {
+        pickIndex: getChunkID(),
+        pco: new Points(geometry, pointMaterialPool.getMaterial()),
+    };
+    node.setState("visible");
+    pc.nodes.push(node);
 
     return pc;
 }

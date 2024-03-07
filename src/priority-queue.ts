@@ -69,13 +69,19 @@ export class PriorityQueue<T> {
         this.heapifyUp();
     }
 
-    public pop(): T | null {
-        if (this.isEmpty()) return null;
+    public popOrThrow(): T {
+        if (this.isEmpty()) throw new Error("Priority queue is empty");
+
         if (this.heap.length === 1) return this.heap.pop()!;
         const item = this.heap[0];
         this.heap[0] = this.heap.pop()!;
         this.heapifyDown();
         return item;
+    }
+
+    public pop(): T | null {
+        if (this.isEmpty()) return null;
+        return this.popOrThrow();
     }
 
     public clear() {

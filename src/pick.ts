@@ -42,7 +42,7 @@ export function getMouseIntersection(
 
     let hits = 0;
     for (const pc of viewer.pointClouds) {
-        for (const node of pc.loadedNodes) {
+        for (const node of pc.nodes) {
             const isHit = ray.intersectsBox(node.bounds);
 
             if (isHit) {
@@ -111,16 +111,16 @@ export function getMouseIntersection(
         let nodehit = null;
         let pchit = null;
         for (const pc of viewer.pointClouds) {
-            for (const lnode of pc.loadedNodes) {
-                if (lnode.pcIndex === a) {
+            for (const lnode of pc.nodes) {
+                if (lnode.data?.pickIndex === a) {
                     nodehit = lnode;
                     pchit = pc;
                 }
             }
         }
 
-        if (nodehit && pchit) {
-            const attrs = nodehit.pco.geometry.getAttribute("position");
+        if (nodehit && pchit && nodehit.data) {
+            const attrs = nodehit.data.pco.geometry.getAttribute("position");
 
             const X = attrs.array[idx * 3 + 0];
             const Y = attrs.array[idx * 3 + 1];

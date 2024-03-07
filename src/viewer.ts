@@ -21,10 +21,10 @@ import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
 
 import { EarthControls } from "./earth-controls";
-import { PointCloud, pool } from "./pointcloud";
-import { PointCloudNode } from "./pointcloud-node";
+import { PointCloud } from "./pointcloud";
+import { PointCloudNode, workerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, getCameraFrustum, getNodeVisibilityRating, printVec } from "./utils";
+import { createTightBounds, getCameraFrustum, printVec } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
@@ -178,9 +178,13 @@ export class Viewer {
                 if (ev.key === "-") {
                     ptmat.updatePointSize(-1);
                 }
-                if (ev.key === "u") {
-                    this.updateVisibile();
-                }
+            }
+
+            if (ev.key === "u") {
+                this.loadMoreNodes();
+            }
+            if (ev.key === "x") {
+                this.dropWorstNodes();
             }
 
             this.requestRender();
@@ -189,9 +193,9 @@ export class Viewer {
         this.econtrols.init();
 
         // TODO: base on updates, not on timer
-        setInterval(() => {
-            this.updateVisibile();
-        }, 1000);
+        // setInterval(() => {
+        //     this.updateVisibile();
+        // }, 1000);
 
         this.requestRender();
     }
@@ -248,7 +252,7 @@ export class Viewer {
 
         debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
-        debug.pool = ` ${pool.running()} ${pool.queued()} (${pool.tasksFinished})`;
+        debug.pool = ` ${workerPool.running()} ${workerPool.queued()} (${workerPool.tasksFinished})`;
 
         debug.touchCount = ` ${this.econtrols.touchCount}`;
 
@@ -267,64 +271,84 @@ export class Viewer {
     }
 
     addNode(n: PointCloudNode) {
-        const o = n.pco;
-        this.scene.add(o);
-        this.pointObjects.push(o);
-        this.requestRender();
-
-        this.scene.add(n.debugMesh);
+        if (n.state === "visible") {
+            const o = n.data!.pco;
+            this.scene.add(o);
+            this.pointObjects.push(o);
+            this.requestRender();
+        } else {
+            throw new Error("cannot add node that is not loaded");
+        }
     }
 
-    updateVisibile() {
+    dropWorstNodes() {
+        const loadedNodes = [];
+        for (const pc of this.pointClouds) {
+            for (const node of pc.nodes) {
+                if (node.state == "visible" && node.depth > 0) {
+                    loadedNodes.push(node);
+                }
+            }
+        }
+
+        loadedNodes.sort((a, b) => {
+            return a.getNodeVisibilityRating(this.camera) - b.getNodeVisibilityRating(this.camera);
+        });
+
+        const toDrop = loadedNodes.slice(-5);
+
+        for (const node of toDrop) {
+            node.unload(this);
+        }
+
+        // TODO: only render if changed
+        this.requestRender();
+    }
+
+    loadMoreNodes() {
         const frustum = getCameraFrustum(this.camera);
 
-        const nodeScore = (n: PointCloudNode) => {
-            // TODO: Add preference to points in the screen middle
-            // TODO: Add preference to zero-level nodes
-            const s = getNodeVisibilityRating(n.parent.octreeBounds, n.nodeName, n.parent.rootSpacing, this.camera);
-
-            return s;
-        };
-
-        const pq = new PriorityQueue<PointCloudNode>((a, b) => nodeScore(a) - nodeScore(b));
+        const pq = new PriorityQueue<PointCloudNode>(
+            (a, b) => a.getNodeVisibilityRating(this.camera) - b.getNodeVisibilityRating(this.camera)
+        );
 
         for (const pc of this.pointClouds) {
-            for (const node of pc.loadedNodes) {
+            for (const node of pc.nodes) {
                 const inFrustum = frustum.intersectsBox(node.bounds);
                 if (inFrustum) {
-                    node.pco.visible = true;
-                    pq.push(node);
-                    node.debugMesh.material = this.mats.loaded;
-                } else {
-                    node.debugMesh.material = this.mats.culled;
-                    node.pco.visible = false;
+                    if (node.state !== "visible") {
+                        pq.push(node);
+                    }
                 }
             }
         }
 
         let visiblePoints = 0;
-
-        let vis = 0;
+        let maxLoads = 5;
 
         while (visiblePoints < POINT_BUDGET && !pq.isEmpty()) {
-            const node = pq.pop()!;
-            if (!node.pco.visible) {
-                console.log("show", node);
+            if (maxLoads == 0) {
+                break;
             }
-            node.pco.visible = true;
-            node.debugMesh.material = this.mats.loaded;
+
+            const node = pq.popOrThrow();
             visiblePoints += node.pointCount;
-            vis++;
+
+            if (node.state === "unloaded") {
+                console.log("load", node);
+                maxLoads--;
+                node.load(this).then((nd) => {
+                    console.log("node laod finishz", nd);
+                });
+            } else {
+                console.log("node already loaded", node.state);
+            }
         }
 
-        console.log("VIS", vis, "/", (visiblePoints / 1_000_000).toFixed(2) + "M");
-
-        while (!pq.isEmpty()) {
-            const node = pq.pop()!;
-
-            node.pco.visible = false;
-            node.debugMesh.material = this.mats.hidden;
-        }
+        // while (!pq.isEmpty()) {
+        //     const node = pq.pop()!;
+        //     node.unload(this);
+        // }
 
         // TODO: only render if changed
         this.requestRender();
@@ -361,7 +385,7 @@ export class Viewer {
 
         console.log("ADD POINTCLOUD", pc);
 
-        pc.loadNodes();
+        pc.initializeNodes();
 
         if (center) {
             this.econtrols.showPointCloud(pc);

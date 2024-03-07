@@ -1,4 +1,4 @@
-import { Material, ShaderMaterial, Vector2 } from "three";
+import { Material, ShaderMaterial } from "three";
 import { COLOR_MODE } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
