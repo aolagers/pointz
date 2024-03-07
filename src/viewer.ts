@@ -6,7 +6,6 @@ import {
     Line,
     LineBasicMaterial,
     Mesh,
-    MeshNormalMaterial,
     NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
@@ -15,7 +14,6 @@ import {
     RGBAFormat,
     Raycaster,
     Scene,
-    SphereGeometry,
     UnsignedIntType,
     Vector2,
     Vector3,
@@ -29,7 +27,7 @@ import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
-import { getMouseIntersection } from "./pick";
+import { getMouseIntersection, pickMarker } from "./pick";
 
 const pickWindow = 31;
 
@@ -75,7 +73,6 @@ export class Viewer {
     frame: number = 0;
     frameTime: number = 0;
     renderTarget: WebGLRenderTarget;
-    pickTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
     cameraOrtho: OrthographicCamera;
@@ -86,7 +83,6 @@ export class Viewer {
     renderRequested: boolean;
 
     edlMaterial: EDLMaterial;
-    marker: Mesh;
 
     clicked: boolean;
 
@@ -125,12 +121,6 @@ export class Viewer {
             depthTexture: new DepthTexture(this.width, this.height, UnsignedIntType),
         });
 
-        this.pickTarget = new WebGLRenderTarget(pickWindow, pickWindow, {
-            format: RGBAFormat,
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-        });
-
         this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -10, 5);
@@ -156,11 +146,7 @@ export class Viewer {
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        this.marker = new Mesh(
-            new SphereGeometry(0.5, 16, 16),
-            new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
-        );
-        this.scene.add(this.marker);
+        this.scene.add(pickMarker);
 
         // this.scene.background = new Color(0x505050);
         // this.scene.background = new Color(0x4485b4);
