@@ -1,4 +1,13 @@
-import { Mesh, MeshNormalMaterial, PerspectiveCamera, Plane, SphereGeometry, Vector2, Vector3 } from "three";
+import {
+    Euler,
+    Mesh,
+    MeshNormalMaterial,
+    PerspectiveCamera,
+    Plane,
+    SphereGeometry,
+    Vector2,
+    Vector3,
+} from "three";
 import { Viewer } from "./viewer";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
@@ -227,10 +236,39 @@ export class EarthControls {
             this.prevPinch = pinchDist;
         }
 
+        // TODO: debounce?
+        localStorage.setItem(
+            "camera",
+            JSON.stringify({
+                position: this.camera.position.toArray(),
+                rotation: this.camera.rotation.toArray(),
+            })
+        );
+
         this.onChange?.();
     }
 
     update(_delta: number) {}
+
+    restoreCamera() {
+        const camText = localStorage.getItem("camera");
+        console.log("RESTORE", camText);
+
+        if (!camText) {
+            return false;
+        }
+
+        try {
+            const camJSON = JSON.parse(camText);
+            this.camera.position.copy(new Vector3().fromArray(camJSON.position));
+            this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
+            this.onChange?.();
+            return true;
+        } catch (e) {
+            console.error("Error restoring camera", e);
+            return false;
+        }
+    }
 
     showPointCloud(pc: PointCloud) {
         const center = pc.tightBounds.getCenter(new Vector3());
