@@ -61,8 +61,8 @@ function getInfo(worker: Worker, source: LazSource) {
     });
 }
 
-function getData(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: number[]) {
-    return new Promise<{ geometry: BufferGeometry }>((resolve, reject) => {
+function getChunk(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: number[]) {
+    return new Promise<{ geometry: BufferGeometry; pointCount: number }>((resolve, reject) => {
         worker.onmessage = (e) => {
             const data = e.data as WorkerPointsResponse;
             if (data.msgType === "points") {
@@ -73,7 +73,7 @@ function getData(worker: Worker, source: LazSource, node: CopcNodeInfo, offset: 
                 geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
                 geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
-                resolve({ geometry: geometry });
+                resolve({ geometry: geometry, pointCount: data.pointCount });
             } else {
                 reject("not points");
             }
@@ -97,6 +97,7 @@ export class PointCloud {
     hierarchy: Hierarchy;
     loadedNodes: PointCloudNode[];
     octreeInfo: OctreeInfo;
+    pointsLoaded: number = 0;
 
     constructor(
         viewer: Viewer,
@@ -175,14 +176,16 @@ export class PointCloud {
             const nname = n.join("-");
             console.log(this.name, "LOAD", nname);
             const node = this.hierarchy.nodes[nname]!;
-            const data = await getData(worker, this.source, node, this.offset.toArray());
+            const pointData = await getChunk(worker, this.source, node, this.offset.toArray());
 
-            const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
+            const pcn = new PointCloudNode(nname, pointData.geometry, this.bounds);
 
             this.loadedNodes.push(pcn);
 
             this.viewer.scene.add(pcn.pco);
             this.viewer.objects.push(pcn.pco);
+
+            this.pointsLoaded += pointData.pointCount;
             // await new Promise((resolve) => setTimeout(resolve, 100));
             loaded++;
         }
