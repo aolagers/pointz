@@ -1,4 +1,4 @@
-import { Color, Material, ShaderMaterial, Vector2 } from "three";
+import { Material, ShaderMaterial, Vector2 } from "three";
 import { COLOR_MODE } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
@@ -55,8 +55,6 @@ export class PointMaterial extends ShaderMaterial {
                 PICK: pick ? true : false,
             },
             uniforms: {
-                uColor: { value: new Color(3403332) },
-                uMouse: { value: new Vector2(0, 0) },
                 ptSize: { value: DEFAULT_PT_SIZE },
                 uClassMask: { value: 0xffff },
                 uNodeIndex: { value: 0 },

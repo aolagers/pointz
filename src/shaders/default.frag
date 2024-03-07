@@ -1,13 +1,6 @@
-uniform vec3 uColor;
-
 flat in int vClass;
-in vec2 mouse;
-in vec4 rgbColor;
-
-in float fintensity;
-
-in float custom1;
-in float custom2;
+in vec4 vColor;
+in float vIntensity;
 
 out vec4 FragColor;
 
@@ -24,7 +17,7 @@ const vec3 CLASS_COLORS[N_CLASSES] = vec3[](
         vec3(1.0, 1.0, 0.0), // 6: building
         vec3(0.0, 1.0, 1.0), // 7: noise
         vec3(1.0, 0.0, 1.0), // 8: model key / reserved
-                            
+
         vec3(0.3, 0.3, 1.0) // 9: water
         // 10: rail
         // 11: road surface
@@ -39,14 +32,6 @@ const vec3 CLASS_COLORS[N_CLASSES] = vec3[](
 
 void main() {
 
-    uint cls = uint(vClass);
-    // classification color
-    if (cls == 0u) {
-        FragColor = vec4(0.5, 0.25, 0.1, 1.0);
-    } else {
-        FragColor = vec4(uColor, 1.0);
-    }
-
     // round points
     float u = 2.0 * gl_PointCoord.x - 1.0;
     float v = 2.0 * gl_PointCoord.y - 1.0;
@@ -59,21 +44,21 @@ void main() {
     float alpha = 0.998;
 
 #if defined(PICK)
-        FragColor = rgbColor; 
-        //FragColor = vec4(1.0, 1.0, 0.0, rgbColor.a); 
+        FragColor = vColor;
         return;
 #endif
 
     if (COLOR_MODE == 0) {
         // intensity
-        FragColor = vec4(vec3(fintensity), alpha);
+        FragColor = vec4(vec3(vIntensity), alpha);
     } else if (COLOR_MODE == 1) {
         // classification
-        FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], alpha);
+        FragColor = vec4(CLASS_COLORS[uint(vClass) % N_CLASSES], alpha);
     } else if (COLOR_MODE == 2) {
         // RGB
-        FragColor = vec4(rgbColor.rgb, alpha);
+        FragColor = vec4(vColor.rgb, alpha);
     } else {
-        FragColor = vec4(0.0, 0.0, 1.0, alpha);
+        // what??
+        FragColor = vec4(1.0, 0.0, 1.0, alpha);
     }
 }
