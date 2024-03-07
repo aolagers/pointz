@@ -22,7 +22,7 @@ import type {
 import { WorkerPool } from "./worker-pool";
 import { PointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { boxToMesh, nodeToBox } from "./utils";
+import { boxToMesh, getNodeVisibilityRating, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
@@ -34,6 +34,7 @@ type RespMap = {
 export const pool = new WorkerPool<RespMap>(workerUrl, 8);
 
 export class PointCloudNode {
+    parent: PointCloud;
     nodeName: OctreePath;
     geometry: BufferGeometry;
     bounds: Box3;
@@ -42,7 +43,17 @@ export class PointCloudNode {
 
     debugMesh: Mesh;
 
-    constructor(name: OctreePath, geom: BufferGeometry, bounds: Box3, idx: number) {
+    spacing: number;
+
+    constructor(
+        parent: PointCloud,
+        name: OctreePath,
+        geom: BufferGeometry,
+        bounds: Box3,
+        idx: number,
+        spacing: number
+    ) {
+        this.parent = parent;
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
@@ -59,6 +70,7 @@ export class PointCloudNode {
         }
         this.debugMesh = cube;
         this.visibleIndex = idx;
+        this.spacing = spacing;
     }
 
     get depth() {
@@ -118,7 +130,7 @@ export class PointCloud {
     octreeBounds: Box3;
     hierarchy: Hierarchy;
     loadedNodes: PointCloudNode[];
-    spacing: number;
+    rootSpacing: number;
     pointsLoaded: number = 0;
 
     static material = new PointMaterial(false);
@@ -132,7 +144,7 @@ export class PointCloud {
         octreeBounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
-        spacing: number
+        rootSpacing: number
     ) {
         this.viewer = viewer;
         this.name = name;
@@ -142,7 +154,7 @@ export class PointCloud {
         this.octreeBounds = octreeBounds;
         this.loadedNodes = [];
         this.hierarchy = hierarchy;
-        this.spacing = spacing;
+        this.rootSpacing = rootSpacing;
     }
 
     async loadFake() {
@@ -151,7 +163,7 @@ export class PointCloud {
         this.viewer.addObject(pcn.pco);
     }
 
-    async load() {
+    async loadNodes() {
         const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
 
         console.log(this.name, { toLoad, l: toLoad.length });
@@ -159,8 +171,10 @@ export class PointCloud {
         let loaded = 0;
 
         const score = (p: OctreePath) => {
-            const box = nodeToBox(this.octreeBounds, p);
-            return this.viewer.camera.position.distanceTo(box.getCenter(new Vector3())) + p[0] * 1000;
+            const score = getNodeVisibilityRating(this.octreeBounds, p, this.rootSpacing, this.viewer.camera);
+            return score;
+            // const box = nodeToBox(this.octreeBounds, p);
+            // return this.viewer.camera.position.distanceTo(box.getCenter(new Vector3())) + p[0] * 1000;
         };
 
         const pq = new PriorityQueue<OctreePath>((a, b) => score(a) - score(b));
@@ -181,14 +195,17 @@ export class PointCloud {
             const nname = n.join("-");
             const nodeInfo = this.hierarchy.nodes[nname]!;
 
-            // const bb = nodeToBox(this.octreeBounds, n);
-            // const dst = this.viewer.camera.position.distanceTo(bb.getCenter(new Vector3()));
-            // console.log("load", nname, dst);
-
             const prom = getChunk(this.source, nodeInfo, this.offset.toArray()).then((pointData) => {
                 const bbox = nodeToBox(this.octreeBounds, n);
 
-                const pcn = new PointCloudNode(n, pointData.geometry, bbox, pointData.chunkId);
+                const pcn = new PointCloudNode(
+                    this,
+                    n,
+                    pointData.geometry,
+                    bbox,
+                    pointData.chunkId,
+                    this.rootSpacing / Math.pow(2, n[0])
+                );
 
                 this.loadedNodes.push(pcn);
 
@@ -325,7 +342,7 @@ export class PointCloud {
             0
         );
 
-        pc.loadedNodes.push(new PointCloudNode([0, 0, 0, 0], geometry, tightBounds, cid));
+        pc.loadedNodes.push(new PointCloudNode(pc, [0, 0, 0, 0], geometry, tightBounds, cid, pc.rootSpacing));
 
         return pc;
     }

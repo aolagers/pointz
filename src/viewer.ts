@@ -25,7 +25,7 @@ import Stats from "three/addons/libs/stats.module.js";
 import { EarthControls } from "./earth-controls";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
-import { boxToMesh, createTightBounds, getCameraFrustum, printVec } from "./utils";
+import { createTightBounds, getCameraFrustum, getNodeVisibilityRating, printVec } from "./utils";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 
@@ -284,14 +284,12 @@ export class Viewer {
     updateVisibile() {
         const frustum = getCameraFrustum(this.camera);
 
-        const cameraRay = new Ray(this.camera.position, this.camera.getWorldDirection(new Vector3()).normalize());
-
         const nodeScore = (n: PointCloudNode) => {
-            return (
-                100_000 * n.depth +
-                n.bounds.distanceToPoint(this.camera.position) +
-                cameraRay.distanceToPoint(n.bounds.getCenter(new Vector3()))
-            );
+            // TODO: Add preference to points in the screen middle
+            // TODO: Add preference to zero-level nodes
+            const s = getNodeVisibilityRating(n.parent.octreeBounds, n.nodeName, n.parent.rootSpacing, this.camera);
+
+            return s;
         };
 
         const pq = new PriorityQueue<PointCloudNode>((a, b) => {
@@ -311,6 +309,7 @@ export class Viewer {
             }
         }
 
+        // TODO: use point budget and some minimum visibility score
         let show = 32;
 
         while (show > 0 && !pq.isEmpty()) {
@@ -362,7 +361,7 @@ export class Viewer {
         this.scene.add(cube);
 
         console.log("NODES for", what, pc.hierarchy.nodes);
-        pc.load();
+        pc.loadNodes();
 
         if (center) {
             this.econtrols.showPointCloud(pc);

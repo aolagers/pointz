@@ -1,6 +1,5 @@
 import {
     Camera,
-    MeshBasicMaterial,
     NearestFilter,
     PerspectiveCamera,
     RGBAFormat,
