@@ -14,6 +14,7 @@
     "@types/three": "^0.159.0",
     "three": "^0.159.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "vite-plugin-glsl": "^1.2.1"
   }
 }
