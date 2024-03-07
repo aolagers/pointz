@@ -184,21 +184,30 @@ export class PointCloud {
 
         let inview = 0;
         for (const nnum of toLoad) {
-            const bbox = nodeToBox(this.octreeBounds, nnum);
-            if (frustum.intersectsBox(bbox)) {
-                inview++;
-                pq.push(nnum);
-            }
+            // if (nnum[0] <= 3) {
+            inview++;
+            pq.push(nnum);
+            // }
+            // const bbox = nodeToBox(this.octreeBounds, nnum);
+            // if (frustum.intersectsBox(bbox)) {
+            //     inview++;
+            //     pq.push(nnum);
+            // }
         }
 
         const promises = [];
 
         while (!pq.isEmpty() && promises.length < 255) {
             const n = pq.pop()!;
-            const nname = n.join("-");
-            const node = this.hierarchy.nodes[nname]!;
 
-            const prom = getChunk(this.source, node, this.offset.toArray()).then((pointData) => {
+            const nname = n.join("-");
+            const nodeInfo = this.hierarchy.nodes[nname]!;
+
+            // const bb = nodeToBox(this.octreeBounds, n);
+            // const dst = this.viewer.camera.position.distanceTo(bb.getCenter(new Vector3()));
+            // console.log("load", nname, dst);
+
+            const prom = getChunk(this.source, nodeInfo, this.offset.toArray()).then((pointData) => {
                 const bbox = nodeToBox(this.octreeBounds, n);
 
                 const pcn = new PointCloudNode(n, pointData.geometry, bbox, pointData.chunkId);

@@ -127,7 +127,6 @@ export class Viewer {
         this.camera = new PerspectiveCamera(75, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
         this.camera.up.set(0, 0, 1);
         this.camera.position.set(0, -10, 5);
-        this.camera.lookAt(0, 0, 0);
 
         this.controls = new MapControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
@@ -229,7 +228,7 @@ export class Viewer {
                         const file = item.getAsFile();
                         if (file) {
                             console.log(`… file[${i}].name = ${file.name}`);
-                            this.addLAZ(file!);
+                            this.addLAZ(file!, true);
                         }
                     }
                 });
@@ -416,15 +415,22 @@ export class Viewer {
         this.scene.add(cube);
     }
 
-    async addLAZ(what: string | File) {
+    async addLAZ(what: string | File, center = false) {
         const pc = await PointCloud.loadLAZ(this, what);
         this.pclouds.push(pc);
 
         console.log("NODES for", what, pc.hierarchy.nodes);
         pc.load();
-        // const cube = createTightBounds(pc);
-        // this.scene.add(cube);
 
-        // this.controls.target.copy(cube.position);
+        if (center) {
+            const cpos = pc.octreeBounds.getCenter(new Vector3());
+
+            const size = pc.octreeBounds.getSize(new Vector3()).x;
+            console.log(cpos);
+
+            this.camera.position.copy(cpos).add(new Vector3(0, size, size / 2));
+            this.controls.target.copy(cpos);
+            this.controls.update();
+        }
     }
 }
