@@ -13,7 +13,7 @@ viewer.init();
 //viewer.requestRender();
 // viewer.renderLoop();
 
-// viewer.addDemo();
+viewer.addDemo();
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
 viewer.addLAZ(here + "/lion_takanawa.copc.laz");
