@@ -10,7 +10,11 @@
         "moduleResolution": "bundler",
         "noEmit": true,
         "allowImportingTsExtensions": true,
-        "module": "ESNext"
+        "module": "ESNext",
+
+        "types": [
+            "vitest/importMeta"
+        ]
     },
     "include": ["src"]
 }
