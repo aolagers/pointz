@@ -1,14 +1,4 @@
-import {
-    Euler,
-    Mesh,
-    MeshNormalMaterial,
-    PerspectiveCamera,
-    Plane,
-    Ray,
-    SphereGeometry,
-    Vector2,
-    Vector3,
-} from "three";
+import { Mesh, MeshNormalMaterial, PerspectiveCamera, Plane, SphereGeometry, Vector2, Vector3 } from "three";
 import { Viewer } from "./viewer";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
@@ -17,8 +7,9 @@ const unitZ = new Vector3(0, 0, 1);
 
 // see: https://www.redblobgames.com/making-of/draggable/
 
-// TODO: doubleclick zoom
 // TODO: remove allocation from move handler
+// TODO: try zooming to mouse position, not center
+// TODO: run animations
 
 export class EarthControls {
     camera: PerspectiveCamera;
@@ -30,15 +21,10 @@ export class EarthControls {
 
     dragging: "left" | "right" | "mid" | null = null;
 
+    lastClick = Date.now();
+
     start = {
         mouse: new Vector2(),
-        cameraPos: new Vector3(),
-        cameraAngle: new Euler(),
-
-        cameraRay: new Ray(),
-        plane: new Plane(),
-
-        target: new Vector3(),
     };
 
     onChange: null | (() => void) = null;
@@ -69,8 +55,10 @@ export class EarthControls {
     }
 
     zoom(deltaY: number) {
+        const step = Math.sign(deltaY) * Math.sqrt(Math.abs(deltaY));
+        console.log("zoom", deltaY);
         const dir = this.camera.getWorldDirection(new Vector3());
-        this.camera.position.add(dir.multiplyScalar(-deltaY));
+        this.camera.position.add(dir.multiplyScalar(-step));
         this.onChange?.();
     }
 
@@ -78,8 +66,16 @@ export class EarthControls {
         this.viewer.addExtraStuff(this.pivot);
     }
 
+    zoomTo(target: Vector3) {
+        const camToTarget = new Vector3().subVectors(target, this.camera.position);
+        this.camera.position.add(camToTarget.multiplyScalar(0.5));
+    }
+
     pointerStart(e: PointerEvent) {
-        console.log("DOWN");
+        if (!e.isPrimary) {
+            return;
+        }
+
         const rect = this.domElement.getBoundingClientRect();
         this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
         this.pointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
@@ -104,6 +100,13 @@ export class EarthControls {
             return;
         }
 
+        if (Date.now() - this.lastClick < 200) {
+            this.zoomTo(pt.position);
+            return;
+        }
+
+        this.lastClick = Date.now();
+
         if (e.button === 0) {
             this.dragging = "left";
         } else if (e.button === 1) {
@@ -117,25 +120,15 @@ export class EarthControls {
         }
 
         this.start.mouse.copy(this.pointer);
-        this.start.cameraPos.copy(this.camera.position);
-        this.start.cameraAngle.copy(this.camera.rotation);
-
-        this.start.plane.setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
-        this.start.cameraRay.set(this.camera.position, this.camera.getWorldDirection(new Vector3()));
-
-        this.start.cameraRay.intersectPlane(this.start.plane, this.start.target);
-
         this.prevAngle.set(0, 0);
-
-        if (!this.start.target) {
-            console.error("no target intersection!!");
-            return;
-        }
 
         console.log("pointer DOWN", this.dragging, e);
     }
 
     pointerEnd(e: PointerEvent) {
+        if (!e.isPrimary) {
+            return;
+        }
         this.dragging = null;
         this.pivot.visible = false;
         console.log("pointer UP", this.dragging, e);
@@ -146,6 +139,10 @@ export class EarthControls {
 
     pointerMove(e: PointerEvent) {
         const rect = this.domElement.getBoundingClientRect();
+        if (!e.isPrimary) {
+            return;
+        }
+
         this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
         this.pointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
 
@@ -155,6 +152,7 @@ export class EarthControls {
 
         if (this.dragging === "left") {
             // PAN
+
             const plane = new Plane().setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
             const ray = getMouseRay(this.pointer, this.camera);
             const intersection = ray.intersectPlane(plane, new Vector3());
@@ -190,20 +188,17 @@ export class EarthControls {
         this.onChange?.();
     }
 
-    update(delta: number) {
-        // TODO: run animations
-    }
+    update(_delta: number) {}
 
     showPointCloud(pc: PointCloud) {
         const center = pc.octreeBounds.getCenter(new Vector3());
         const size = pc.octreeBounds.getSize(new Vector3()).x;
 
-        this.camera.position.copy(center).add(new Vector3(0, -size, size/2));
+        this.camera.position.copy(center).add(new Vector3(0, -size, size / 2));
         this.camera.lookAt(center);
 
         console.log("cam", this.camera.position);
 
-        this.update(0);
         this.onChange?.();
     }
 }
