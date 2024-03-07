@@ -27,10 +27,12 @@ import { createCubeBoundsBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
-export const pool = new WorkerPool<WorkerPointsRequest | WorkerInfoRequest, WorkerPointsResponse | WorkerInfoResponse>(
-    workerUrl,
-    8,
-);
+type RespMap = {
+    info: WorkerInfoResponse;
+    points: WorkerPointsResponse;
+};
+
+export const pool = new WorkerPool<RespMap>(workerUrl, 8);
 
 export class PointCloudNode {
     nodeName: OctreePath;
@@ -53,12 +55,7 @@ async function getInfo(source: LazSource) {
     };
 
     const res = await pool.runTask(req);
-
-    if (res.msgType === "info") {
-        return res;
-    } else {
-        throw new Error("not info");
-    }
+    return res;
 }
 
 async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
@@ -70,19 +67,15 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
     };
     const data = await pool.runTask(req);
 
-    // const data = e.data as WorkerPointsResponse;
-    if (data.msgType === "points") {
-        const geometry = new BufferGeometry();
-        geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
-        geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-        // TODO: use actual classification data
-        const classes = Array(data.pointCount).fill(2);
-        geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
-        geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
-        return { geometry: geometry, pointCount: data.pointCount };
-    } else {
-        throw new Error("not points");
-    }
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
+    geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
+    // TODO: use actual classification data
+    const classes = Array(data.pointCount).fill(2);
+    geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
+    geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+
+    return { geometry: geometry, pointCount: data.pointCount };
 }
 
 export class PointCloud {
