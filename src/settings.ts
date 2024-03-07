@@ -13,3 +13,9 @@ export const COLOR_MODE = {
     RGB: "2",
     RGB_AND_CLASS: "3",
 };
+
+export const LOCALSTORAGE_KEYS = {
+    CAMERA: "camera",
+    COLOR_MODE: "color_mode",
+    DEBUG_MODE: "debug_mode",
+};
