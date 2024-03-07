@@ -20,7 +20,7 @@ type CameraPosition = {
     rotation: [number, number, number, EulerOrder];
 };
 
-const unitZ = new Vector3(0, 0, 1);
+const UNIT_Z = new Vector3(0, 0, 1);
 
 // see: https://www.redblobgames.com/making-of/draggable/
 
@@ -254,7 +254,7 @@ export class EarthControls {
                 let dy = this.prevAngle.y - ay;
 
                 const cameraDir = this.camera.getWorldDirection(new Vector3());
-                const pitch = cameraDir.angleTo(unitZ);
+                const pitch = cameraDir.angleTo(UNIT_Z);
 
                 // limit pitch angle to 0..PI to prevent flipping upside down
                 if (pitch + dy > Math.PI) {
@@ -269,13 +269,13 @@ export class EarthControls {
                 const right = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
 
                 pivotToCam.applyAxisAngle(right, -dy);
-                pivotToCam.applyAxisAngle(unitZ, dx);
+                pivotToCam.applyAxisAngle(UNIT_Z, dx);
 
                 // update camera position
                 this.camera.position.addVectors(this.pivot.position, pivotToCam);
 
                 this.camera.rotateOnWorldAxis(right, -dy);
-                this.camera.rotateOnWorldAxis(unitZ, dx);
+                this.camera.rotateOnWorldAxis(UNIT_Z, dx);
 
                 this.prevAngle.set(ax, ay);
             } else if (this.dragging === "left") {
@@ -283,7 +283,7 @@ export class EarthControls {
 
                 this.setCursor("move");
 
-                const plane = new Plane().setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
+                const plane = new Plane().setFromNormalAndCoplanarPoint(UNIT_Z, this.pivot.position);
                 const ray = getMouseRay(this.pointer, this.camera);
                 const intersection = ray.intersectPlane(plane, new Vector3());
                 if (intersection) {

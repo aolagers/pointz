@@ -39,6 +39,7 @@ const debug = {
     pool: "",
     render: "",
     frames: "",
+    nodestats: "",
 };
 
 const raycaster = new Raycaster();
@@ -83,6 +84,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     errorElement: HTMLElement | null;
     initialized = false;
+
+    debug_mode = false;
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         super();
@@ -212,11 +215,18 @@ export class Viewer extends EventDispatcher<TEvents> {
             if (ev.key === "u") {
                 this.loadMoreNodes();
             }
-            if (ev.key === "x") {
-                this.dropWorstNodes();
-            }
 
             this.requestRender("keydown");
+        });
+
+        const toggleDebugButton = document.getElementById("toggle-debug")!;
+        toggleDebugButton.addEventListener("click", () => {
+            this.debug_mode = !this.debug_mode;
+            if (this.debug_mode) {
+                toggleDebugButton.classList.add("active");
+            } else {
+                toggleDebugButton.classList.remove("active");
+            }
         });
 
         this.econtrols.init();
@@ -302,6 +312,11 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.frame++;
 
+        debug.nodestats =
+            `loads:${PointCloudNode.stats.loads} ` +
+            `retries:${PointCloudNode.stats.retries} ` +
+            `errs:${PointCloudNode.stats.errors}`;
+
         debug.render =
             // `progs:${this.renderer.info.programs?.length} ` +
             `geoms:${this.renderer.info.memory.geometries} ` +
@@ -354,29 +369,6 @@ export class Viewer extends EventDispatcher<TEvents> {
                 }
             }
         }
-    }
-
-    dropWorstNodes() {
-        const loadedNodes = [];
-        for (const pc of this.pointClouds) {
-            for (const node of pc.nodes) {
-                if (node.state == "visible" && node.depth > 0) {
-                    loadedNodes.push(node);
-                }
-            }
-        }
-
-        loadedNodes.sort((a, b) => {
-            return b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera);
-        });
-
-        const toDrop = loadedNodes.slice(-5).filter((n) => n.depth > 0);
-
-        for (const node of toDrop) {
-            node.unload(this);
-        }
-
-        this.requestRender("drop worst");
     }
 
     loadMoreNodesThrottled = throttle(300, () => {

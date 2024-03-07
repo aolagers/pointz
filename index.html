@@ -68,6 +68,9 @@
             #btns button:hover {
                 background-color: rgba(0, 0, 0, 0.6);
             }
+            #btns button:hover.active {
+                background-color: rgba(255, 0, 0, 0.8);
+            }
 
             #btns button {
                 border-top: 1px solid var(--light);
@@ -81,6 +84,10 @@
                 border-left: 1px solid var(--dark);
                 border-right: 1px solid var(--light);
                 border-bottom: 1px solid var(--light);
+            }
+
+            .active {
+                background-color: rgba(255, 0, 0, 0.5);
             }
 
             .label {
@@ -184,8 +191,7 @@
         <div id="errormsg" class=""></div>
 
         <div id="btns" class="">
-            <button id="more-points" class="nice btn">more</button>
-            <button id="less-points" class="nice btn">less</button>
+            <button id="toggle-debug" class="nice btn">debug</button>
             <button id="reset-cam" class="nice btn">reset cam</button>
         </div>
         <script type="module" src="/src/index.ts"></script>
