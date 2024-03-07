@@ -80,6 +80,8 @@ export class Viewer {
 
     renderRequested: boolean;
 
+    edlMaterial: EDLMaterial;
+
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         this.width = width;
         this.height = height;
@@ -127,14 +129,15 @@ export class Viewer {
         this.stats.addPanel(this.gpuPanel);
         this.stats.showPanel(0);
 
-        const tquad = new Mesh(
-            new PlaneGeometry(2, 2),
-            new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture),
-        );
+        this.edlMaterial = new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
+
+        const tquad = new Mesh(new PlaneGeometry(2, 2), this.edlMaterial);
         this.sceneOrtho = new Scene();
         this.sceneOrtho.add(tquad); // Scene for orthographic display
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+        this.setSize(this.width, this.height);
     }
 
     init() {
@@ -331,6 +334,9 @@ export class Viewer {
         this.width = width;
         this.height = height;
         const pr = 1.0; //window.devicePixelRatio;
+
+        this.edlMaterial.uniforms.uResolution.value = [width, height];
+
         this.renderTarget.setSize(this.width * pr, this.height * pr);
         this.renderer.setSize(this.width * pr, this.height * pr, false);
         this.camera.aspect = this.width / this.height;

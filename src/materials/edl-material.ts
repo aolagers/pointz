@@ -1,4 +1,4 @@
-import { DepthTexture, ShaderMaterial, Texture } from "three";
+import { DepthTexture, ShaderMaterial, Texture, Vector2 } from "three";
 import { CAMERA_FAR, CAMERA_NEAR } from "../settings";
 import edlFrag from "../shaders/edl.frag";
 import edlVert from "../shaders/edl.vert";
@@ -8,10 +8,11 @@ export class EDLMaterial extends ShaderMaterial {
         super({
             glslVersion: "300 es",
             uniforms: {
-                cameraNear: { value: CAMERA_NEAR },
-                cameraFar: { value: CAMERA_FAR },
-                colorTexture: { value: colorTexture },
-                depthTexture: { value: depthTexture },
+                uCameraNear: { value: CAMERA_NEAR },
+                uCameraFar: { value: CAMERA_FAR },
+                uColorTexture: { value: colorTexture },
+                uDepthTexture: { value: depthTexture },
+                uResolution: { value: [50, 50] },
             },
             vertexShader: edlVert,
             fragmentShader: edlFrag,
