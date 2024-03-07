@@ -45,6 +45,12 @@ export function getPointMaterial() {
     }
 
     pointMaterial = new ShaderMaterial({
+        defines: {
+            // 0: intensity
+            // 1: classification
+            // 2: rgb
+            COLOR_MODE: "2",
+        },
         uniforms: {
             uColor: { value: new Color(3403332) },
             uMouse: { value: new Vector2(0, 0) },
