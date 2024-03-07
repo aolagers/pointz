@@ -13,7 +13,7 @@ import {
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud } from "./pointcloud";
-import { MATERIALS, pointer } from "./materials";
+import { MATERIALS, pointer, updateValues } from "./materials";
 import { createTightBounds } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
@@ -65,6 +65,19 @@ export class Viewer {
         document.body.appendChild(this.renderer.domElement);
 
         document.body.addEventListener("pointermove", this.onPointerMove);
+
+        const sl1 = document.getElementById("sl1") as HTMLInputElement;
+        const sl2 = document.getElementById("sl2") as HTMLInputElement;
+
+        const sliders: [number, number] = [0, 0];
+        sl1.addEventListener("input", () => {
+            sliders[0] = parseInt(sl1.value);
+            updateValues(sliders[0], sliders[1]);
+        });
+        sl2.addEventListener("input", () => {
+            sliders[1] = parseInt(sl2.value);
+            updateValues(sliders[0], sliders[1]);
+        });
         window.addEventListener("resize", this.onWindowResize);
     }
 

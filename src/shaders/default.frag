@@ -4,6 +4,9 @@ flat varying uint cls;
 flat varying vec2 mouse;
 flat varying vec3 rgbColor;
 
+flat varying float custom1;
+flat varying float custom2;
+
 void main() {
 
     // classification color
