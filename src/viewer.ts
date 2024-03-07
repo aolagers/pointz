@@ -137,9 +137,8 @@ export class Viewer {
 
     init() {
         document.body.appendChild(this.stats.dom);
-        document.body.appendChild(this.renderer.domElement);
 
-        document.body.addEventListener("pointermove", this.onPointerMove);
+        this.renderer.domElement.addEventListener("pointermove", (ev) => this.onPointerMove(ev));
 
         const sl1 = document.getElementById("sl1") as HTMLInputElement;
         const sl2 = document.getElementById("sl2") as HTMLInputElement;
@@ -340,10 +339,25 @@ export class Viewer {
     onPointerMove(event: PointerEvent) {
         if (event.isPrimary === false) return;
 
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        const rect = this.renderer.domElement.getBoundingClientRect();
+
+        pointer.x = ((event.clientX - rect.x) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.y) / rect.height) * 2 + 1;
+
+        /*
+        const W = 100;
+        this.renderer.setScissor(
+            ((pointer.x + 1) / 2) * this.width - W / 2,
+            this.height + (this.height * (pointer.y - 1)) / 2 - W / 2,
+            W,
+            W,
+        );
+        this.renderer.setScissorTest(true);
+        */
 
         debug.mouse = printVec(pointer);
+
+        this.requestRender();
     }
 
     async addDemo() {
