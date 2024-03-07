@@ -44,6 +44,7 @@ export class PointCloudNode {
     debugMesh: Mesh;
 
     spacing: number;
+    pointCount: number;
 
     constructor(
         parent: PointCloud,
@@ -51,7 +52,8 @@ export class PointCloudNode {
         geom: BufferGeometry,
         bounds: Box3,
         idx: number,
-        spacing: number
+        spacing: number,
+        pointCount: number
     ) {
         this.parent = parent;
         this.nodeName = name;
@@ -60,6 +62,8 @@ export class PointCloudNode {
 
         this.pco = new Points(this.geometry, PointCloud.material);
         this.pco.matrixAutoUpdate = false;
+
+        this.pointCount = pointCount;
 
         const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
         if (name[0] === 0) {
@@ -189,7 +193,7 @@ export class PointCloud {
 
         const promises = [];
 
-        while (!pq.isEmpty() && promises.length < 64) {
+        while (!pq.isEmpty() && promises.length < 255) {
             const n = pq.pop()!;
 
             const nname = n.join("-");
@@ -204,7 +208,8 @@ export class PointCloud {
                     pointData.geometry,
                     bbox,
                     pointData.chunkId,
-                    this.rootSpacing / Math.pow(2, n[0])
+                    this.rootSpacing / Math.pow(2, n[0]),
+                    pointData.pointCount
                 );
 
                 this.loadedNodes.push(pcn);
@@ -339,10 +344,10 @@ export class PointCloud {
             tightBounds,
             offset,
             { pages: {}, nodes: {} },
-            0
+            0.1
         );
 
-        pc.loadedNodes.push(new PointCloudNode(pc, [0, 0, 0, 0], geometry, tightBounds, cid, pc.rootSpacing));
+        pc.loadedNodes.push(new PointCloudNode(pc, [0, 0, 0, 0], geometry, tightBounds, cid, pc.rootSpacing, indice));
 
         return pc;
     }

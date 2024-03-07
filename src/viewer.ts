@@ -10,12 +10,10 @@ import {
     PlaneGeometry,
     Points,
     RGBAFormat,
-    Ray,
     Raycaster,
     Scene,
     UnsignedIntType,
     Vector2,
-    Vector3,
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
@@ -26,7 +24,7 @@ import { EarthControls } from "./earth-controls";
 import { PointCloud, PointCloudNode, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, getNodeVisibilityRating, printVec } from "./utils";
-import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
+import { CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 
 const debugEl = document.getElementById("debug")!;
@@ -205,6 +203,10 @@ export class Viewer {
 
         this.econtrols.init();
 
+        setInterval(() => {
+            this.updateVisibile();
+        }, 1000);
+
         this.requestRender();
     }
 
@@ -292,9 +294,7 @@ export class Viewer {
             return s;
         };
 
-        const pq = new PriorityQueue<PointCloudNode>((a, b) => {
-            return nodeScore(a) - nodeScore(b);
-        });
+        const pq = new PriorityQueue<PointCloudNode>((a, b) => nodeScore(a) - nodeScore(b));
 
         for (const pc of this.pclouds) {
             for (const node of pc.loadedNodes) {
@@ -302,32 +302,47 @@ export class Viewer {
                 if (inFrustum) {
                     node.pco.visible = true;
                     pq.push(node);
+                    node.debugMesh.material = this.mats.loaded;
                 } else {
-                    node.debugMesh.material = new MeshBasicMaterial({ color: 0xff0077, wireframe: true });
+                    node.debugMesh.material = this.mats.culled;
                     node.pco.visible = false;
                 }
             }
         }
 
-        // TODO: use point budget and some minimum visibility score
-        let show = 32;
+        let visiblePoints = 0;
 
-        while (show > 0 && !pq.isEmpty()) {
-            const n = pq.pop()!;
-            if (!n.pco.visible) console.log("show", n);
-            n.pco.visible = true;
-            n.debugMesh.material = new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true });
-            show--;
+        let vis = 0;
+
+        while (visiblePoints < POINT_BUDGET && !pq.isEmpty()) {
+            const node = pq.pop()!;
+            if (!node.pco.visible) {
+                console.log("show", node);
+            }
+            node.pco.visible = true;
+            node.debugMesh.material = this.mats.loaded;
+            visiblePoints += node.pointCount;
+            vis++;
         }
+
+        console.log("VIS", vis, "/", (visiblePoints / 1_000_000).toFixed(2) + "M");
 
         while (!pq.isEmpty()) {
-            const n = pq.pop()!;
+            const node = pq.pop()!;
 
-            if (n.pco.visible) console.log("hide", n);
-            n.pco.visible = false;
-            n.debugMesh.material = new MeshBasicMaterial({ color: 0xcc33ff, wireframe: true });
+            node.pco.visible = false;
+            node.debugMesh.material = this.mats.hidden;
         }
+
+        // TODO: only render if changed
+        this.requestRender();
     }
+
+    mats = {
+        culled: new MeshBasicMaterial({ color: 0xff0077, wireframe: true }),
+        hidden: new MeshBasicMaterial({ color: 0xcc33ff, wireframe: true }),
+        loaded: new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true }),
+    };
 
     setSize(width: number, height: number) {
         this.width = width;
