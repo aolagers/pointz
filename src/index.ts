@@ -11,6 +11,17 @@ const canvas = document.querySelector("#viewer") as HTMLCanvasElement;
 
 const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
+viewer.addEventListener("loading", (ev) => {
+    const el = document.querySelector(".loader") as HTMLElement;
+    const n = ev.nodes;
+    console.log(n, el);
+    if (n) {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+});
+
 viewer.init();
 
 window.addEventListener("resize", () => viewer.setSize(window.innerWidth, window.innerHeight));
