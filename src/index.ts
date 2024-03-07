@@ -18,10 +18,10 @@ viewer.init();
 // viewer.addPointCloud(demopc);
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
-viewer.addLAZ(here + "/lion_takanawa.copc.laz", true);
+viewer.addLAZ(here + "/lion_takanawa.copc.laz");
 
 if (window.location.hostname === "localhost") {
-    viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz", true);
+    viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
 } else {
     viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
 }
@@ -30,11 +30,14 @@ window.addEventListener("resize", () => {
     viewer.setSize(window.innerWidth, window.innerHeight);
 });
 
-document.querySelector("#more")!.addEventListener("click", () => {
+document.querySelector("#more-points")!.addEventListener("click", () => {
     viewer.loadMoreNodes();
 });
-document.querySelector("#less")!.addEventListener("click", () => {
+document.querySelector("#less-points")!.addEventListener("click", () => {
     viewer.dropWorstNodes();
+});
+document.querySelector("#reset-cam")!.addEventListener("click", () => {
+    viewer.econtrols.targetAll();
 });
 
 // viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");

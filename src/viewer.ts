@@ -32,7 +32,6 @@ import { pointMaterialPool } from "./materials/point-material";
 
 const debugEl = document.querySelector("#debug")!;
 const debug = {
-    mouse: "",
     camera: "",
     touchCount: "",
     pts: "",
@@ -181,6 +180,9 @@ export class Viewer {
                 }
             }
 
+            if (ev.key === "r") {
+                this.econtrols.targetAll();
+            }
             if (ev.key === "u") {
                 this.loadMoreNodes();
             }
