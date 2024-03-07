@@ -380,67 +380,70 @@ export class Viewer {
             (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
-        let visiblePoints = 0;
-
         const nonVisibleNodes: PointCloudNode[] = [];
 
+        // check node visibility
         for (const pc of this.pointClouds) {
             for (const node of pc.nodes) {
-                if (node.state === "visible" || node.state === "loading") {
-                    visiblePoints += node.pointCount;
-                }
-                const inFrustum = frustum.intersectsBox(node.bounds);
-                if (inFrustum) {
-                    if (node.state === "unloaded") {
-                        pq.push(node);
-                    }
+                if (frustum.intersectsBox(node.bounds)) {
+                    pq.push(node);
                 } else {
-                    if (node.state === "visible") {
-                        nonVisibleNodes.push(node);
-                    }
+                    nonVisibleNodes.push(node);
                 }
             }
         }
 
-        while (visiblePoints < POINT_BUDGET && !pq.isEmpty()) {
-            if (loads == 5) {
-                break;
-            }
-
-            const node = pq.popOrThrow();
-
-            // dont load too fine resolution
-            if (node.estimateNodeError(this.camera) < 0.001) {
-                break;
-            }
-
-            visiblePoints += node.pointCount;
-
-            if (node.state === "unloaded") {
-                console.log("load", node);
-                loads++;
-                node.load(this)
-                    .then((_nd) => {
-                        console.log("node loaded finishz", node.nodeName, node.pointCount);
-                    })
-                    .catch((e) => {
-                        console.error("oh no, load error", e);
-                    });
-            } else {
-                console.log("node already loaded", node.state);
-            }
-        }
-
+        // unload culled nodes
         for (const node of nonVisibleNodes) {
-            node.unload(this);
+            if (node.state === "visible") {
+                node.unload(this);
+            }
         }
 
-        // TODO: only render if something changed
+        let visiblePoints = 0;
+
+        while (!pq.isEmpty()) {
+            const node = pq.popOrThrow();
+            const err = node.estimateNodeError(this.camera);
+
+            const shown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > 0.001);
+
+            if (node.state === "visible") {
+                if (shown) {
+                    // all good
+                    visiblePoints += node.pointCount;
+                    continue;
+                } else {
+                    console.log("DROP", node.nodeName, err);
+                    node.unload(this);
+                    continue;
+                }
+            } else if (node.state === "unloaded") {
+                if (shown) {
+                    console.log("LOAD", node.nodeName, err);
+                    loads++;
+                    visiblePoints += node.pointCount;
+
+                    node.load(this)
+                        .then((_nd) => {
+                            // console.log("node loaded finishz", node.nodeName, node.pointCount);
+                        })
+                        .catch((e) => {
+                            console.error("oh no, load error", e);
+                            throw e;
+                        });
+                } else {
+                    // all good
+                }
+            } else if (node.state === "loading") {
+                // TODO: how to cancel?
+                visiblePoints += node.pointCount;
+            } else if (node.state === "error") {
+                // TODO: how to retry?
+            }
+        }
+
         this.requestRender();
-
-        if (loads === 0) {
-            console.warn("no more loads to do", visiblePoints, POINT_BUDGET);
-        }
 
         return loads;
     }
