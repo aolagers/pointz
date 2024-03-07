@@ -68,7 +68,7 @@ export class EarthControls {
     }
 
     init() {
-        this.viewer.addExtraStuff(this.pivot);
+        this.viewer.scene.add(this.pivot);
     }
 
     zoomTo(target: Vector3, factor: number) {

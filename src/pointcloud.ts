@@ -107,10 +107,11 @@ export class PointCloud {
         this.rootSpacing = rootSpacing;
     }
 
+    // TODO: load from the node
     async loadNodes() {
         if (this.isDemo) {
             const pcn = this.loadedNodes[0]!;
-            this.viewer.addObject(pcn.pco);
+            this.viewer.addNode(pcn);
             return;
         }
 
@@ -160,9 +161,7 @@ export class PointCloud {
 
                 this.loadedNodes.push(pcn);
 
-                this.viewer.addObject(pcn.pco);
-
-                this.viewer.addExtraStuff(pcn.debugMesh);
+                this.viewer.addNode(pcn);
 
                 this.pointsLoaded += pointData.pointCount;
 
