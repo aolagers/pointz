@@ -4,9 +4,15 @@ type Wrapper = {
     id: number;
 };
 
+type QueuedItem = {
+    request: unknown;
+    resolve: (resp: any) => void;
+    reject: (resp: any) => void;
+};
+
 export class WorkerPool<R extends Record<string, any>> {
     pool: Wrapper[] = [];
-    queue: { request: any; resolve: (resp: any) => void }[] = [];
+    queue: QueuedItem[] = [];
 
     tasksFinished: number = 0;
 
@@ -34,8 +40,11 @@ export class WorkerPool<R extends Record<string, any>> {
         const next = this.queue.shift();
         if (next) {
             w.worker.onmessage = async (e) => {
-                // await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000));
-                next.resolve(e.data);
+                if (e.data.msgType === "error") {
+                    next.reject(e.data);
+                } else {
+                    next.resolve(e.data);
+                }
                 this.onTaskFinished(w);
             };
             w.worker.postMessage(next.request);
@@ -49,18 +58,21 @@ export class WorkerPool<R extends Record<string, any>> {
 
         if (available) {
             available.busy = true;
-            return new Promise<R[J["command"]]>((resolve) => {
+            return new Promise<R[J["command"]]>((resolve, reject) => {
                 available.worker.onmessage = async (e) => {
-                    // await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000));
-                    resolve(e.data);
+                    if (e.data.msgType === "error") {
+                        reject(e.data);
+                    } else {
+                        resolve(e.data);
+                    }
 
                     this.onTaskFinished(available);
                 };
                 available.worker.postMessage(req);
             });
         } else {
-            return new Promise<R[J["command"]]>((resolve) => {
-                this.queue.push({ request: req, resolve });
+            return new Promise<R[J["command"]]>((resolve, reject) => {
+                this.queue.push({ request: req, resolve, reject });
             });
         }
     }
