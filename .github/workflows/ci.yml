@@ -58,7 +58,4 @@ jobs:
               uses: JamesIves/github-pages-deploy-action@v4
               with:
                   single-commit: true
-                  repository-name: aolagers/pointz-www
-                  token: ${{ secrets.DEPLOY_PAGE_TOKEN }}
                   folder: out
-                  target-folder: .
