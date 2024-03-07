@@ -13,15 +13,15 @@ viewer.init();
 //viewer.requestRender();
 // viewer.renderLoop();
 
-viewer.addDemo();
+// viewer.addDemo();
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
-viewer.addLAZ(here + "/lion_takanawa.copc.laz");
+// viewer.addLAZ(here + "/lion_takanawa.copc.laz", true);
 
 if (window.location.hostname === "localhost") {
-    // viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+    viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz", true);
 } else {
-    // viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+    viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
 }
 
 window.addEventListener("resize", () => {

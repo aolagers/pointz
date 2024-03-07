@@ -22,7 +22,7 @@ import type {
 import { WorkerPool } from "./worker-pool";
 import { PointMaterial } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { boxToMesh, getCameraFrustum, nodeToBox } from "./utils";
+import { boxToMesh, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
 
@@ -154,30 +154,16 @@ export class PointCloud {
     async load() {
         const toLoad = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
 
-        // toLoad.sort((a, b) => {
-        //     for (let i = 0; i < 4; i++) {
-        //         if (a[i]! < b[i]!) {
-        //             return -1;
-        //         } else if (a[i]! > b[i]!) {
-        //             return 1;
-        //         }
-        //     }
-        //     return 0;
-        // });
-
         console.log(this.name, { toLoad, l: toLoad.length });
 
         let loaded = 0;
 
-        const pq = new PriorityQueue<OctreePath>((a, b) => {
-            const bboxA = nodeToBox(this.octreeBounds, a);
-            const distA = this.viewer.camera.position.distanceTo(bboxA.getCenter(new Vector3()));
+        const score = (p: OctreePath) => {
+            const box = nodeToBox(this.octreeBounds, p);
+            return this.viewer.camera.position.distanceTo(box.getCenter(new Vector3())) + p[0] * 1000;
+        };
 
-            const bboxB = nodeToBox(this.octreeBounds, b);
-            const distB = this.viewer.camera.position.distanceTo(bboxB.getCenter(new Vector3()));
-
-            return distA - distB;
-        });
+        const pq = new PriorityQueue<OctreePath>((a, b) => score(a) - score(b));
 
         let inview = 0;
         for (const nnum of toLoad) {
@@ -189,7 +175,7 @@ export class PointCloud {
 
         const promises = [];
 
-        while (!pq.isEmpty() && promises.length < 255) {
+        while (!pq.isEmpty() && promises.length < 64) {
             const n = pq.pop()!;
 
             const nname = n.join("-");
