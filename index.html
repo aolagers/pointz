@@ -31,12 +31,6 @@
             border-radius: 0.5em;
         }
 
-        #sliders {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-        }
-
         #viewer {
             margin: 0;
             padding: 0;
@@ -47,14 +41,7 @@
 
 <body>
     <div id="debug">debug</div>
-    <div id="sliders">
-        <div>
-            <input id="sl1" type="range" min="-100" max="100" value="0" />
-        </div>
-        <div>
-            <input id="sl2" type="range" min="-100" max="100" value="0" />
-        </div>
-    </div>
+
     <canvas id="viewer"></canvas>
     <script type="module" src="/src/index.ts"></script>
 </body>

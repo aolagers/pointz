@@ -10,7 +10,8 @@ import {
     WebGLRenderer,
 } from "three";
 import { Viewer } from "./viewer";
-import { PointCloud, PointCloudNode } from "./pointcloud";
+import { PointCloud } from "./pointcloud";
+import { PointCloudNode } from "./pointcloud-node";
 import { PointMaterial } from "./materials/point-material";
 
 const raycaster = new Raycaster();
@@ -119,7 +120,7 @@ export function getMouseIntersection(
         }
 
         if (nodehit && pchit) {
-            const attrs = nodehit.geometry.getAttribute("position");
+            const attrs = nodehit.pco.geometry.getAttribute("position");
 
             const X = attrs.array[idx * 3 + 0];
             const Y = attrs.array[idx * 3 + 1];

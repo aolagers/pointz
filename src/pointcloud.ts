@@ -4,8 +4,6 @@ import {
     Float32BufferAttribute,
     Int32BufferAttribute,
     IntType,
-    Mesh,
-    Points,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
     Vector3,
@@ -20,11 +18,11 @@ import type {
     Hierarchy,
 } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
-import { pointMaterialPool } from "./materials/point-material";
 import { Viewer } from "./viewer";
-import { boxToMesh, getNodeVisibilityRating, nodeToBox } from "./utils";
+import { getNodeVisibilityRating, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
 import { PriorityQueue } from "./priority-queue";
+import { PointCloudNode } from "./pointcloud-node";
 
 type RespMap = {
     info: WorkerInfoResponse;
@@ -32,55 +30,6 @@ type RespMap = {
 };
 
 export const pool = new WorkerPool<RespMap>(workerUrl, 8);
-
-export class PointCloudNode {
-    parent: PointCloud;
-    nodeName: OctreePath;
-    geometry: BufferGeometry;
-    bounds: Box3;
-    pco: Points;
-    visibleIndex: number;
-
-    debugMesh: Mesh;
-
-    spacing: number;
-    pointCount: number;
-
-    constructor(
-        parent: PointCloud,
-        name: OctreePath,
-        geom: BufferGeometry,
-        bounds: Box3,
-        idx: number,
-        spacing: number,
-        pointCount: number
-    ) {
-        this.parent = parent;
-        this.nodeName = name;
-        this.geometry = geom;
-        this.bounds = bounds;
-
-        this.pco = new Points(this.geometry, pointMaterialPool.getMaterial());
-        this.pco.matrixAutoUpdate = false;
-
-        this.pointCount = pointCount;
-
-        const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
-        if (name[0] === 0) {
-            cube.scale.set(1.02, 1.02, 1.02);
-        }
-        if (name[0] === 1) {
-            cube.scale.set(0.99, 0.99, 0.99);
-        }
-        this.debugMesh = cube;
-        this.visibleIndex = idx;
-        this.spacing = spacing;
-    }
-
-    get depth() {
-        return this.nodeName[0];
-    }
-}
 
 async function getInfo(source: LazSource) {
     const req: WorkerInfoRequest = {

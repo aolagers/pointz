@@ -21,10 +21,11 @@ import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
 
 import { EarthControls } from "./earth-controls";
-import { PointCloud, PointCloudNode, pool } from "./pointcloud";
+import { PointCloud, pool } from "./pointcloud";
+import { PointCloudNode } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, getNodeVisibilityRating, printVec } from "./utils";
-import { CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
 
@@ -32,9 +33,6 @@ const debugEl = document.getElementById("debug")!;
 const debug = {
     mouse: "",
     camera: "",
-    // target: "",
-    // slider1: "",
-    // slider2: "",
     touchCount: "",
     pts: "",
     pool: "",
@@ -134,23 +132,6 @@ export class Viewer {
 
     init() {
         document.body.appendChild(this.stats.dom);
-
-        const sl1 = document.getElementById("sl1") as HTMLInputElement;
-        const sl2 = document.getElementById("sl2") as HTMLInputElement;
-
-        const sliders: [number, number] = [0, 0];
-        sl1.addEventListener("input", () => {
-            sliders[0] = parseFloat(sl1.value);
-            for (const m of pointMaterialPool.all) {
-                m.updateSliders(sliders[0], sliders[1]);
-            }
-        });
-        sl2.addEventListener("input", () => {
-            sliders[1] = parseFloat(sl2.value);
-            for (const m of pointMaterialPool.all) {
-                m.updateSliders(sliders[0], sliders[1]);
-            }
-        });
 
         this.econtrols.onChange = () => {
             debug.camera = printVec(this.camera.position);
