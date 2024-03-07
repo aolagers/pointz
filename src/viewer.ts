@@ -73,7 +73,6 @@ export class Viewer {
     edlMaterial: EDLMaterial;
 
     errors: Record<string, boolean> = {
-        noPointClouds: true,
         resizing: false,
     };
 
@@ -141,23 +140,13 @@ export class Viewer {
         this.setSize(this.width, this.height);
     }
 
-    private loadHandle = 0;
-
     init() {
         document.body.appendChild(this.stats.dom);
 
         this.econtrols.onChange = () => {
             debug.camera = printVec(this.camera.position);
 
-            if (this.loadHandle > 0) {
-                clearTimeout(this.loadHandle);
-            }
-
-            this.loadHandle = setTimeout(() => {
-                this.loadMoreNodes();
-                this.loadHandle = 0;
-            }, 200);
-
+            this.loadMoreNodesThrottled();
             this.requestRender();
         };
 
@@ -374,6 +363,25 @@ export class Viewer {
         this.requestRender();
     }
 
+    private loadHandle = 0;
+    private lastLoaded = 0;
+
+    loadMoreNodesThrottled() {
+        if (this.lastLoaded === 0) {
+            this.loadMoreNodes();
+            this.lastLoaded = performance.now();
+        } else {
+            clearTimeout(this.loadHandle);
+            this.loadHandle = setTimeout(
+                () => {
+                    this.loadMoreNodes();
+                    this.lastLoaded = performance.now();
+                },
+                300 - (performance.now() - this.lastLoaded)
+            );
+        }
+    }
+
     loadMoreNodes() {
         let loads = 0;
         const frustum = getCameraFrustum(this.camera);
@@ -520,15 +528,13 @@ export class Viewer {
         this.errorElement.style.display = "block";
         if (this.errors.resizing) {
             this.errorElement.textContent = "resizing...";
-        } else if (this.errors.noPointClouds) {
-            this.errorElement.textContent = "no pointclouds";
         } else {
             this.errorElement.style.display = "none";
         }
     }
 
     addPointCloud(pc: PointCloud, center = false) {
-        this.setError("noPointClouds", false);
+        // this.setError("noPointClouds", false);
         this.pointClouds.push(pc);
 
         const cube = createTightBounds(pc);
@@ -544,6 +550,8 @@ export class Viewer {
             pc.tightBounds.max,
             pc
         );
+
+        this.loadMoreNodesThrottled();
 
         if (center) {
             this.econtrols.showPointCloud(pc);
