@@ -130,7 +130,7 @@ export class Viewer {
         this.setSize(this.width, this.height);
     }
 
-    loadHandle = 0;
+    private loadHandle = 0;
 
     init() {
         document.body.appendChild(this.stats.dom);
@@ -174,6 +174,11 @@ export class Viewer {
         });
 
         document.addEventListener("keydown", (ev) => {
+            if (ev.ctrlKey || ev.metaKey || ev.altKey) {
+                console.log("skip key", ev.key);
+                return;
+            }
+
             for (const ptmat of pointMaterialPool.all) {
                 if (ev.key === "1") {
                     ptmat.changeColorMode("INTENSITY");
@@ -222,10 +227,12 @@ export class Viewer {
     addLabel(text: string, pos: Vector3, pc: PointCloud) {
         const div = document.createElement("div");
         div.classList.add("nice", "label");
+        div.style.textAlign = "right";
+        div.style.whiteSpace = "pre";
         div.textContent = text;
         // div.style.backgroundColor = "transparent";
 
-        div.addEventListener("click", (e) => {
+        div.addEventListener("click", () => {
             this.econtrols.showPointCloud(pc);
         });
 
@@ -343,7 +350,7 @@ export class Viewer {
             return b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera);
         });
 
-        const toDrop = loadedNodes.slice(-5);
+        const toDrop = loadedNodes.slice(-5).filter((n) => n.depth > 0);
 
         for (const node of toDrop) {
             node.unload(this);

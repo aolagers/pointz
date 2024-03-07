@@ -56,7 +56,7 @@ export class PointMaterial extends ShaderMaterial {
             },
             uniforms: {
                 ptSize: { value: DEFAULT_PT_SIZE },
-                uClassMask: { value: 0xffff },
+                uClassMask: { value: 0xffffffff },
                 uNodeIndex: { value: 0 },
             },
             vertexShader: defaultVert,
