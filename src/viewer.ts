@@ -3,7 +3,6 @@ import {
     Clock,
     Color,
     DepthTexture,
-    Frustum,
     Line,
     LineBasicMaterial,
     LinearSRGBColorSpace,
@@ -24,10 +23,9 @@ import {
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
 import Stats from "three/addons/libs/stats.module.js";
-import { PointCloud, PointCloudNode, pool } from "./pointcloud";
-import { PointMaterial } from "./materials/point-material";
+import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
-import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
+import { createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
@@ -154,18 +152,16 @@ export class Viewer {
         const sl1 = document.getElementById("sl1") as HTMLInputElement;
         const sl2 = document.getElementById("sl2") as HTMLInputElement;
 
-        const ptmat = PointMaterial.getSingleton();
-
         const sliders: [number, number] = [0, 0];
         sl1.addEventListener("input", () => {
             sliders[0] = parseFloat(sl1.value);
             debug.slider1 = sliders[0].toFixed(2);
-            ptmat.updateSliders(sliders[0], sliders[1]);
+            PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
         sl2.addEventListener("input", () => {
             sliders[1] = parseFloat(sl2.value);
             debug.slider2 = sliders[1].toFixed(2);
-            ptmat.updateSliders(sliders[0], sliders[1]);
+            PointCloud.material.updateSliders(sliders[0], sliders[1]);
         });
 
         this.controls.addEventListener("change", (e) => {
@@ -198,7 +194,7 @@ export class Viewer {
         });
 
         document.addEventListener("keydown", (ev) => {
-            const ptmat = PointMaterial.getSingleton();
+            const ptmat = PointCloud.material;
 
             if (ev.key === "1") {
                 ptmat.changeColorMode("INTENSITY");
@@ -272,6 +268,7 @@ export class Viewer {
         this.renderer.setRenderTarget(null);
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
 
+        // Picking
         if (true) {
             this.camera.setViewOffset(
                 this.width,
@@ -281,12 +278,22 @@ export class Viewer {
                 pickWindow,
                 pickWindow,
             );
+
+
+            for (const o of this.objects) {
+                o.material = PointCloud.pickMaterial;
+            }
+
             this.renderer.setRenderTarget(null);
             this.renderer.setViewport(0, 0, pickWindow, pickWindow);
             this.renderer.render(this.scene, this.camera);
 
             this.camera.clearViewOffset();
             this.renderer.setViewport(0, 0, this.width, this.height);
+
+            for (const o of this.objects) {
+                o.material = PointCloud.material;
+            }
         }
 
         this.gpuPanel.endQuery();
@@ -333,6 +340,7 @@ export class Viewer {
         this.requestRender();
     }
 
+    /*
     updateVisibile() {
         const frustum = new Frustum();
         frustum.setFromProjectionMatrix(this.camera.projectionMatrix);
@@ -357,6 +365,7 @@ export class Viewer {
             pc.loadedNodes.splice(pc.loadedNodes.indexOf(n), 1);
         }
     }
+    */
 
     setSize(width: number, height: number) {
         this.width = width;

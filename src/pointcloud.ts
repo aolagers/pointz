@@ -43,8 +43,8 @@ export class PointCloudNode {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
-        this.pco = new Points(this.geometry, PointMaterial.getSingleton());
 
+        this.pco = new Points(this.geometry, PointCloud.material);
         this.pco.matrixAutoUpdate = false;
     }
 }
@@ -89,6 +89,9 @@ export class PointCloud {
     octreeInfo: OctreeInfo;
     pointsLoaded: number = 0;
 
+    static material = new PointMaterial();
+    static pickMaterial = new PointMaterial(true);
+
     constructor(
         viewer: Viewer,
         name: string,
@@ -113,6 +116,7 @@ export class PointCloud {
     async loadFake() {
         const pcn = this.loadedNodes[0]!;
 
+        this.loadedNodes.push(pcn);
         this.viewer.addObject(pcn.pco);
     }
 
