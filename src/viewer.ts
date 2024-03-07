@@ -8,17 +8,18 @@ import {
     OrthographicCamera,
     PerspectiveCamera,
     PlaneGeometry,
-    Points,
     RGBAFormat,
     Raycaster,
     Scene,
     UnsignedIntType,
     Vector2,
+    Vector3,
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import Stats from "three/addons/libs/stats.module.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 
 import { EarthControls } from "./earth-controls";
 import { PointCloud } from "./pointcloud";
@@ -196,8 +197,32 @@ export class Viewer {
         //     this.updateVisibile();
         // }, 1000);
 
+        this.labelRenderer = new CSS2DRenderer();
+        this.labelRenderer.setSize(this.width, this.height);
+        this.labelRenderer.domElement.style.position = "absolute";
+        this.labelRenderer.domElement.style.top = "0px";
+        this.labelRenderer.domElement.style.pointerEvents = "none";
+
+        document.body.appendChild(this.labelRenderer.domElement);
+
         this.requestRender();
     }
+
+    addLabel(text: string, pos: Vector3) {
+        const div = document.createElement("div");
+        div.classList.add("nice", "label");
+        div.textContent = text;
+        // div.style.backgroundColor = "transparent";
+
+        const label = new CSS2DObject(div);
+        label.position.copy(pos);
+        label.center.set(0, 0);
+
+        console.log("label", text, label);
+        this.scene.add(label);
+    }
+
+    labelRenderer = new CSS2DRenderer();
 
     requestRender() {
         if (!this.renderRequested) {
@@ -262,6 +287,8 @@ export class Viewer {
         this.renderer.info.reset();
         const frameEnd = performance.now();
         this.frameTime = frameEnd - frameStart;
+
+        this.labelRenderer.render(this.scene, this.camera);
     }
 
     renderLoop() {
@@ -389,7 +416,8 @@ export class Viewer {
         const sz = new Vector2();
         this.renderer.getDrawingBufferSize(sz);
         // this.renderer.domElement.style.width = `${this.width}px`;
-        // console.log(this.width, sz);
+
+        this.labelRenderer.setSize(this.width, this.height);
     }
 
     addPointCloud(pc: PointCloud, center = false) {
@@ -401,6 +429,17 @@ export class Viewer {
         console.log("ADD POINTCLOUD", pc);
 
         pc.initializeNodes();
+
+        cube.geometry.computeBoundingSphere();
+        cube.geometry.computeBoundingBox();
+
+        if (cube.geometry.boundingBox) {
+            const cnt = cube.geometry.boundingBox.getCenter(new Vector3());
+            const sz = cube.geometry.boundingBox.getSize(new Vector3());
+            console.log("cnt", cnt, "sz", sz);
+            const ofz = new Vector3(0, 0, sz.z);
+            this.addLabel(pc.name, cube.position.clone().addVectors(cnt, ofz));
+        }
 
         if (center) {
             this.econtrols.showPointCloud(pc);

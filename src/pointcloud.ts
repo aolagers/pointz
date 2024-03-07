@@ -16,6 +16,7 @@ export class PointCloud {
     name: string;
     source: string | File;
     offset: Vector3;
+    // TODO: store this with offset subtracted
     tightBounds: Box3;
     octreeBounds: Box3;
     hierarchy: Hierarchy;

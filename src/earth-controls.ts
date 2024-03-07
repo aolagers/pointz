@@ -143,7 +143,6 @@ export class EarthControls {
         }
         this.dragging = null;
         this.pivot.visible = false;
-        console.log("pointer UP", this.dragging, e);
         this.onChange?.();
     }
 
