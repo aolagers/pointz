@@ -7,6 +7,11 @@ const wasmInterceptor = {
     name: "wasm-interceptor-plugin",
     configureServer(server) {
         server.middlewares.use((req, res, next) => {
+            // Add COOP and COEP to enable crossOriginIsolated mode.
+            // Needed for accurate performance.now() and memory stuff
+            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+            res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+
             if (req.url.endsWith("/laz-perf.wasm")) {
                 console.log(">>> WASM", req.url);
                 res.setHeader("Content-Type", "application/wasm");
