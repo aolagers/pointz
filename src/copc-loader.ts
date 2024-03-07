@@ -41,6 +41,7 @@ export type WorkerPointsResponse = {
     colors: Uint8Array;
     classifications: Uint8Array;
     intensities: Uint16Array;
+    indices: Uint32Array;
 };
 
 function log(...args: any[]) {
@@ -92,6 +93,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
         const colors = new Uint8Array(ptCount * 3);
         const classifications = new Uint8Array(ptCount);
         const intensities = new Uint16Array(ptCount);
+        const indices = new Uint32Array(ptCount);
 
         const hasRGB = "Red" in view.dimensions && "Green" in view.dimensions && "Blue" in view.dimensions;
 
@@ -103,6 +105,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             g: hasRGB ? view.getter("Green") : () => 0,
             b: hasRGB ? view.getter("Blue") : () => 0,
             i: view.getter("Intensity"),
+            c: view.getter("Classification"),
         };
 
         let div = 1;
@@ -125,8 +128,10 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             colors[cIdx++] = getters.g(i) / div;
             colors[cIdx++] = getters.b(i) / div;
 
-            classifications[i] = 0;
+            classifications[i] = getters.c(i);
             intensities[i] = getters.i(i);
+
+            indices[i] = i;
         }
 
         const response: WorkerPointsResponse = {
@@ -136,10 +141,11 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             colors,
             classifications,
             intensities,
+            indices,
         };
 
         postMessage(response, {
-            transfer: [positions.buffer, colors.buffer, classifications.buffer, intensities.buffer],
+            transfer: [positions.buffer, colors.buffer, classifications.buffer, intensities.buffer, indices.buffer],
         });
         return;
     }

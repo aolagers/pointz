@@ -3,6 +3,7 @@ uniform vec2 uMouse;
 in uint classification;
 in float intensity;
 in vec3 color;
+in uint indices;
 
 uniform float ptSize;
 uniform float uCustom1;
