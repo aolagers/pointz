@@ -106,9 +106,9 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
                 x: view.getter("X"),
                 y: view.getter("Y"),
                 z: view.getter("Z"),
-                r: hasRGB ? view.getter("Red") : () => 0,
-                g: hasRGB ? view.getter("Green") : () => 0,
-                b: hasRGB ? view.getter("Blue") : () => 0,
+                r: hasRGB ? view.getter("Red") : () => 128,
+                g: hasRGB ? view.getter("Green") : () => 128,
+                b: hasRGB ? view.getter("Blue") : () => 128,
                 i: view.getter("Intensity"),
                 c: view.getter("Classification"),
             };
