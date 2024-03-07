@@ -73,6 +73,7 @@ async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[])
     geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
     geometry.setAttribute("classification", new Uint32BufferAttribute(data.classifications, 1));
     geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+    geometry.setAttribute("indices", new Uint32BufferAttribute(data.indices, 1));
 
     return { geometry: geometry, pointCount: data.pointCount };
 }

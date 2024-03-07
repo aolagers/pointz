@@ -31,7 +31,7 @@ import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
-const W = 100;
+const pickWindow = 31;
 
 const points = [];
 
@@ -276,13 +276,13 @@ export class Viewer {
             this.camera.setViewOffset(
                 this.width,
                 this.height,
-                ((pointer.x + 1) / 2) * this.width - W / 2,
-                this.height - ((pointer.y + 1) / 2) * this.height - W / 2,
-                W,
-                W,
+                ((pointer.x + 1) / 2) * this.width - pickWindow / 2,
+                this.height - ((pointer.y + 1) / 2) * this.height - pickWindow / 2,
+                pickWindow,
+                pickWindow,
             );
             this.renderer.setRenderTarget(null);
-            this.renderer.setViewport(0, 0, W, W);
+            this.renderer.setViewport(0, 0, pickWindow, pickWindow);
             this.renderer.render(this.scene, this.camera);
 
             this.camera.clearViewOffset();
