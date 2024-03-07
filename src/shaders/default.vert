@@ -10,6 +10,7 @@ in float visibleIndex;
 uniform float ptSize;
 uniform float uCustom1;
 uniform float uCustom2;
+uniform int uClassMask;
 
 out vec4 rgbColor;
 flat out int vClass;
@@ -21,10 +22,15 @@ out float fintensity;
 
 out vec2 mouse;
 
-out float depth;
+//out float depth;
 
 void main() {
     vClass = classification;
+
+    if (((1 << classification) & uClassMask) == 0 ) {
+        return;
+    }
+
     rgbColor = vec4(color, 4);
 
     mouse = uMouse;
@@ -34,9 +40,9 @@ void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vec4 screenPosition = projectionMatrix * mvPosition;
 
-    float dist = distance(cameraPosition, position);
+    //float dist = distance(cameraPosition, position);
 
-    depth = dist;
+    //depth = dist;
     custom1 = uCustom1;
     custom2 = uCustom2;
 
@@ -57,7 +63,7 @@ void main() {
     */
 
 #if defined(PICK)
-    gl_PointSize=4.0;
+    //gl_PointSize=4.0;
 
     int data = ptIndex;
 

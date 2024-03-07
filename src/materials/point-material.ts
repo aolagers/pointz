@@ -19,6 +19,8 @@ export class PointMaterial extends ShaderMaterial {
                 ptSize: { value: ptSize },
                 uCustom1: { value: 0.0 },
                 uCustom2: { value: 0.0 },
+                // uClassMask: { value: 0xffff & ~(1 << 2) },
+                uClassMask: { value: 0xffff },
             },
             vertexShader: defaultVert,
             fragmentShader: defaultFrag,

@@ -292,7 +292,7 @@ export class PointCloud {
             const z = 2 * Math.sin(x / 10) + 1 * Math.sin(y / 5);
             vertices.push(x, y, z);
             colors.push(0.4 + Math.random() * C, 0.15 + Math.random() * C, 0 + Math.random() * C);
-            classes.push(0);
+            classes.push(2);
             ints.push(Math.floor(200 * (x + y + 100)));
             indices.push(indice++);
         }
