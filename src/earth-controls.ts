@@ -46,7 +46,7 @@ export class EarthControls {
         this.domElement.addEventListener("wheel", (e) => {
             e.preventDefault();
 
-            const deltaY = e.deltaY;
+            const deltaY = Math.sign(e.deltaY) * Math.pow(Math.abs(e.deltaY), 0.2);
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
 
             if (pt) {

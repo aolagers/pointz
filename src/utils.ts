@@ -56,10 +56,16 @@ export function nodeToBox(base: Box3, key: OctreePath) {
 
 export function getCameraFrustum(camera: Camera) {
     const frustum = new Frustum();
-    // camera.updateMatrix();
-    // camera.updateMatrixWorld();
-
     const projScreenMatrix = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(projScreenMatrix);
     return frustum;
+}
+
+export function getNodeVisibilityRating(base: Box3, p: OctreePath, rootSpacing: number, camera: Camera) {
+    // IDEA: use bounding sphere instead of box?
+    const spacing = rootSpacing / Math.pow(2, p[0]);
+    const box = nodeToBox(base, p);
+    const dist = box.distanceToPoint(camera.position);
+    const screenRes = spacing / dist;
+    return -screenRes;
 }

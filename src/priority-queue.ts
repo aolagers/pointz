@@ -77,6 +77,10 @@ export class PriorityQueue<T> {
         this.heapifyDown();
         return item;
     }
+
+    public clear() {
+        this.heap = [];
+    }
 }
 
 if (import.meta.vitest) {
