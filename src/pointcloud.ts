@@ -1,4 +1,5 @@
 import {
+    Box3,
     BufferGeometry,
     Float32BufferAttribute,
     Points,
@@ -24,10 +25,10 @@ import { createCubeBounds } from "./utils";
 export class PointCloudNode {
     nodeName: string;
     geometry: BufferGeometry;
-    bounds: { min: Vector3; max: Vector3 };
+    bounds: Box3;
     pco: Points;
 
-    constructor(name: string, geom: BufferGeometry, bounds: { min: Vector3; max: Vector3 }) {
+    constructor(name: string, geom: BufferGeometry, bounds: Box3) {
         this.nodeName = name;
         this.geometry = geom;
         this.bounds = bounds;
@@ -88,7 +89,7 @@ export class PointCloud {
     name: string;
     source: string | File;
     offset: Vector3;
-    bounds: { min: Vector3; max: Vector3 };
+    bounds: Box3;
     hierarchy: Hierarchy;
     loadedNodes: PointCloudNode[];
     octreeInfo: OctreeInfo;
@@ -97,7 +98,7 @@ export class PointCloud {
         viewer: Viewer,
         name: string,
         source: string | File,
-        bounds: { min: Vector3; max: Vector3 },
+        bounds: Box3,
         offset: Vector3,
         hierarchy: Hierarchy,
         octreeInfo: OctreeInfo,
@@ -172,10 +173,7 @@ export class PointCloud {
         }
 
         const offset = new Vector3(...details.header.offset);
-        const bounds = {
-            min: new Vector3(...details.header.min),
-            max: new Vector3(...details.header.max),
-        };
+        const bounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
 
         const pc = new PointCloud(viewer, "pc-1", source, bounds, offset, details.hierarchy, details.info);
 
@@ -229,22 +227,14 @@ export class PointCloud {
             }
         }
 
-        const min = new Vector3(Infinity, Infinity, Infinity);
-        const max = new Vector3(-Infinity, -Infinity, -Infinity);
+        const bounds = new Box3();
         for (let i = 0; i < vertices.length; i += 3) {
-            min.x = Math.min(min.x, vertices[i]!);
-            max.x = Math.max(max.x, vertices[i]!);
-            min.y = Math.min(min.y, vertices[i + 1]!);
-            max.y = Math.max(max.y, vertices[i + 1]!);
-            min.z = Math.min(min.z, vertices[i + 2]!);
-            max.z = Math.max(max.z, vertices[i + 2]!);
+            bounds.expandByPoint(new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]));
         }
 
         geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
         geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
         geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
-
-        const bounds = { min, max };
 
         const pc = new PointCloud(
             viewer,
