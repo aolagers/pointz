@@ -59,7 +59,7 @@ export class EarthControls {
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
 
             if (pt) {
-                this.zoomTo(pt.position, -deltaY / 30);
+                this.zoomTo(pt.position, 1.0 + deltaY / 30);
             } else {
                 // TODO: what to do if no point was hit? error flash?
                 this.onChange?.();
@@ -71,9 +71,9 @@ export class EarthControls {
         this.viewer.addExtraStuff(this.pivot);
     }
 
-    zoomTo(target: Vector3, amount: number) {
-        const camToTarget = new Vector3().subVectors(target, this.camera.position);
-        this.camera.position.add(camToTarget.multiplyScalar(amount));
+    zoomTo(target: Vector3, factor: number) {
+        const targetToCam = new Vector3().subVectors(this.camera.position, target);
+        this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
         this.onChange?.();
     }
 
@@ -135,6 +135,7 @@ export class EarthControls {
     }
 
     pointerEnd(e: PointerEvent) {
+        this.prevPinch = 0;
         this.touchCount = Math.max(0, this.touchCount - 1);
         if (!e.isPrimary) {
             return;
@@ -200,10 +201,13 @@ export class EarthControls {
         if (this.touchCount == 2) {
             const pinchDist = new Vector2().subVectors(this.pointer, this.secondPointer).length();
 
-            if (pinchDist > this.prevPinch) {
-                this.zoomTo(this.pivot.position, 0.9);
-            } else {
-                this.zoomTo(this.pivot.position, 1.1);
+            const eps = 0.05;
+            if (this.prevPinch > 0) {
+                if (pinchDist > this.prevPinch) {
+                    this.zoomTo(this.pivot.position, 1 - eps);
+                } else {
+                    this.zoomTo(this.pivot.position, 1 + eps);
+                }
             }
 
             this.prevPinch = pinchDist;
