@@ -151,24 +151,25 @@ export class PointCloud {
 
         let inview = 0;
         for (const nnum of toLoad) {
-            if (loaded < 64) {
+            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
+            if (loaded < 128) {
                 const nname = nnum.join("-");
 
-                console.log("LOAD", nname);
-                const node = this.hierarchy.nodes[nname]!;
-                const data = await getData(worker, this.source, node, this.offset.toArray());
+                if (frustum.intersectsBox(bbox)) {
+                    console.log("LOAD", nname);
+                    const node = this.hierarchy.nodes[nname]!;
+                    const data = await getData(worker, this.source, node, this.offset.toArray());
 
-                const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
+                    const pcn = new PointCloudNode(nname, data.geometry, this.bounds);
 
-                this.loadedNodes.push(pcn);
+                    this.loadedNodes.push(pcn);
 
-                this.viewer.scene.add(pcn.pco);
-                this.viewer.objects.push(pcn.pco);
+                    this.viewer.scene.add(pcn.pco);
+                    this.viewer.objects.push(pcn.pco);
+                }
+                loaded++;
             }
 
-            loaded++;
-
-            const bbox = createCubeBoundsBox(this.octreeInfo.cube, nnum, this.offset);
             if (frustum.intersectsBox(bbox)) {
                 const _dist = this.viewer.camera.position.distanceTo(bbox.getCenter(new Vector3()));
                 // console.log(dist);
