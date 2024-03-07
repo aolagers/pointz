@@ -21,6 +21,7 @@ import {
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
+import { EarthControls } from "./earth-controls";
 import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud, pool } from "./pointcloud";
 import { EDLMaterial } from "./materials/edl-material";
@@ -61,7 +62,9 @@ const clock = new Clock();
 export class Viewer {
     renderer: WebGLRenderer;
     camera: PerspectiveCamera;
+
     controls: MapControls;
+    econtrols: EarthControls;
 
     scene: Scene;
     pclouds: PointCloud[] = [];
@@ -129,6 +132,8 @@ export class Viewer {
         this.controls = new MapControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.2;
+
+        this.econtrols = new EarthControls(this.camera, this.renderer.domElement);
 
         this.scene = new Scene();
         this.scene.add(line);
