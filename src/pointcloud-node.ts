@@ -22,6 +22,7 @@ import { Viewer } from "./viewer";
 import { CopcNodeInfo, WorkerPointsRequest, WorkerPointsResponse } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
+import { SHOW_LOADING } from "./settings";
 
 export const pointsWorkerPool = new WorkerPool<
     {
@@ -31,11 +32,17 @@ export const pointsWorkerPool = new WorkerPool<
     WorkerPointsResponse
 >(workerUrl, 4);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+(window as any).pointsWorkerPool = pointsWorkerPool;
+
 const nodeCache = new LRUCache<string, PointCloudNode>({
     // max: 10,
     maxSize: 3_000_000,
 
     sizeCalculation: (value) => {
+        console.log("SIZE", value, value.pointCount);
+        if (!value) return 1;
+        if (value.pointCount === 0) return 1;
         return value.pointCount;
     },
     dispose: (node, key, reason) => {
@@ -189,7 +196,7 @@ export class PointCloudNode {
         this.setState("loading");
 
         try {
-            this.debugMesh.visible = true;
+            this.debugMesh.visible = SHOW_LOADING;
             viewer.requestRender("start loading");
             const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
 

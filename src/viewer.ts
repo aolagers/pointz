@@ -27,7 +27,7 @@ import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, printVec, stringifyError, throttle } from "./utils";
-import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET } from "./settings";
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { pointMaterialPool } from "./materials/point-material";
 
@@ -327,6 +327,12 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.frameTime = frameEnd - frameStart;
 
         this.labelRenderer.render(this.scene, this.camera);
+
+        if (SHOW_RENDERS && why) {
+            const dx = this.camera.position.x - this.prevCam.x;
+            const dy = this.camera.position.y - this.prevCam.y;
+            console.log("requestRender", why, dx.toFixed(2), dy.toFixed(2));
+        }
         this.prevCam.copy(this.camera.position);
     }
 
@@ -464,6 +470,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             visiblePoints += r.info.node.pointCount;
         }
 
+        let drops = 0;
         if (pointsWorkerPool.queueLength > 0) {
             pointsWorkerPool.rescore((x) => {
                 const score = x.info.node.estimateNodeError(this.camera);
@@ -472,13 +479,15 @@ export class Viewer extends EventDispatcher<TEvents> {
                     visiblePoints += x.info.node.pointCount;
                     return score;
                 } else {
-                    console.log("RESCORE DROP", x.info.node.nodeName, score, visiblePoints);
+                    drops++;
 
                     x.info.node.unload(this);
                     return null;
                 }
             });
         }
+
+        console.log("RESCORE dropped", drops, visiblePoints);
 
         this.requestRender("load more");
     }
