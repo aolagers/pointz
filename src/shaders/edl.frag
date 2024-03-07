@@ -42,19 +42,48 @@ void main() {
     float depth4 = readDepth(uDepthTexture, vUv + vec2(0.0, -dY));
 
     float dm = range * depth;
+
     float d1 = range * depth1;
     float d2 = range * depth2;
     float d3 = range * depth3;
     float d4 = range * depth4;
 
-    float ddif = 0.0
-        + max(0.0, d1 - dm)
-        + max(0.0, d2 - dm)
-        + max(0.0, d3 - dm)
-        + max(0.0, d4 - dm);
+    bool isBG = color.a == 0.0;
 
-    if (ddif > 1.000 ) {
-        FragColor = vec4(color.xyz * max(0.1, (1.0 - ddif/30.0)), color.a);
+    if (false && isBG) {
+        // has data nearby
+        if ( depth1<0.98
+                || depth2<0.98
+                || depth3<0.98
+                || depth3<0.98
+           ) {
+            FragColor = vec4(color.xyz, 0.50);
+        } else {
+            // "clear" background
+            FragColor = vec4(color.xyz, color.a);
+        }
+        return;
+    }
+
+
+    float ddif = 0.0
+        //+max(0.0, dm - d1)
+    + max(0.0, d1/dm - 1.0)
+    + max(0.0, d2/dm - 1.0)
+    + max(0.0, d3/dm - 1.0)
+    + max(0.0, d4/dm - 1.0)
+        //+ max(0.0, dm - d1)
+        ;
+
+    if (ddif > 0.001 ) {
+        FragColor = vec4(color.xyz * max(0.1, min(1.0, 1.0 - ddif*10.0)), color.a);
+        //a = 0.1;
+        ////FragColor = vec4(color.xyz * 0.1, color.a);
+    //} else if (color.a == 0.000 ) {
+        //FragColor = vec4(0.0, 0.0, 0.0, 0.8);
+        //FragColor = vec4(color.xyz * 0.1, color.a);
+        //FragColor = vec4(color.xyz * max(0.1, (1.0 - ddif/30.0)), color.a);
+        //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
         FragColor = vec4(color.xyz, color.a);
