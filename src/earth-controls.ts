@@ -72,9 +72,13 @@ export class EarthControls {
                 this.zoomTo(pt.position, 1.0 + deltaY / 30);
             } else {
                 // TODO: what to do if no point was hit? error flash?
-                this.onChange?.();
+                this.changed();
             }
         });
+    }
+
+    changed() {
+        this.onChange?.();
     }
 
     init() {
@@ -84,7 +88,8 @@ export class EarthControls {
     zoomTo(target: Vector3, factor: number) {
         const targetToCam = new Vector3().subVectors(this.camera.position, target);
         this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
-        this.onChange?.();
+        this.saveCamera();
+        this.changed();
     }
 
     pointerStart(e: PointerEvent) {
@@ -113,7 +118,7 @@ export class EarthControls {
             this.pivot.visible = false;
         }
 
-        this.onChange?.();
+        this.changed();
 
         if (!pt) {
             return;
@@ -153,7 +158,7 @@ export class EarthControls {
         }
         this.dragging = null;
         this.pivot.visible = false;
-        this.onChange?.();
+        this.changed();
     }
 
     prevAngle = new Vector2(0, 0);
@@ -237,16 +242,8 @@ export class EarthControls {
             this.prevPinch = pinchDist;
         }
 
-        // TODO: debounce?
-        localStorage.setItem(
-            "camera",
-            JSON.stringify({
-                position: this.camera.position.toArray(),
-                rotation: this.camera.rotation.toArray(),
-            })
-        );
-
-        this.onChange?.();
+        this.saveCamera();
+        this.changed();
     }
 
     update(_delta: number) {}
@@ -261,9 +258,25 @@ export class EarthControls {
         this.showBox(tbox);
     }
 
+    private saveHandle = 0;
+
+    saveCamera() {
+        if (this.saveHandle > 0) {
+            clearTimeout(this.saveHandle);
+        }
+
+        this.saveHandle = setTimeout(() => {
+            const campos = {
+                position: this.camera.position.toArray(),
+                rotation: this.camera.rotation.toArray(),
+            };
+            localStorage.setItem("camera", JSON.stringify(campos));
+            this.saveHandle = 0;
+        }, 100);
+    }
+
     restoreCamera() {
         const camText = localStorage.getItem("camera");
-        console.log("RESTORE", camText);
 
         if (!camText) {
             return false;
@@ -273,7 +286,7 @@ export class EarthControls {
             const camJSON = JSON.parse(camText);
             this.camera.position.copy(new Vector3().fromArray(camJSON.position));
             this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
-            this.onChange?.();
+            this.changed();
             return true;
         } catch (e) {
             console.error("Error restoring camera", e);
@@ -290,7 +303,8 @@ export class EarthControls {
 
         console.log("cam", this.camera.position);
 
-        this.onChange?.();
+        this.saveCamera();
+        this.changed();
     }
 
     showPointCloud(pc: PointCloud) {

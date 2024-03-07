@@ -8,10 +8,10 @@ const uint N_CLASSES = 10u;
 const vec3 CLASS_COLORS[N_CLASSES] = vec3[](
         vec3(0.4, 0.4, 0.4), // 0: never classified
         vec3(0.8, 0.8, 0.8), // 1: unassigned
-        vec3(117.0/255.0, 59.0/255.0, 36.0/255.0), // 2: ground
+        vec3(140.0/255.0, 80.0/255.0, 60.0/255.0), // 2: ground
 
         vec3(25.0/255.0, 170.0/255.0, 70.0/255.0), // 3: low vege
-        vec3(15.0/255.0, 125.0/255.0, 30.0/255.0), // 4: med vege
+        vec3(15.0/255.0, 155.0/255.0, 30.0/255.0), // 4: med vege
         vec3(30.0/255.0, 239.0/255.0, 31.0/255.0), // 5: high vege
 
         vec3(1.0, 1.0, 0.0), // 6: building

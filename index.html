@@ -24,16 +24,19 @@
                 background-color: rgba(0, 0, 0, 0.3);
                 font-size: x-small;
                 border-radius: 0.2em;
-                font-family: monospace;
+                font-family: sans-serif;
+                font-weight: bold;
+                line-height: 1.5;
                 backdrop-filter: blur(2px);
                 outline: 1px solid rgba(0, 0, 0, 0.5);
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
             }
 
             #debug {
+                z-index: 20;
                 position: fixed;
-                top: 20px;
-                right: 20px;
+                top: 10px;
+                right: 10px;
                 text-align: right;
             }
 
@@ -53,8 +56,8 @@
             .label {
                 background-color: rgba(0, 0, 0, 0.3);
                 padding: 0.2em 0.5em;
-                color: #fff;
-                font-size: small;
+                color: #ddd;
+                font-size: x-small;
                 cursor: pointer;
             }
         </style>
