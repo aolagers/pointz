@@ -3,7 +3,7 @@ uniform vec2 uMouse;
 attribute uint classification;
 attribute vec3 color;
 
-attribute float pointSize;
+uniform float ptSize;
 
 flat varying vec3 rgbColor;
 flat varying uint cls;
@@ -23,10 +23,9 @@ void main() {
 
     float dist = distance(cameraPosition, position);
 
-    gl_PointSize = max(3.0, 100.0/dist);
+    gl_PointSize = max(ptSize, 150.0/dist);
 
     gl_Position = screenPosition;
-
 
     vec4 mpos = screenPosition / screenPosition.w;
 
@@ -35,4 +34,8 @@ void main() {
     if (mDist < 0.01) {
         gl_PointSize = 2.0 + gl_PointSize * 2.0;
     }
+
+    //if (gl_FragDepth < 0.5) {
+        //gl_PointSize = 1.0;
+    //}
 }

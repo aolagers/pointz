@@ -11,9 +11,11 @@ import {
     WebGLRenderer,
 } from "three";
 import { MapControls } from "three/addons/controls/MapControls.js";
+import Stats from "three/addons/libs/stats.module.js";
 import { PointCloud } from "./pointcloud";
 import { MATERIALS, pointer } from "./materials";
 import { createTightBounds } from "./utils";
+import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
 
 const points = [];
 points.push(new Vector3(0, 0, 100));
@@ -29,6 +31,9 @@ export class Viewer {
     scene: Scene;
     pclouds: PointCloud[] = [];
     objects: Points[] = [];
+
+    stats: Stats;
+    gpuPanel: GPUStatsPanel;
 
     constructor() {
         this.renderer = new WebGLRenderer({ antialias: true });
@@ -47,8 +52,13 @@ export class Viewer {
 
         this.scene = new Scene();
         this.scene.background = new Color(0x202020);
-
         this.scene.add(line);
+
+        this.stats = new Stats();
+        this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
+        this.stats.addPanel(this.gpuPanel);
+        this.stats.showPanel(0);
+        document.body.appendChild(this.stats.dom);
     }
 
     init() {
@@ -59,6 +69,7 @@ export class Viewer {
     }
 
     loop() {
+        this.stats.update();
         const delta = clock.getDelta();
 
         if (this.objects.length > 0) {
@@ -70,7 +81,6 @@ export class Viewer {
                 const pos = line.geometry.attributes.position!;
                 const verts = pos.array;
 
-                // intersec
                 verts[3] = intersections[0].point.x;
                 verts[4] = intersections[0].point.y;
                 verts[5] = intersections[0].point.z;
@@ -84,13 +94,17 @@ export class Viewer {
         }
 
         this.controls.update(delta);
+        this.gpuPanel.startQuery();
         this.renderer.render(this.scene, this.camera);
+        this.gpuPanel.endQuery();
 
+        // console.log(this.controls.getDistance(), this.controls.getPolarAngle(), this.controls.getAzimuthalAngle());
         requestAnimationFrame(() => this.loop());
     }
 
     async start() {
         this.addDemo();
+        // this.addLAZ("http://localhost:5173/copc.copc.laz");
         this.addLAZ("http://localhost:5173/lion_takanawa.copc.laz");
         // this.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
 
@@ -153,6 +167,8 @@ export class Viewer {
         pc.load();
         const cube = createTightBounds(pc);
         this.scene.add(cube);
+
+        this.controls.target.copy(cube.position);
     }
 }
 
