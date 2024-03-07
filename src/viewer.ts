@@ -35,7 +35,6 @@ const debug = {
     jsmem: "",
     camera: "",
     touchCount: "",
-    pts: "",
     pool: "",
     render: "",
     frames: "",
@@ -276,21 +275,17 @@ export class Viewer {
 
         let totalPts = 0;
 
-        for (const pc of this.pointClouds) {
-            totalPts += pc.pointsLoaded;
-        }
-
         this.frame++;
 
         debug.render =
-            `progs:${this.renderer.info.programs?.length} ` +
+            // `progs:${this.renderer.info.programs?.length} ` +
             `geoms:${this.renderer.info.memory.geometries} ` +
             `calls:${this.renderer.info.render.calls} ` +
             `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
-        debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
+        // debug.pts = ` ${(totalPts / 1_000_000.0).toFixed(2)}M`;
 
         debug.pool = ` ${workerPool.running()} ${workerPool.queued()} (${workerPool.tasksFinished})`;
 
@@ -354,7 +349,6 @@ export class Viewer {
             node.unload(this);
         }
 
-        // TODO: only render if changed
         this.requestRender();
     }
 
