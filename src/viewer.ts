@@ -442,22 +442,31 @@ export class Viewer {
         loaded: new MeshBasicMaterial({ color: 0x0ffff0, wireframe: true }),
     };
 
+    resizeHandle = 0;
+
     setSize(width: number, height: number) {
-        this.width = width;
-        this.height = height;
-        const pr = 1.0; //window.devicePixelRatio;
+        if (this.resizeHandle > 0) {
+            clearTimeout(this.resizeHandle);
+        }
 
-        this.edlMaterial.uniforms.uResolution.value = [width, height];
+        this.resizeHandle = setTimeout(() => {
+            this.width = width;
+            this.height = height;
+            const pr = 1.0; //window.devicePixelRatio;
 
-        this.renderTarget.setSize(this.width * pr, this.height * pr);
-        this.renderer.setSize(this.width * pr, this.height * pr, false);
-        this.camera.aspect = this.width / this.height;
-        this.camera.updateProjectionMatrix();
-        const sz = new Vector2();
-        this.renderer.getDrawingBufferSize(sz);
-        // this.renderer.domElement.style.width = `${this.width}px`;
+            this.edlMaterial.uniforms.uResolution.value = [width, height];
 
-        this.labelRenderer.setSize(this.width, this.height);
+            this.renderTarget.setSize(this.width * pr, this.height * pr);
+            this.renderer.setSize(this.width * pr, this.height * pr, false);
+            this.camera.aspect = this.width / this.height;
+            this.camera.updateProjectionMatrix();
+            const sz = new Vector2();
+            this.renderer.getDrawingBufferSize(sz);
+            // this.renderer.domElement.style.width = `${this.width}px`;
+
+            this.labelRenderer.setSize(this.width, this.height);
+            this.requestRender();
+        }, 200);
     }
 
     addPointCloud(pc: PointCloud, center = false) {
