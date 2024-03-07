@@ -40,3 +40,25 @@ jobs:
                       dist
                   if-no-files-found: error
                   retention-days: 3
+
+    deploy:
+        runs-on: ubuntu-latest
+
+        needs: build
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: client
+                  path: out
+
+            - name: deploy to gh-pages
+              uses: JamesIves/github-pages-deploy-action@v4
+              with:
+                  single-commit: true
+                  repository-name: aolagers/pointz-www
+                  token: ${{ secrets.DEPLOY_PAGE_TOKEN }}
+                  folder: out
+                  target-folder: .
