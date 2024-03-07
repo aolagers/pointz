@@ -406,40 +406,44 @@ export class Viewer {
             const node = pq.popOrThrow();
             const err = node.estimateNodeError(this.camera);
 
-            const shown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > 0.001);
+            const shouldBeShown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > 0.001);
 
-            if (node.state === "visible") {
-                if (shown) {
-                    // all good
-                    visiblePoints += node.pointCount;
-                    continue;
-                } else {
-                    console.log("DROP", node.nodeName, err);
-                    node.unload(this);
-                    continue;
-                }
-            } else if (node.state === "unloaded") {
-                if (shown) {
-                    console.log("LOAD", node.nodeName, err);
-                    loads++;
-                    visiblePoints += node.pointCount;
+            switch (node.state) {
+                case "visible":
+                    if (shouldBeShown) {
+                        // all good
+                        visiblePoints += node.pointCount;
+                    } else {
+                        console.log("DROP", node.nodeName, err);
+                        node.unload(this);
+                    }
+                    break;
 
-                    node.load(this)
-                        .then((_nd) => {
-                            // console.log("node loaded finishz", node.nodeName, node.pointCount);
-                        })
-                        .catch((e) => {
-                            console.error("oh no, load error", e);
-                            throw e;
-                        });
-                } else {
-                    // all good
-                }
-            } else if (node.state === "loading") {
-                // TODO: how to cancel?
-                visiblePoints += node.pointCount;
-            } else if (node.state === "error") {
-                // TODO: how to retry?
+                case "unloaded":
+                    if (shouldBeShown) {
+                        console.log("LOAD", node.nodeName, err);
+                        loads++;
+                        visiblePoints += node.pointCount;
+
+                        node.load(this)
+                            .then((_nd) => {
+                                // console.log("node loaded finishz", node.nodeName, node.pointCount);
+                            })
+                            .catch((e) => {
+                                console.error("oh no, load error", e);
+                                throw e;
+                            });
+                    }
+                    break;
+
+                case "loading":
+                    // TODO: how to cancel?
+                    visiblePoints += node.pointCount;
+                    break;
+
+                case "error":
+                    // TODO: how to retry?
+                    break;
             }
         }
 
