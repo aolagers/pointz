@@ -61,11 +61,3 @@ export function getCameraFrustum(camera: Camera) {
     return frustum;
 }
 
-export function getNodeVisibilityRating(base: Box3, p: OctreePath, rootSpacing: number, camera: Camera) {
-    // IDEA: use bounding sphere instead of box?
-    const spacing = rootSpacing / Math.pow(2, p[0]);
-    const box = nodeToBox(base, p);
-    const dist = box.distanceToPoint(camera.position);
-    const screenRes = spacing / dist;
-    return -screenRes;
-}
