@@ -92,6 +92,10 @@ export class EarthControls {
         this.viewer.scene.add(this.pivot);
     }
 
+    setCursor(cursor: string) {
+        this.viewer.labelRenderer.domElement.style.cursor = cursor;
+    }
+
     zoomTo(target: Vector3, factor: number) {
         const targetToCam = new Vector3().subVectors(this.camera.position, target);
         this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
@@ -183,6 +187,7 @@ export class EarthControls {
 
     pointerEnd(e: PointerEvent) {
         if (e.isPrimary) {
+            this.setCursor("auto");
             this.down.primary = false;
         } else {
             this.down.secondary = false;
@@ -211,6 +216,7 @@ export class EarthControls {
         }
 
         if (this.isZooming) {
+            this.setCursor("zoom-in");
             const dy = this.pointer.y - this.zoomPrevY;
 
             const z = 1.0 + dy * 3.0;
@@ -229,6 +235,7 @@ export class EarthControls {
             if (this.dragging === "right" || (this.down.primary && this.down.secondary)) {
                 // PITCH & YAW
 
+                this.setCursor("grab");
                 const ax = dp.x * 2 * Math.PI;
                 const ay = dp.y * 2 * Math.PI;
 
@@ -262,6 +269,8 @@ export class EarthControls {
                 this.prevAngle.set(ax, ay);
             } else if (this.dragging === "left") {
                 // PAN
+
+                this.setCursor("move");
 
                 const plane = new Plane().setFromNormalAndCoplanarPoint(unitZ, this.pivot.position);
                 const ray = getMouseRay(this.pointer, this.camera);
