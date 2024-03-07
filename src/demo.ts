@@ -85,10 +85,16 @@ export function loadDemo(viewer: Viewer) {
 
     const node = new PointCloudNode(pc, [0, 0, 0, 0], cubeBounds, pc.rootSpacing);
 
+    node.isDemo = true;
+
     node.data = {
         pickIndex: getChunkID(),
         pco: new Points(geometry, pointMaterialPool.getMaterial()),
     };
+
+    // TODO: dont use userData, it's ugly
+    node.data.pco.userData.nodeIndex = node.data.pickIndex;
+
     node.setState("visible");
     pc.nodes.push(node);
 

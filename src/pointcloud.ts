@@ -1,9 +1,9 @@
 import { Box3, Vector3 } from "three";
-import type { Hierarchy } from "./copc-loader";
+import type { Hierarchy, LazSource, WorkerInfoRequest } from "./copc-loader";
 import { Viewer } from "./viewer";
 import { nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
-import { PointCloudNode, getInfo } from "./pointcloud-node";
+import { PointCloudNode, workerPool } from "./pointcloud-node";
 
 let _chunkId = 0;
 
@@ -65,7 +65,7 @@ export class PointCloud {
 
         if (loadRoot) {
             console.log("load root");
-            this.nodes.find((n) => n.nodeName[0] === 0)?.load(this.viewer);
+            this.nodes.find((n) => n.depth === 0)?.load(this.viewer);
         }
     }
 
@@ -91,8 +91,16 @@ export class PointCloud {
             details.info.spacing
         );
 
-        pcloud.initializeNodes();
-
         return pcloud;
     }
+}
+
+async function getInfo(source: LazSource) {
+    const req: WorkerInfoRequest = {
+        command: "info",
+        source: source,
+    };
+
+    const res = await workerPool.runTask(req);
+    return res;
 }

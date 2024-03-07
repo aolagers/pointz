@@ -14,8 +14,8 @@ viewer.init();
 // viewer.requestRener();
 // viewer.renderLoop();
 
-// const demopc = loadDemo(viewer);
-// viewer.addPointCloud(demopc);
+const demopc = loadDemo(viewer);
+viewer.addPointCloud(demopc);
 
 const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
 // viewer.addLAZ(here + "/lion_takanawa.copc.laz", true);
