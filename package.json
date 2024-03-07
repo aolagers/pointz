@@ -9,7 +9,7 @@
     "test": "vitest"
   },
   "keywords": [],
-  "author": "",
+  "author": "Alex Lagerstedt <aolagers@iki.fi>",
   "license": "ISC",
   "dependencies": {
     "copc": "^0.0.5",
@@ -22,5 +22,8 @@
     "vite-plugin-glsl": "^1.2.1",
     "vite-plugin-static-copy": "^1.0.0",
     "vitest": "^1.1.0"
+  },
+  "prettier": {
+    "trailingComma": "es5"
   }
 }
