@@ -46,7 +46,7 @@ export class PointCloud {
         this.rootSpacing = rootSpacing;
     }
 
-    async initializeNodes(loadRoot = true) {
+    async initializeNodes() {
         if (this.isDemo) {
             const pcn = this.nodes[0]!;
             this.viewer.addNode(pcn);
@@ -63,10 +63,7 @@ export class PointCloud {
             this.nodes.push(pcn);
         }
 
-        if (loadRoot) {
-            console.log("load root");
-            this.nodes.find((n) => n.depth === 0)?.load(this.viewer);
-        }
+        this.nodes.find((n) => n.depth === 0)?.load(this.viewer);
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
