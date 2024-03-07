@@ -1,11 +1,17 @@
 uniform vec2 uMouse;
-attribute uint classification;
 
+attribute uint classification;
+attribute vec3 color;
+
+flat varying vec3 rgbColor;
 flat varying uint cls;
+
 flat varying vec2 mouse;
 
 void main() {
     cls = classification;
+    rgbColor = color;
+
     mouse = uMouse;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
