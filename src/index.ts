@@ -13,8 +13,10 @@ const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
 viewer.addEventListener("loading", (ev) => {
     const el = document.querySelector(".loader") as HTMLElement;
+    if (!el) {
+        return;
+    }
     const n = ev.nodes;
-    console.log(n, el);
     if (n) {
         el.style.display = "block";
     } else {
