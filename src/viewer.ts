@@ -358,6 +358,8 @@ export class Viewer {
 
         let visiblePoints = 0;
 
+        const nonVisibleNodes: PointCloudNode[] = [];
+
         for (const pc of this.pointClouds) {
             for (const node of pc.nodes) {
                 if (node.state === "visible" || node.state === "loading") {
@@ -367,6 +369,10 @@ export class Viewer {
                 if (inFrustum) {
                     if (node.state === "unloaded") {
                         pq.push(node);
+                    }
+                } else {
+                    if (node.state === "visible") {
+                        nonVisibleNodes.push(node);
                     }
                 }
             }
@@ -395,10 +401,9 @@ export class Viewer {
             }
         }
 
-        // while (!pq.isEmpty()) {
-        //     const node = pq.pop()!;
-        //     node.unload(this);
-        // }
+        for (const node of nonVisibleNodes) {
+            node.unload(this);
+        }
 
         // TODO: only render if something changed
         this.requestRender();
