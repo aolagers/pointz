@@ -239,8 +239,10 @@ export class Viewer {
         this.frame++;
 
         debug.render =
-            `calls: ${this.renderer.info.render.calls}, ` +
-            `pts: ${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
+            `progs:${this.renderer.info.programs?.length} ` +
+            `geoms:${this.renderer.info.memory.geometries} ` +
+            `calls:${this.renderer.info.render.calls} ` +
+            `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
         debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
@@ -264,14 +266,13 @@ export class Viewer {
         requestAnimationFrame(() => this.renderLoop());
     }
 
-    addExtraStuff(m: Mesh) {
-        this.scene.add(m);
-    }
-
-    addObject(o: Points) {
+    addNode(n: PointCloudNode) {
+        const o = n.pco;
         this.scene.add(o);
         this.pointObjects.push(o);
         this.requestRender();
+
+        this.scene.add(n.debugMesh);
     }
 
     updateVisibile() {
@@ -354,6 +355,7 @@ export class Viewer {
 
     addPointCloud(pc: PointCloud, center = false) {
         this.pointClouds.push(pc);
+
         const cube = createTightBounds(pc);
         this.scene.add(cube);
 
