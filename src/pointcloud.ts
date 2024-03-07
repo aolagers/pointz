@@ -163,6 +163,8 @@ export class PointCloud {
 
             await new Promise((resolve) => setTimeout(resolve, 50));
         }
+
+        worker.terminate();
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
