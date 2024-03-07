@@ -14,11 +14,12 @@ export class EarthControls {
     pivot: Mesh;
 
     pointer = new Vector2(0, 0);
+
     secondPointer = new Vector2(0, 0);
+    touchCount = 0;
+    prevPinch = 0;
 
     dragging: "left" | "right" | "mid" | null = null;
-
-    touchCount = 0;
 
     lastClick = performance.now();
 
@@ -149,6 +150,8 @@ export class EarthControls {
     pointerMove(e: PointerEvent) {
         const rect = this.domElement.getBoundingClientRect();
         if (!e.isPrimary) {
+            this.secondPointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
+            this.secondPointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
             return;
         }
 
@@ -192,6 +195,18 @@ export class EarthControls {
                 const intersectionToPivot = new Vector3().subVectors(this.pivot.position, intersection);
                 this.camera.position.add(intersectionToPivot);
             }
+        }
+
+        if (this.touchCount == 2) {
+            const pinchDist = new Vector2().subVectors(this.pointer, this.secondPointer).length();
+
+            if (pinchDist > this.prevPinch) {
+                this.zoomTo(this.pivot.position, 0.9);
+            } else {
+                this.zoomTo(this.pivot.position, 1.1);
+            }
+
+            this.prevPinch = pinchDist;
         }
 
         this.onChange?.();
