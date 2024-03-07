@@ -26,15 +26,20 @@ export class EarthControls {
     pointer = new Vector2(0, 0);
 
     secondPointer = new Vector2(0, 0);
-    touchCount = 0;
     prevPinch = 0;
 
     dragging: "left" | "right" | "mid" | null = null;
 
-    lastClick = performance.now();
+    lastClickUp = performance.now();
+    lastClickDown = performance.now();
 
     start = {
         mouse: new Vector2(),
+    };
+
+    down = {
+        primary: false,
+        secondary: false,
     };
 
     onChange: null | (() => void) = null;
@@ -48,19 +53,21 @@ export class EarthControls {
             new SphereGeometry(0.5, 16, 16),
             new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
         );
+
+        this.camera.layers.disable(1);
+        this.pivot.layers.set(1);
+
         this.pivot.visible = false;
 
         this.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
 
         this.domElement.addEventListener("pointerdown", (e) => this.pointerStart(e));
-        this.domElement.addEventListener("pointerup", (e) => this.pointerEnd(e));
+        this.domElement.addEventListener("pointerup", (e) => this.pointerUp(e));
         this.domElement.addEventListener("pointercancel", (e) => this.pointerEnd(e));
         this.domElement.addEventListener("pointermove", (e) => this.pointerMove(e));
 
         this.domElement.addEventListener("pointerenter", (_e) => {});
-        this.domElement.addEventListener("pointerleave", (_e) => {
-            this.touchCount = Math.max(0, this.touchCount - 1);
-        });
+        this.domElement.addEventListener("pointerleave", (_e) => {});
 
         this.domElement.addEventListener("wheel", (e) => {
             e.preventDefault();
@@ -92,13 +99,19 @@ export class EarthControls {
         this.changed();
     }
 
+    isZooming = false;
+
+    zoomPrevY = 0;
+    zoomStart3D = new Vector3();
+
     pointerStart(e: PointerEvent) {
-        this.touchCount++;
         const rect = this.domElement.getBoundingClientRect();
         if (e.isPrimary) {
+            this.down.primary = true;
             this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
             this.pointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
         } else {
+            this.down.secondary = true;
             this.secondPointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
             this.secondPointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
             return;
@@ -124,13 +137,16 @@ export class EarthControls {
             return;
         }
 
-        // check for double click
-        if (performance.now() - this.lastClick < 200) {
-            this.zoomTo(pt.position, 0.5);
-            return;
-        }
+        // TODO: check for double click zoom thing
+        if (e.isPrimary) {
+            if (performance.now() - this.lastClickDown < 200) {
+                this.zoomPrevY = this.pointer.y;
+                this.zoomStart3D.copy(pt.position);
+                this.isZooming = true;
+            }
 
-        this.lastClick = performance.now();
+            this.lastClickDown = performance.now();
+        }
 
         if (e.button === 0) {
             this.dragging = "left";
@@ -150,9 +166,30 @@ export class EarthControls {
         console.log("pointer DOWN", this.dragging, e);
     }
 
+    pointerUp(e: PointerEvent) {
+        if (e.isPrimary) {
+            const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
+            if (pt) {
+                if (performance.now() - this.lastClickUp < 200) {
+                    this.zoomTo(pt.position, 0.5);
+                    // return;
+                }
+            }
+            this.lastClickUp = performance.now();
+        }
+
+        this.pointerEnd(e);
+    }
+
     pointerEnd(e: PointerEvent) {
+        if (e.isPrimary) {
+            this.down.primary = false;
+        } else {
+            this.down.secondary = false;
+        }
+
+        this.isZooming = false;
         this.prevPinch = 0;
-        this.touchCount = Math.max(0, this.touchCount - 1);
         if (!e.isPrimary) {
             return;
         }
@@ -173,6 +210,15 @@ export class EarthControls {
             this.secondPointer.y = -((e.clientY - rect.y) / rect.height) * 2 + 1;
         }
 
+        if (this.isZooming) {
+            const dy = this.pointer.y - this.zoomPrevY;
+
+            const z = 1.0 + dy * 3.0;
+            this.zoomPrevY = this.pointer.y;
+            this.zoomTo(this.zoomStart3D, z);
+            return;
+        }
+
         if (!this.dragging) {
             return;
         }
@@ -180,7 +226,7 @@ export class EarthControls {
         if (e.isPrimary) {
             const dp = this.pointer.clone().sub(this.start.mouse);
 
-            if (this.dragging === "right" || this.touchCount > 1) {
+            if (this.dragging === "right" || (this.down.primary && this.down.secondary)) {
                 // PITCH & YAW
 
                 const ax = dp.x * 2 * Math.PI;
@@ -227,7 +273,9 @@ export class EarthControls {
             }
         }
 
-        if (this.touchCount == 2) {
+        // pinch zoom
+        /*
+        if (two buttons down) {
             const pinchDist = new Vector2().subVectors(this.pointer, this.secondPointer).length();
 
             const eps = 0.02;
@@ -241,6 +289,7 @@ export class EarthControls {
 
             this.prevPinch = pinchDist;
         }
+        */
 
         this.saveCamera();
         this.changed();
