@@ -20,7 +20,7 @@ import type {
     Hierarchy,
 } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
-import { PointMaterial } from "./materials/point-material";
+import { pointMaterialPool } from "./materials/point-material";
 import { Viewer } from "./viewer";
 import { boxToMesh, getNodeVisibilityRating, nodeToBox } from "./utils";
 import { OctreePath } from "./octree";
@@ -60,7 +60,7 @@ export class PointCloudNode {
         this.geometry = geom;
         this.bounds = bounds;
 
-        this.pco = new Points(this.geometry, PointCloud.material);
+        this.pco = new Points(this.geometry, pointMaterialPool.getMaterial());
         this.pco.matrixAutoUpdate = false;
 
         this.pointCount = pointCount;
@@ -136,9 +136,6 @@ export class PointCloud {
     loadedNodes: PointCloudNode[];
     rootSpacing: number;
     pointsLoaded: number = 0;
-
-    static material = new PointMaterial(false);
-    static pickMaterial = new PointMaterial(true);
 
     constructor(
         viewer: Viewer,
