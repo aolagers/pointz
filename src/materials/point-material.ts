@@ -6,8 +6,6 @@ import defaultVert from "../shaders/default.vert";
 let ptSize = 6.0;
 
 export class PointMaterial extends ShaderMaterial {
-    onUpdate: null | (() => void) = null;
-
     constructor(pick: boolean) {
         super({
             glslVersion: "300 es",
@@ -51,6 +49,5 @@ export class PointMaterial extends ShaderMaterial {
     changeColorMode(color: keyof typeof COLOR_MODE) {
         this.defines.COLOR_MODE = COLOR_MODE[color];
         this.needsUpdate = true;
-        this.onUpdate?.();
     }
 }

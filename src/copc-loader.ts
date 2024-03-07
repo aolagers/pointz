@@ -54,7 +54,6 @@ function getGetter(source: LazSource) {
     } else {
         const file: File = source;
         return async (begin: number, end: number) => {
-            // log("sliced", begin, end);
             const sliced = file.slice(begin, end);
             return new Uint8Array(await sliced.arrayBuffer());
         };

@@ -257,11 +257,11 @@ export class Viewer {
             if (ev.key === "-") {
                 ptmat.updatePointSize(-1);
             }
+
+            this.requestRender();
         });
 
-        PointCloud.material.onUpdate = () => {
-            this.requestRender();
-        };
+        this.requestRender();
     }
 
     requestRender() {
@@ -416,7 +416,7 @@ export class Viewer {
         const pc = await PointCloud.loadLAZ(this, what);
         this.pclouds.push(pc);
 
-        console.log("NODES", pc.hierarchy.nodes);
+        console.log("NODES for", what, pc.hierarchy.nodes);
         pc.load();
         // const cube = createTightBounds(pc);
         // this.scene.add(cube);
