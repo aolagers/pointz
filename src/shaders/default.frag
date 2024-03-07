@@ -46,17 +46,20 @@ void main() {
         discard;
     }
 
+    // TODO: replace ugly hack by passing material id in some other way
+    float alpha = 0.998;
+
     if (COLOR_MODE == 0) {
         // intensity
-        gl_FragColor = vec4(vec3(fintensity), 1.0);
+        gl_FragColor = vec4(vec3(fintensity), alpha);
     } else if (COLOR_MODE == 1) {
         // classification
-        gl_FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], 1.0);
+        gl_FragColor = vec4(CLASS_COLORS[cls%N_CLASSES], alpha);
     } else if (COLOR_MODE == 2) {
         // RGB
-        gl_FragColor = vec4(rgbColor, 1.0);
+        gl_FragColor = vec4(rgbColor, alpha);
     } else {
-        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, 1.0, alpha);
     }
 
     // fix colors when rendering to a texture

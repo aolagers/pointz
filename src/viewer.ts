@@ -29,7 +29,7 @@ import { updateSliders, changeColorMode, updatePointSize } from "./materials/poi
 import { createEDLMaterial } from "./materials/edl-material";
 import { createCubeBoundsBox, createTightBounds, printVec } from "./utils";
 import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
-import { CAMERA_FAR, CAMERA_NEAR, PIXEL_RATIO } from "./settings";
+import { CAMERA_FAR, CAMERA_NEAR } from "./settings";
 
 const points = [];
 
@@ -299,7 +299,7 @@ export class Viewer {
     setSize(width: number, height: number) {
         this.width = width;
         this.height = height;
-        const pr = 1.0;//window.devicePixelRatio;
+        const pr = 1.0; //window.devicePixelRatio;
         this.renderTarget.setSize(this.width * pr, this.height * pr);
         this.renderer.setSize(this.width * pr, this.height * pr, false);
         this.camera.aspect = this.width / this.height;

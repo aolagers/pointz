@@ -1,6 +1,8 @@
 #include <packing>
+
 uniform sampler2D colorTexture;
 uniform sampler2D depthTexture;
+
 uniform float cameraNear;
 uniform float cameraFar;
 
@@ -14,6 +16,12 @@ float readDepth(sampler2D depthSampler, vec2 coord) {
 
 void main() {
     vec4 color = texture2D(colorTexture, vUv);
+
+    if (color.a == 1.0) {
+        // material is not pointcloud, skip EDL
+        gl_FragColor = vec4(color.xyz, 1.0);
+        return;
+    }
 
     float depth = readDepth(depthTexture, vUv);
 
@@ -44,11 +52,10 @@ void main() {
         //depth3 > depth+dz ||
         //depth4 > depth+dz
     if (ddif > 3.000 ) {
-        gl_FragColor = vec4(color.xyz * (1.0 - ddif/50.0), 1.0);
+        gl_FragColor = vec4(color.xyz * max(0.3, (1.0 - ddif/50.0)), 1.0);
     } else {
         //gl_FragColor = vec4(color.xyz * (1.0-depth), 1.0);
         gl_FragColor = vec4(color.xyz, 1.0);
-
     }
 
     // Fog

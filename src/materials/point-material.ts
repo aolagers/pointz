@@ -1,9 +1,9 @@
 import { Color, ShaderMaterial, Vector2 } from "three";
-import { COLOR_MODE, PIXEL_RATIO } from "../settings";
+import { COLOR_MODE } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
-let ptSize = 4.0 * PIXEL_RATIO;
+let ptSize = 6.0;
 
 let pointMaterial: ShaderMaterial | null = null;
 
