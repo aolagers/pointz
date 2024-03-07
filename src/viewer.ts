@@ -6,8 +6,12 @@ import {
     Frustum,
     Line,
     LineBasicMaterial,
+    Mesh,
+    MeshBasicMaterial,
     NearestFilter,
+    OrthographicCamera,
     PerspectiveCamera,
+    PlaneGeometry,
     Points,
     RGBAFormat,
     Raycaster,
@@ -59,7 +63,13 @@ export class Viewer {
     gpuPanel: GPUStatsPanel;
 
     frame: number = 0;
-    rt2: WebGLRenderTarget;
+    renderTarget: WebGLRenderTarget;
+
+    sceneOrtho: Scene;
+    cameraOrtho: OrthographicCamera;
+    tmaterial: MeshBasicMaterial;
+    tquad: Mesh;
+
 
     constructor() {
         this.renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
@@ -67,7 +77,7 @@ export class Viewer {
         this.renderer.autoClear = true;
         this.renderer.autoClearDepth = false;
 
-        this.rt2 = new WebGLRenderTarget(1024, 1024, {
+        this.renderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight, {
             format: RGBAFormat,
             minFilter: NearestFilter,
             magFilter: NearestFilter,
@@ -76,7 +86,7 @@ export class Viewer {
             depthTexture: new DepthTexture(1024, 1024, UnsignedShortType),
         });
 
-        console.log("CAPS", this.renderer.capabilities);
+        // console.log("CAPS", this.renderer.capabilities);
 
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100_000);
         this.camera.up.set(0, 0, 1);
@@ -104,6 +114,10 @@ export class Viewer {
         // const e = gl.getExtension("WEBGL_depth_texture");
         // const sup = gl.getSupportedExtensions();
         // console.log({ ALIASED_POINT_SIZE_RANGE: f, WEBGL_depth_texture: e, sup });
+        this.sceneOrtho = new Scene();
+        this.tmaterial = new MeshBasicMaterial({ map: this.renderTarget.texture });
+        this.tquad = new Mesh(new PlaneGeometry(2, 2), this.tmaterial);
+        this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     }
 
     init() {
@@ -165,6 +179,7 @@ export class Viewer {
         this.stats.update();
         const delta = clock.getDelta();
 
+        /*
         if (this.objects.length > 0) {
             raycaster.setFromCamera(pointer, this.camera);
             const intersections = raycaster.intersectObject(this.objects[0]!, false);
@@ -185,10 +200,22 @@ export class Viewer {
                 line.visible = false;
             }
         }
+        */
 
         this.controls.update(delta);
+
         this.gpuPanel.startQuery();
+        this.renderer.setRenderTarget(this.renderTarget);
+        this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
+        this.renderer.setRenderTarget(null);
+        // console.log(this.rt2.depthTexture);
+
+        this.sceneOrtho.add(this.tquad); // Scene for orthographic display
+        this.renderer.render(this.sceneOrtho, this.cameraOrtho);
+
+        // this.renderer.render(this.scene, this.camera);
+
         this.gpuPanel.endQuery();
 
         let totalPts = 0;
@@ -241,6 +268,7 @@ export class Viewer {
 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
+        this.renderTarget.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
