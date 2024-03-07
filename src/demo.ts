@@ -102,9 +102,6 @@ export function loadDemo(viewer: Viewer) {
         pco: new Points(geometry, pointMaterialPool.getMaterial()),
     };
 
-    // TODO: dont use userData, it's ugly
-    node.data.pco.userData.nodeIndex = node.data.pickIndex;
-
     node.setState("visible");
     pc.nodes.push(node);
 
