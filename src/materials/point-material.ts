@@ -3,9 +3,19 @@ import { COLOR_MODE, PIXEL_RATIO } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
-const ptSize = 4.0 * PIXEL_RATIO;
+let ptSize = 4.0 * PIXEL_RATIO;
 
 let pointMaterial: ShaderMaterial | null = null;
+
+export function updatePointSize(amount: number) {
+    if (!pointMaterial) return;
+    ptSize += amount;
+    const uc1 = pointMaterial.uniforms.ptSize;
+    if (uc1) {
+        uc1.value = ptSize;
+    }
+    pointMaterial.needsUpdate = true;
+}
 
 export function setPointer(pointer: Vector2) {
     if (!pointMaterial) return;
@@ -13,7 +23,7 @@ export function setPointer(pointer: Vector2) {
     if (uc1) uc1.value = pointer;
 }
 
-export function updateMaterials1(c1: number, c2: number) {
+export function updateSliders(c1: number, c2: number) {
     if (!pointMaterial) return;
 
     const uc1 = pointMaterial.uniforms.uCustom1;
@@ -22,7 +32,7 @@ export function updateMaterials1(c1: number, c2: number) {
     if (uc2) uc2.value = c2;
 }
 
-export function updateMaterials2(color: keyof typeof COLOR_MODE) {
+export function changeColorMode(color: keyof typeof COLOR_MODE) {
     if (!pointMaterial) return;
     pointMaterial.defines.COLOR_MODE = COLOR_MODE[color];
     pointMaterial.needsUpdate = true;
