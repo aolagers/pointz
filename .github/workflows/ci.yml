@@ -1,0 +1,38 @@
+name: Build and Deploy
+
+on:
+    push:
+        branches: ["main"]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        env:
+            GIT_COMMIT: ${{ github.sha }}
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: "18.17"
+                  cache: "npm"
+                  cache-dependency-path: |
+                      package-lock.json
+
+            - name: npm ci
+              run: |
+                  npm ci
+
+            - name: npm build
+              run: |
+                  npm run build
+
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: client
+                  path: |
+                      dist
+                  if-no-files-found: error
+                  retention-days: 3
