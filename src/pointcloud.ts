@@ -24,6 +24,7 @@ export class PointCloud {
     rootSpacing: number;
     pointCount: number;
 
+    id: string;
     isDemo = false;
 
     constructor(
@@ -48,6 +49,7 @@ export class PointCloud {
         this.rootSpacing = rootSpacing;
         this.pointCount = pointCount;
 
+        this.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
         // TODO: fix offset if it seems too small
     }
 

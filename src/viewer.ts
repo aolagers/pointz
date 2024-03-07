@@ -407,7 +407,7 @@ export class Viewer {
                         // all good
                         visiblePoints += node.pointCount;
                     } else {
-                        console.log("DROP", node.nodeName, err);
+                        console.log("CACHE", node.nodeName, err);
                         // node.unload(this);
                         node.cache();
                     }
