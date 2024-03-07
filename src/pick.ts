@@ -1,8 +1,35 @@
-import { Camera, MeshBasicMaterial, Raycaster, Vector2 } from "three";
+import {
+    Camera,
+    Mesh,
+    MeshBasicMaterial,
+    MeshNormalMaterial,
+    NearestFilter,
+    RGBAFormat,
+    Raycaster,
+    SphereGeometry,
+    Vector2,
+    WebGLRenderTarget,
+} from "three";
 import { Viewer } from "./viewer";
 import { PointCloud } from "./pointcloud";
+import { PointMaterial } from "./materials/point-material";
 
 const raycaster = new Raycaster();
+
+export const pickMarker = new Mesh(
+    new SphereGeometry(0.5, 16, 16),
+    new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
+);
+
+const pickWindow = 31;
+
+const pickMaterial = new PointMaterial(true);
+
+const pickRenderTarget = new WebGLRenderTarget(pickWindow, pickWindow, {
+    format: RGBAFormat,
+    minFilter: NearestFilter,
+    magFilter: NearestFilter,
+});
 
 export function getMouseRay(mouse: Vector2, camera: Camera) {
     raycaster.setFromCamera(mouse, camera);
@@ -11,7 +38,6 @@ export function getMouseRay(mouse: Vector2, camera: Camera) {
 
 // TODO: only return the hit, dont modify rendering here
 export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
-    const pickWindow = 31;
     const ray = getMouseRay(pointer, viewer.camera);
 
     let hits = 0;
@@ -51,18 +77,18 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
 
     // TODO: only matching objects
     for (const o of viewer.objects) {
-        o.material = PointCloud.pickMaterial;
+        o.material = pickMaterial;
     }
 
     // render to pick buffer
-    viewer.renderer.setRenderTarget(viewer.pickTarget);
+    viewer.renderer.setRenderTarget(pickRenderTarget);
     // this.renderer.clear();
     viewer.renderer.render(viewer.scene, viewer.camera);
 
     let pbuf = new Uint8Array(4 * pickWindow * pickWindow);
 
     // if (Date.now() - lastlog > 1000)
-    viewer.renderer.readRenderTargetPixels(viewer.pickTarget, 0, 0, pickWindow, pickWindow, pbuf);
+    viewer.renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, pickWindow, pickWindow, pbuf);
     // console.log(pbuf.slice(0, 4).join("/"), pbuf.slice(4, 8).join("/"));
     let closest = Infinity;
     let best = 0;
@@ -112,7 +138,7 @@ export function getMouseIntersection(pointer: Vector2, viewer: Viewer) {
             const Y = attrs.array[idx * 3 + 1];
             const Z = attrs.array[idx * 3 + 2];
 
-            viewer.marker.position.set(X, Y, Z);
+            pickMarker.position.set(X, Y, Z);
 
             console.log(
                 `HIT a:${a} c:${vals.join("/")} idx:${idx} n:${nodehit} ` +
