@@ -61,20 +61,18 @@ async function getInfo(source: LazSource) {
 }
 
 async function getChunk(source: LazSource, node: CopcNodeInfo, offset: number[]) {
-    const req: WorkerPointsRequest = {
+    const data = await pool.runTask({
         command: "points",
         source: source,
         node: node,
         offset: offset,
-    };
-    const data = await pool.runTask(req);
+    });
 
     const geometry = new BufferGeometry();
+
     geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
     geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-    // TODO: use actual classification data
-    const classes = Array(data.pointCount).fill(2);
-    geometry.setAttribute("classification", new Uint32BufferAttribute(classes, 1));
+    geometry.setAttribute("classification", new Uint32BufferAttribute(data.classifications, 1));
     geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
     return { geometry: geometry, pointCount: data.pointCount };
