@@ -213,7 +213,9 @@ export class Viewer {
             }
         });
 
-        // setInterval(() => { this.updateVisibile(); }, 2000);
+        PointCloud.material.onUpdate = () => {
+            this.requestRender();
+        };
     }
 
     requestRender() {

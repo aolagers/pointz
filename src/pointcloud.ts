@@ -89,7 +89,7 @@ export class PointCloud {
     octreeInfo: OctreeInfo;
     pointsLoaded: number = 0;
 
-    static material = new PointMaterial();
+    static material = new PointMaterial(false);
     static pickMaterial = new PointMaterial(true);
 
     constructor(
