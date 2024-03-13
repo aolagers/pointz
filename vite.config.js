@@ -24,6 +24,7 @@ const wasmInterceptor = {
 };
 
 export default defineConfig((x) => ({
+    clearScreen: false,
     plugins: [
         glsl(),
         wasmInterceptor,
