@@ -18,8 +18,6 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
-// import { GPUStatsPanel } from "three/addons/utils/GPUStatsPanel.js";
-// import Stats from "three/addons/libs/stats.module.js";
 import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 
 import { EarthControls } from "./earth-controls";
@@ -29,7 +27,7 @@ import { EDLMaterial } from "./materials/edl-material";
 import { createTightBounds, getCameraFrustum, printVec, stringifyError, throttle } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
 import { PriorityQueue } from "./priority-queue";
-import { pointMaterialPool } from "./materials/point-material";
+import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
 
 const debugEl = document.querySelector("#debug")!;
 const debug = {
@@ -188,23 +186,23 @@ export class Viewer extends EventDispatcher<TEvents> {
                 return;
             }
 
-            for (const ptmat of pointMaterialPool.all) {
+            for (const ptmat of [DEFAULT_POINT_MATERIAL, ...pointMaterialPool.all]) {
                 if (ev.key === "1") {
                     ptmat.changeColorMode("INTENSITY");
                 }
-                if (ev.key === "2") {
+                else if (ev.key === "2") {
                     ptmat.changeColorMode("CLASSIFICATION");
                 }
-                if (ev.key === "3") {
+                else if (ev.key === "3") {
                     ptmat.changeColorMode("RGB");
                 }
-                if (ev.key === "4") {
+                else if (ev.key === "4") {
                     ptmat.changeColorMode("RGB_AND_CLASS");
                 }
-                if (ev.key === "+") {
+                else if (ev.key === "+") {
                     ptmat.updatePointSize(+1);
                 }
-                if (ev.key === "-") {
+                else if (ev.key === "-") {
                     ptmat.updatePointSize(-1);
                 }
             }
