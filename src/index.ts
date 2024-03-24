@@ -32,8 +32,12 @@ function setDebug(to: boolean) {
     localStorage.setItem(LOCALSTORAGE_KEYS.DEBUG_MODE, viewer.debug_mode ? "true" : "false");
 }
 
-const dbg = localStorage.getItem(LOCALSTORAGE_KEYS.DEBUG_MODE) === "true";
-setDebug(dbg);
+const dbg_s = localStorage.getItem(LOCALSTORAGE_KEYS.DEBUG_MODE);
+if (!dbg_s) {
+    setDebug(true);
+} else {
+    setDebug(dbg_s === "true");
+}
 
 viewer.addEventListener("loading", (ev) => {
     const el = document.querySelector(".loader") as HTMLElement;
