@@ -171,6 +171,18 @@
                     transform: translate(24px, 0);
                 }
             }
+
+            #help {
+                z-index: 20;
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                color: white;
+                font-size: x-small;
+            }
+            .bold {
+                font-weight: bold;
+            }
         </style>
     </head>
 
@@ -184,6 +196,14 @@
                 <div></div>
                 <div></div>
             </div>
+        </div>
+
+        <div id="help">
+            <p><span class="bold">1</span>: RGB</p>
+            <p><span class="bold">2</span>: Classification</p>
+            <p><span class="bold">3</span>: Intensity</p>
+            <p><span class="bold">+/-</span>: Adjust point size</p>
+            <p><span class="">Add files by drag&amp;dropping</span></p>
         </div>
 
         <canvas id="viewer"></canvas>

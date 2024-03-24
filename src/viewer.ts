@@ -24,7 +24,7 @@ import { EarthControls } from "./earth-controls";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, getCameraFrustum, printVec, stringifyError, throttle } from "./utils";
+import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
 import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
 import { PriorityQueue } from "./priority-queue";
 import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
@@ -549,7 +549,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.addPointCloud(pc, center);
         } catch (e) {
             console.error(e);
-            alert("LAZ loading error: " + stringifyError(e));
+            alert("LAZ loading error! Only valid COPC LAZ files are supported. See console for details.");
         }
     }
 }
