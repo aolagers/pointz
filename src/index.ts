@@ -64,9 +64,10 @@ const here = window.location.origin + window.location.pathname.replace(/\/$/, ""
 void viewer.addLAZ(here + "/lion_takanawa.copc.laz");
 
 if (window.location.hostname === "localhost") {
-    viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+    void viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
 } else {
-    viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+    // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+    void viewer.addLAZ("https://kartta.aolagers.org/autzen-classified.copc.laz");
 }
 
 
