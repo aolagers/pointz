@@ -1,0 +1,219 @@
+<!doctype html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+        <title>Pointz</title>
+        <link href="./assets/favicon-black-X48Zb8Cv.png" rel="icon" media="(prefers-color-scheme: light)" />
+        <link href="./assets/favicon-white-YlFh3E7u.png" rel="icon" media="(prefers-color-scheme: dark)" />
+        <style>
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: sans-serif;
+                height: 100%;
+                /* background-color: rgb(80, 120, 180); */
+
+                overflow: hidden;
+
+                --dark: rgba(0, 0, 0, 0.5);
+                --light: rgba(128, 128, 128, 0.5);
+            }
+
+            * {
+                user-select: none;
+                touch-action: none;
+                -webkit-touch-callout: none;
+            }
+
+            .nice {
+                padding: 0.4em 0.8em;
+                color: #ddd;
+                background-color: rgba(0, 0, 0, 0.3);
+                font-size: x-small;
+                border-radius: 0.2em;
+                font-family: sans-serif;
+                font-weight: bold;
+                line-height: 1.5;
+                -webkit-backdrop-filter: blur(2px);
+                backdrop-filter: blur(2px);
+                outline: 1px solid rgba(0, 0, 0, 0.5);
+                box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+
+            #debug {
+                z-index: 20;
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                text-align: right;
+            }
+
+            #viewer {
+                margin: 0;
+                padding: 0;
+                display: block;
+                background: radial-gradient(rgb(95, 133, 190), rgb(23, 64, 112));
+            }
+
+            #btns {
+                z-index: 10;
+                position: fixed;
+                top: 10px;
+                right: 10px;
+            }
+
+            #btns button:hover {
+                background-color: rgba(0, 0, 0, 0.6);
+            }
+            #btns button:hover.active {
+                background-color: rgba(255, 0, 0, 0.8);
+            }
+
+            #btns button {
+                border-top: 1px solid var(--light);
+                border-left: 1px solid var(--light);
+                border-right: 1px solid var(--dark);
+                border-bottom: 1px solid var(--dark);
+            }
+
+            #btns button:active {
+                border-top: 1px solid var(--dark);
+                border-left: 1px solid var(--dark);
+                border-right: 1px solid var(--light);
+                border-bottom: 1px solid var(--light);
+            }
+
+            .active {
+                background-color: rgba(255, 0, 0, 0.5);
+            }
+
+            .label {
+                background-color: rgba(0, 0, 0, 0.3);
+                padding: 0.2em 0.5em;
+                color: #ddd;
+                font-size: x-small;
+                cursor: pointer;
+            }
+
+            #errormsg {
+                color: white;
+                font-size: medium;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                display: none;
+            }
+
+            .loader {
+                z-index: 20;
+                position: fixed;
+                top: 1em;
+                left: 50%;
+                transform: translate(0, -50%);
+            }
+            .loadership_LYXXG {
+                display: flex;
+                position: relative;
+                width: 61px;
+                height: 13px;
+            }
+            .loadership_LYXXG div {
+                position: absolute;
+                width: 13px;
+                height: 13px;
+                border-radius: 50%;
+                background: #ffffff;
+                top: 0px;
+                animation-timing-function: cubic-bezier(0, 1, 1, 0);
+            }
+            .loadership_LYXXG div:nth-child(1) {
+                left: 0px;
+                animation: loadership_LYXXG_scale_up 0.6s infinite;
+            }
+            .loadership_LYXXG div:nth-child(2) {
+                left: 0px;
+                animation: loadership_LYXXG_translate 0.6s infinite;
+            }
+            .loadership_LYXXG div:nth-child(3) {
+                left: 24px;
+                animation: loadership_LYXXG_translate 0.6s infinite;
+            }
+            .loadership_LYXXG div:nth-child(4) {
+                left: 48px;
+                animation: loadership_LYXXG_scale_down 0.6s infinite;
+            }
+            @keyframes loadership_LYXXG_scale_up {
+                0% {
+                    transform: scale(0);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+            @keyframes loadership_LYXXG_scale_down {
+                0% {
+                    transform: scale(1);
+                }
+                100% {
+                    transform: scale(0);
+                }
+            }
+            @keyframes loadership_LYXXG_translate {
+                0% {
+                    transform: translate(0, 0);
+                }
+                100% {
+                    transform: translate(24px, 0);
+                }
+            }
+
+            #help {
+                z-index: 20;
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                color: white;
+                font-size: x-small;
+            }
+            .bold {
+                font-weight: bold;
+            }
+        </style>
+      <script type="module" crossorigin src="./assets/index-jDjVNDL7.js"></script>
+    </head>
+
+    <body>
+        <div id="debug" class="nice"></div>
+
+        <div class="loader">
+            <div class="loadership_LYXXG">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+
+        <div id="help">
+            <p><span class="bold">1</span>: Intensity</p>
+            <p><span class="bold">2</span>: Classification</p>
+            <p><span class="bold">3</span>: RGB</p>
+            <p><span class="bold">+/-</span>: Adjust point size</p>
+            <p><span class="">Add files by drag&amp;dropping</span></p>
+        </div>
+
+        <canvas id="viewer"></canvas>
+
+        <div id="errormsg" class=""></div>
+
+        <div id="btns" class="">
+            <button id="toggle-debug" class="nice btn">debug</button>
+            <button id="reset-cam" class="nice btn">reset cam</button>
+        </div>
+    </body>
+</html>
