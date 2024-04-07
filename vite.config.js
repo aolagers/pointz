@@ -25,6 +25,9 @@ const wasmInterceptor = {
 
 export default defineConfig((x) => ({
     clearScreen: false,
+    build: {
+        chunkSizeWarningLimit: 800,
+    },
     plugins: [
         glsl(),
         wasmInterceptor,

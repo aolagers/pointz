@@ -8,6 +8,7 @@ An simple and hackable WebGL point cloud viewer for the browser. Inspired by [Po
 
 -   Efficient loading and rendering of [COPC LAZ](https://copc.io) files.
 -   Easy Google Earth -like controls for both desktop and mobile.
+-   Eye-Dome Lighting (EDL) shader for better depth perception
 
 ## Links
 
