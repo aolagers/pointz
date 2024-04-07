@@ -41,11 +41,6 @@ export default defineConfig((x) => ({
               })
             : [],
     ],
-    server: {
-        watch: {
-
-        },
-    },
     base: "",
     test: {
         includeSource: ["src/**/*.ts"],
