@@ -29,7 +29,7 @@
                 -webkit-touch-callout: none;
             }
 
-            .nice {
+            .nice, #errors div {
                 padding: 0.4em 0.8em;
                 color: #ddd;
                 background-color: rgba(0, 0, 0, 0.3);
@@ -234,6 +234,23 @@
                     opacity: 1;
                 }
             }
+
+            #errors {
+                position: fixed;
+                top: 50px;
+                left: 50%;
+                transform: translate(-50%, 0);
+                z-index: 99;
+                text-align: center;
+            }
+
+            #errors div {
+                background-color: rgba(227, 76, 76, 0.75);
+                font-size: small;
+                cursor: pointer;
+                margin-top: 10px;
+                width: fit-content
+            }
         </style>
     </head>
 
@@ -264,6 +281,8 @@
             <p><span class="bold">+/-</span>: Adjust point size</p>
             <p><span class="">Add files by drag&amp;dropping</span></p>
         </div>
+
+        <div id="errors"> </div>
 
         <canvas id="viewer"></canvas>
 

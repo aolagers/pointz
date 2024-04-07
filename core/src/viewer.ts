@@ -47,6 +47,7 @@ const clock = new Clock();
 
 type TEvents = {
     loading: { nodes: number };
+    error: { message: string };
 };
 
 export class Viewer extends EventDispatcher<TEvents> {
@@ -553,7 +554,10 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.addPointCloud(pc, center);
         } catch (e) {
             console.error("ERROR!!!", e);
-            alert("LAZ loading error! Only valid COPC LAZ files are supported. See console for details.");
+            this.dispatchEvent({
+                type: "error",
+                message: "LAZ loading error! Only valid COPC LAZ files are supported. See console for details.",
+            });
         }
     }
 }

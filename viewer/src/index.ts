@@ -37,6 +37,15 @@ if (!dbg_s) {
     setDebug(dbg_s === "true");
 }
 
+viewer.addEventListener("error", (err) => {
+    const errorElement = document.createElement("div");
+    errorElement.innerText = "Error! " + err.message;
+    document.getElementById("errors")?.appendChild(errorElement);
+    errorElement.addEventListener("click", () => {
+        errorElement.remove();
+    });
+});
+
 viewer.addEventListener("loading", (ev) => {
     const el = document.querySelector(".loader") as HTMLElement;
     if (!el) {
