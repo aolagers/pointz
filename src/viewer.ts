@@ -237,6 +237,8 @@ export class Viewer extends EventDispatcher<TEvents> {
             const n = ev.active + ev.queued;
             this.dispatchEvent({ type: "loading", nodes: n });
         });
+
+        this.renderer.domElement.style.display = "block";
     }
 
     addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
