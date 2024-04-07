@@ -15,6 +15,7 @@ import { Viewer } from "./viewer";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
 import { LOCALSTORAGE_KEYS } from "./settings";
+import { Measure } from "./measure";
 
 type CameraPosition = {
     position: Vector3Tuple;
@@ -30,6 +31,8 @@ export class EarthControls {
     domElement: HTMLElement;
     viewer: Viewer;
     pivot: Mesh;
+
+    measure: Measure;
 
     pointer = new Vector2(0, 0);
 
@@ -67,6 +70,8 @@ export class EarthControls {
 
         this.pivot.visible = false;
 
+        this.measure = new Measure();
+
         this.domElement.addEventListener("touchstart", createDoubleTapPreventer(500), { passive: false });
 
         this.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -100,6 +105,7 @@ export class EarthControls {
 
     init() {
         this.viewer.scene.add(this.pivot);
+        this.measure.init(this.viewer);
     }
 
     setCursor(cursor: string) {
@@ -185,7 +191,11 @@ export class EarthControls {
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
             if (pt) {
                 if (performance.now() - this.lastClickUp < 200) {
-                    this.zoomTo(pt.position, 0.5);
+                    if (this.measure.isActive) {
+                        this.measure.stop();
+                    } else {
+                        this.zoomTo(pt.position, 0.5);
+                    }
                     // return;
                 }
             }
@@ -233,6 +243,14 @@ export class EarthControls {
             this.zoomPrevY = this.pointer.y;
             this.zoomTo(this.zoomStart3D, z);
             return;
+        }
+
+        if (this.measure.isActive) {
+            const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
+            if (pt) {
+                this.measure.update(pt.position);
+                this.changed("measure");
+            }
         }
 
         if (!this.dragging) {

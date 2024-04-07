@@ -205,6 +205,11 @@ export class Viewer extends EventDispatcher<TEvents> {
             if (ev.key === "u") {
                 this.loadMoreNodes();
             }
+            if (ev.key === "m") {
+                if (!this.econtrols.measure.isActive) {
+                    this.econtrols.measure.start();
+                }
+            }
 
             this.requestRender("keydown");
         });
