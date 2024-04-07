@@ -59,8 +59,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     pointClouds: PointCloud[] = [];
 
-    // stats: Stats;
-    // gpuPanel: GPUStatsPanel;
+    customOffset: Vector3 = new Vector3();
+    customOffsetInitialized = false;
 
     frame = 0;
     frameTime = 0;
@@ -129,11 +129,6 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.scene = new Scene();
 
-        // this.stats = new Stats();
-        // this.gpuPanel = new GPUStatsPanel(this.renderer.getContext());
-        // this.stats.addPanel(this.gpuPanel);
-        // this.stats.showPanel(0);
-
         this.edlMaterial = new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
 
         const tquad = new Mesh(new PlaneGeometry(2, 2), this.edlMaterial);
@@ -189,20 +184,15 @@ export class Viewer extends EventDispatcher<TEvents> {
             for (const ptmat of [DEFAULT_POINT_MATERIAL, ...pointMaterialPool.all]) {
                 if (ev.key === "1") {
                     ptmat.changeColorMode("INTENSITY");
-                }
-                else if (ev.key === "2") {
+                } else if (ev.key === "2") {
                     ptmat.changeColorMode("CLASSIFICATION");
-                }
-                else if (ev.key === "3") {
+                } else if (ev.key === "3") {
                     ptmat.changeColorMode("RGB");
-                }
-                else if (ev.key === "4") {
+                } else if (ev.key === "4") {
                     ptmat.changeColorMode("RGB_AND_CLASS");
-                }
-                else if (ev.key === "+") {
+                } else if (ev.key === "+") {
                     ptmat.updatePointSize(+1);
-                }
-                else if (ev.key === "-") {
+                } else if (ev.key === "-") {
                     ptmat.updatePointSize(-1);
                 }
             }
@@ -245,7 +235,6 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
-        return;
         const div = document.createElement("div");
         div.classList.add("nice", "label");
         div.style.textAlign = "right";
@@ -529,6 +518,8 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.pointClouds.push(pc);
 
         const cube = createTightBounds(pc);
+
+        cube.position.sub(this.customOffset);
         this.scene.add(cube);
 
         console.log("ADD POINTCLOUD", pc);
@@ -538,7 +529,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.addLabel(
             `${pc.name}`,
             `${pc.nodes.length} / ${(pc.pointCount / 1_000_000).toFixed(2)}M`,
-            pc.tightBounds.max,
+            pc.tightBounds.max.clone().sub(this.customOffset),
             pc
         );
 
@@ -552,9 +543,16 @@ export class Viewer extends EventDispatcher<TEvents> {
     async addLAZ(what: string | File, center = false) {
         try {
             const pc = await PointCloud.loadLAZ(this, what);
+
+            if (!this.customOffsetInitialized) {
+                console.warn("set coordinate offset to", pc.tightBounds.min);
+                this.customOffset.copy(pc.tightBounds.min);
+                this.customOffsetInitialized = true;
+            }
+
             this.addPointCloud(pc, center);
         } catch (e) {
-            console.error(e);
+            console.error("ERROR!!!", e);
             alert("LAZ loading error! Only valid COPC LAZ files are supported. See console for details.");
         }
     }

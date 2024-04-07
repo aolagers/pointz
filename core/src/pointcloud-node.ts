@@ -36,14 +36,15 @@ export const pointsWorkerPool = new WorkerPool<
 
 const nodeCache = new LRUCache<string, PointCloudNode>({
     // max: 10,
-    maxSize: 3_000_000,
+    maxSize: 4_000_000,
 
     sizeCalculation: (value) => {
-        console.log("SIZE", value, value.pointCount);
+        // console.log("SIZE", value, value.pointCount);
         if (!value) return 1;
         if (value.pointCount === 0) return 1;
         return value.pointCount;
     },
+
     dispose: (node, key, reason) => {
         if (reason === "set" || reason === "evict") {
             console.log("CACHE DROP", reason, key, node.state, nodeCache.size, nodeCache.calculatedSize, node);
@@ -197,7 +198,7 @@ export class PointCloudNode {
         try {
             this.debugMesh.visible = viewer.debug_mode;
             viewer.requestRender("start loading");
-            const pointData = await this.getChunk(this.estimateNodeError(viewer.camera));
+            const pointData = await this.getChunk(this.estimateNodeError(viewer.camera), viewer.customOffset);
 
             pointData.geometry.boundingBox = this.bounds;
 
@@ -242,7 +243,7 @@ export class PointCloudNode {
         this.setState("unloaded");
     }
 
-    async getChunk(score: number) {
+    async getChunk(score: number, customOffset: Vector3){
         const data = await pointsWorkerPool.runTask({
             info: {
                 abort: new AbortController(),
@@ -252,7 +253,7 @@ export class PointCloudNode {
             command: {
                 command: "points",
                 nodeInfo: this.copcInfo,
-                offset: this.parent.headerOffset.toArray(),
+                offset: new Vector3().addVectors(this.parent.headerOffset, customOffset).toArray(),
                 source: this.parent.source,
             },
         });

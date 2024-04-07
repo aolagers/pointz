@@ -365,8 +365,12 @@ export class EarthControls {
     }
 
     showBox(box: Box3) {
-        const center = box.getCenter(new Vector3());
-        const size = box.getSize(new Vector3()).x;
+        const tbox = box.clone();
+        tbox.min.sub(this.viewer.customOffset);
+        tbox.max.sub(this.viewer.customOffset);
+
+        const center = tbox.getCenter(new Vector3());
+        const size = tbox.getSize(new Vector3()).x;
 
         this.camera.position.copy(center).add(new Vector3(0, -1, 0.5).multiplyScalar(size * 1.1));
         this.camera.lookAt(center);

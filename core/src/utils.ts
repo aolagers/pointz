@@ -38,7 +38,7 @@ export function boxToMesh(box: Box3, color: "green" | "blue" | "red") {
     return cube;
 }
 
-export function nodeToBox(base: Box3, key: OctreePath) {
+export function nodeToBox(base: Box3, key: OctreePath, customOffset: Vector3) {
     const D = key[0];
     const X = key[1];
     const Y = key[2];
@@ -49,7 +49,7 @@ export function nodeToBox(base: Box3, key: OctreePath) {
 
     const move = new Vector3(X * divSize.x, Y * divSize.y, Z * divSize.z);
 
-    const newMin = base.min.clone().add(move);
+    const newMin = base.min.clone().add(move).sub(customOffset);
 
     const nodeBox = new Box3(newMin, newMin.clone().add(divSize));
 
