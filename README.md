@@ -1,6 +1,8 @@
 # Pointz
 
-An simple and hackable WebGL point cloud viewer for the browser. Inspired by [Potree](https://github.com/potree/potree).
+A simple and hackable WebGL point cloud viewer for the browser. Inspired by [Potree](https://github.com/potree/potree).
+
+[Open Example](https://aolagers.github.io/pointz/)
 
 ![screenshot](./public/screenshot.jpg)
 

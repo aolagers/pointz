@@ -55,7 +55,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
 
     private addWorker() {
         const i = this.pool.length;
-        const worker = new Worker(this.workerUrl, { type: "module" });
+        const worker = new Worker(new URL(this.workerUrl, import.meta.url), { type: "module" });
         const wrapped = {
             worker: worker,
             busy: false,
@@ -130,7 +130,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
             });
         } else {
             if (this.pool.length < this.maxWorkers) {
-                console.log("ADD workder", this.pool.length);
+                console.log("ADD worker", this.pool.length);
                 this.addWorker();
                 return this.runTask(req);
             } else {

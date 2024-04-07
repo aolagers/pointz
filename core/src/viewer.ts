@@ -245,6 +245,7 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
+        return;
         const div = document.createElement("div");
         div.classList.add("nice", "label");
         div.style.textAlign = "right";

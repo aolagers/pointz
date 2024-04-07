@@ -12,9 +12,7 @@
     "allowImportingTsExtensions": true,
     "module": "ESNext",
 
-    "isolatedModules": true,
-
-    "types": ["vite/client", "vite-plugin-glsl/ext", "vitest/importMeta"]
+    "isolatedModules": true
   },
   "include": ["src"]
 }

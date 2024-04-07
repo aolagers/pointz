@@ -1,6 +1,4 @@
-import { Viewer } from "./viewer";
-import { stringifyError } from "./utils";
-import { LOCALSTORAGE_KEYS } from "./settings";
+import { Viewer } from "@pointz/core";
 
 window.onerror = (message, source, lineno, colno, error) => {
     document.body.innerHTML =
@@ -29,10 +27,10 @@ function setDebug(to: boolean) {
         debugEl.style.display = "none";
     }
 
-    localStorage.setItem(LOCALSTORAGE_KEYS.DEBUG_MODE, viewer.debug_mode ? "true" : "false");
+    localStorage.setItem("debug_mode", viewer.debug_mode ? "true" : "false");
 }
 
-const dbg_s = localStorage.getItem(LOCALSTORAGE_KEYS.DEBUG_MODE);
+const dbg_s = localStorage.getItem("debug_mode");
 if (!dbg_s) {
     setDebug(true);
 } else {
@@ -76,3 +74,13 @@ if (window.location.hostname === "localhost") {
 // viewer.addLAZ("https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz");
 // viewer.addLAZ("http://localhost:5173/sofi.copc.laz");
 // viewer.addLAZ("http://localhost:5173/millsite.copc.laz");
+
+function stringifyError(e: unknown) {
+    if (e instanceof Error) {
+        return JSON.stringify(e, Object.getOwnPropertyNames(e));
+    } else if (typeof e === "string") {
+        return e;
+    } else {
+        return JSON.stringify(e);
+    }
+}
