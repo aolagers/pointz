@@ -83,7 +83,18 @@ export class PointCloud {
         const details = await PointCloud.getInfo(source);
         const headerOffset = new Vector3(...details.header.offset);
 
-        const tightBounds = new Box3().setFromArray([...details.header.min, ...details.header.max]);
+        const tightBoundsFull = new Box3().setFromArray([...details.header.min, ...details.header.max]);
+
+        const mid = tightBoundsFull.getCenter(new Vector3());
+
+        const diff = mid.sub(headerOffset).length();
+
+        if (diff > 1_000_000) {
+            alert("TODO: fix big offset! " + diff);
+            // headerOffset.copy(mid);
+        }
+
+        const tightBounds = tightBoundsFull.clone();
         tightBounds.min.sub(headerOffset);
         tightBounds.max.sub(headerOffset);
 

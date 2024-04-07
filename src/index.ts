@@ -71,7 +71,8 @@ if (window.location.hostname === "localhost") {
 }
 
 
-// viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");
+// void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+// void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");
 // viewer.addLAZ("https://s3.amazonaws.com/data.entwine.io/millsite.copc.laz");
 // viewer.addLAZ("http://localhost:5173/sofi.copc.laz");
 // viewer.addLAZ("http://localhost:5173/millsite.copc.laz");
