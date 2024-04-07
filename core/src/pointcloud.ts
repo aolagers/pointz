@@ -85,13 +85,6 @@ export class PointCloud {
 
         const tightBoundsFull = new Box3().setFromArray([...details.header.min, ...details.header.max]);
 
-        // const midPointFull = tightBoundsFull.getCenter(new Vector3());
-        // const diff = midPointFull.sub(headerOffset).length();
-        // if (diff > 1_000_000) {
-        //     console.error("TODO: fix big offset! ", diff, headerOffset, midPointFull);
-        //     //  headerOffset.copy(mid);
-        // }
-
         const tightBounds = tightBoundsFull.clone();
         tightBounds.min.sub(headerOffset);
         tightBounds.max.sub(headerOffset);

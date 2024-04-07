@@ -37,6 +37,7 @@ const debug = {
     pool: "",
     render: "",
     frames: "",
+    offset: "",
     nodestats: "",
 };
 
@@ -47,7 +48,7 @@ const clock = new Clock();
 
 type TEvents = {
     loading: { nodes: number };
-    error: { message: string };
+    notice: { kind: "error" | "warn" | "info"; message: string };
 };
 
 export class Viewer extends EventDispatcher<TEvents> {
@@ -321,6 +322,8 @@ export class Viewer extends EventDispatcher<TEvents> {
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
             .join("<br>");
 
+        debug.offset = printVec(this.customOffset);
+
         this.renderer.info.reset();
         const frameEnd = performance.now();
         this.frameTime = frameEnd - frameStart;
@@ -545,17 +548,36 @@ export class Viewer extends EventDispatcher<TEvents> {
         try {
             const pc = await PointCloud.loadLAZ(this, what);
 
+            const offset = pc.tightBounds.min.clone();
+
             if (!this.customOffsetInitialized) {
-                console.warn("set coordinate offset to", pc.tightBounds.min);
-                this.customOffset.copy(pc.tightBounds.min);
+                if (offset.length() > 100_000) {
+                    console.warn("set coordinate offset to", offset);
+                    this.customOffset.copy(offset);
+                    // this.dispatchEvent({
+                    //     type: "notice",
+                    //     kind: "info",
+                    //     message: "Coordinate offset set to " + printVec(this.customOffset),
+                    // });
+                }
+
                 this.customOffsetInitialized = true;
+            } else {
+                if (offset.sub(this.customOffset).length() > 100_000) {
+                    this.dispatchEvent({
+                        type: "notice",
+                        kind: "warn",
+                        message: "Coordinates very far away. Precision may suffer.",
+                    });
+                }
             }
 
             this.addPointCloud(pc, center);
         } catch (e) {
             console.error("ERROR!!!", e);
             this.dispatchEvent({
-                type: "error",
+                type: "notice",
+                kind: "error",
                 message: "LAZ loading error! Only valid COPC LAZ files are supported. See console for details.",
             });
         }

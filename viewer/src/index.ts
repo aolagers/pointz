@@ -37,13 +37,17 @@ if (!dbg_s) {
     setDebug(dbg_s === "true");
 }
 
-viewer.addEventListener("error", (err) => {
-    const errorElement = document.createElement("div");
-    errorElement.innerText = "Error! " + err.message;
-    document.getElementById("errors")?.appendChild(errorElement);
-    errorElement.addEventListener("click", () => {
-        errorElement.remove();
+viewer.addEventListener("notice", (ev) => {
+    const el = document.createElement("div");
+    el.classList.add(ev.kind);
+    el.innerText = ev.message;
+    document.getElementById("notices")?.appendChild(el);
+    el.addEventListener("click", () => {
+        el.remove();
     });
+    setTimeout(() => {
+        el.remove();
+    }, 5000);
 });
 
 viewer.addEventListener("loading", (ev) => {
@@ -77,7 +81,6 @@ if (window.location.hostname === "localhost") {
     void viewer.addLAZ(here + "/assets/lion_takanawa.copc.laz");
     void viewer.addLAZ("https://kartta.aolagers.org/autzen-classified.copc.laz");
 }
-
 
 // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
 // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/sofi.copc.laz");

@@ -29,7 +29,8 @@
                 -webkit-touch-callout: none;
             }
 
-            .nice, #errors div {
+            .nice,
+            #notices div {
                 padding: 0.4em 0.8em;
                 color: #ddd;
                 background-color: rgba(0, 0, 0, 0.3);
@@ -146,7 +147,9 @@
                 border-radius: 50%;
                 background: #ffffff;
                 border: 1px solid black;
-                animation: loadership_TFCBD_scale 1.2s infinite, loadership_TFCBD_fade 1.2s infinite;
+                animation:
+                    loadership_TFCBD_scale 1.2s infinite,
+                    loadership_TFCBD_fade 1.2s infinite;
                 animation-timing-function: linear;
             }
 
@@ -216,10 +219,10 @@
                 20%,
                 80%,
                 100% {
-                    transform: scale(1.0);
+                    transform: scale(1);
                 }
                 50% {
-                    transform: scale(2.0);
+                    transform: scale(2);
                 }
             }
 
@@ -235,7 +238,7 @@
                 }
             }
 
-            #errors {
+            #notices {
                 position: fixed;
                 top: 50px;
                 left: 50%;
@@ -244,12 +247,20 @@
                 text-align: center;
             }
 
-            #errors div {
-                background-color: rgba(227, 76, 76, 0.75);
+            #notices div {
                 font-size: small;
                 cursor: pointer;
                 margin-top: 10px;
-                width: fit-content
+                width: fit-content;
+            }
+            #notices div.error {
+                background-color: rgba(227, 76, 76, 0.75);
+            }
+            #notices div.warn {
+                background-color: rgba(160, 120, 30, 0.75);
+            }
+            #notices div.info {
+                background-color: rgba(95, 133, 190, 0.75); /*, rgba(23, 64, 112, 0.75));*/
             }
         </style>
     </head>
@@ -282,7 +293,7 @@
             <p><span class="">Add files by drag&amp;dropping</span></p>
         </div>
 
-        <div id="errors"> </div>
+        <div id="notices"></div>
 
         <canvas id="viewer"></canvas>
 
