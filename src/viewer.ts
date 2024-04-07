@@ -225,6 +225,9 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.labelRenderer.domElement.style.position = "absolute";
         this.labelRenderer.domElement.style.top = rect.y + "px";
         this.labelRenderer.domElement.style.left = rect.x + "px";
+        this.labelRenderer.domElement.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+        });
 
         document.body.appendChild(this.labelRenderer.domElement);
 
