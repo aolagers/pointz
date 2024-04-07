@@ -33,10 +33,8 @@ export default defineConfig((x) => ({
         x.command === "build"
             ? viteStaticCopy({
                   targets: [
-                      {
-                          src: "./public/laz-perf.wasm",
-                          dest: "./assets",
-                      },
+                      { src: "./public/laz-perf.wasm", dest: "./assets" },
+                      { src: "./public/lion_takanawa.copc.laz", dest: "." },
                   ],
               })
             : [],
