@@ -93,7 +93,6 @@ export class PriorityQueue<T> {
     }
 }
 
-/*
 if (import.meta.vitest) {
     const { it, expect } = import.meta.vitest;
 
@@ -123,5 +122,3 @@ if (import.meta.vitest) {
         expect(pq.pop()).toBe(null);
     });
 }
-
-*/

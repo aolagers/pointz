@@ -14,7 +14,8 @@
 	"scripts": {
 		"build": "vite build",
 		"watch": "vite build --watch",
-		"dev": "vite"
+		"dev": "vite",
+		"test": "vitest"
 	},
 	"dependencies": {
 		"copc": "^0.0.6",

@@ -13,4 +13,7 @@ export default defineConfig({
         minify: false,
     },
     base: "./",
+    test: {
+        includeSource: ["src/**/*.ts"],
+    },
 });
