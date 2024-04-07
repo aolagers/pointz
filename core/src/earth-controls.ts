@@ -169,6 +169,9 @@ export class EarthControls {
         }
 
         if (e.button === 0) {
+            if (this.measure.isActive) {
+                this.measure.addPoint(pt.position);
+            }
             this.dragging = "left";
         } else if (e.button === 1) {
             this.dragging = "mid";

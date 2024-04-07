@@ -1,9 +1,10 @@
-import { Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from "three";
+import { BufferGeometry, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from "three";
 import { Viewer } from "./viewer";
 
 type Measurement = {
     nodes: Array<Mesh>;
-    lines: Array<Mesh>;
+    lineGeom: BufferGeometry;
+    line: Line;
 };
 
 export class Measure {
@@ -12,6 +13,8 @@ export class Measure {
     activeMeasurement: Measurement | null = null;
 
     measurements: Measurement[] = [];
+
+    viewer: Viewer | null;
 
     isActive = false;
 
@@ -22,15 +25,28 @@ export class Measure {
         );
 
         this.mark.layers.set(1);
+        this.viewer = null;
     }
 
     init(viewer: Viewer) {
         viewer.scene.add(this.mark);
+        this.viewer = viewer;
     }
 
     start() {
         this.isActive = true;
+        const g = new BufferGeometry();
+        this.activeMeasurement = {
+            line: new Line(g, new LineBasicMaterial({ color: "rgb(0, 255, 0)" })),
+            lineGeom: g,
+            nodes: [],
+        };
+
+        this.activeMeasurement.line.layers.set(1);
+        this.viewer?.scene.add(this.activeMeasurement.line);
+        console.log("LINE", this.activeMeasurement.line);
     }
+
     update(pos: Vector3) {
         this.mark.visible = true;
         this.mark.position.copy(pos);
@@ -39,6 +55,27 @@ export class Measure {
         // const scl = 0.1 + dst / 50;
         // this.measure.mark.scale.set(scl, scl, scl);
     }
+
+    addPoint(pos: Vector3) {
+        if (!this.isActive || !this.activeMeasurement) {
+            alert("no active measurement");
+            throw new Error("no active measurement");
+        }
+
+        const node = this.mark.clone();
+
+        this.viewer?.scene.add(node);
+
+        this.activeMeasurement.nodes.push(node);
+
+        const positions = this.activeMeasurement.nodes.map((n) => n.position);
+
+        this.activeMeasurement.line.geometry.setFromPoints(positions);
+
+        this.activeMeasurement.line.geometry.getAttribute("position").needsUpdate = true;
+        this.activeMeasurement.line.geometry.computeBoundingSphere();
+    }
+
     stop() {
         this.isActive = false;
         this.mark.visible = false;
