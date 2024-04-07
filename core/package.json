@@ -3,13 +3,11 @@
 	"version": "1.0.0",
 	"type": "module",
 	"private": true,
-	"main": "./dist/core.umd.cjs",
 	"module": "./dist/core.js",
 	"types": "./dist/viewer.d.ts",
 	"exports": {
 		".": {
 			"import": "./dist/core.js",
-			"require": "./dist/core.umd.cjs",
 			"types": "./dist/viewer.d.ts"
 		}
 	},
@@ -30,5 +28,8 @@
 		"vite-plugin-dts": "^3.8.1",
 		"vite-plugin-glsl": "^1.3.0",
 		"vitest": "^1.4.0"
+	},
+	"optionalDependencies": {
+		"@rollup/rollup-linux-x64-gnu": "^4.14.1"
 	}
 }

@@ -9,6 +9,7 @@ export default defineConfig({
         lib: {
             entry: "src/viewer.ts",
             name: "core",
+            formats: ["es"],
             // fileName: (format) => `core.${format}.js`,
         },
     },
