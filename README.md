@@ -1,6 +1,6 @@
 # Pointz
 
-An simple and hackable WebGL point cloud viewer for the browser.
+An simple and hackable WebGL point cloud viewer for the browser. Inspired by [Potree](https://github.com/potree/potree).
 
 ![screenshot](./public/screenshot.jpg)
 
@@ -27,15 +27,13 @@ stateDiagram-v2
     unloaded --> loading: load
 
     loading --> visible: show
-  	loading --> error
-	  loading --> unloaded: unload
+    loading --> error
+    loading --> unloaded: unload
 
     error --> loading: load
 
-	  visible --> cached: cache
-
+    visible --> cached: cache
 
     cached --> visible: show
     cached --> unloaded: unload
-
 ```
