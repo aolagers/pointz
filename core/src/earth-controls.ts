@@ -337,7 +337,7 @@ export class EarthControls {
 
         this.saveHandle = setTimeout(() => {
             const campos = {
-                position: this.camera.position.toArray(),
+                position: new Vector3().addVectors(this.camera.position, this.viewer.customOffset).toArray(),
                 rotation: this.camera.rotation.toArray(),
             } as CameraPosition;
             localStorage.setItem(LOCALSTORAGE_KEYS.CAMERA, JSON.stringify(campos));
@@ -354,7 +354,7 @@ export class EarthControls {
 
         try {
             const camJSON = JSON.parse(camText) as CameraPosition;
-            this.camera.position.copy(new Vector3().fromArray(camJSON.position));
+            this.camera.position.copy(new Vector3().fromArray(camJSON.position).sub(this.viewer.customOffset));
             this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
             this.changed("restoreCam");
             return true;

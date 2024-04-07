@@ -223,8 +223,6 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         document.body.appendChild(this.labelRenderer.domElement);
 
-        this.econtrols.restoreCamera();
-
         this.initialized = true;
         this.requestRender("init");
 
@@ -562,6 +560,8 @@ export class Viewer extends EventDispatcher<TEvents> {
                 }
 
                 this.customOffsetInitialized = true;
+
+                this.econtrols.restoreCamera();
             } else {
                 if (offset.sub(this.customOffset).length() > 100_000) {
                     this.dispatchEvent({
