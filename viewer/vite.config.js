@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { createReadStream } from "node:fs";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const wasmInterceptor = {
     name: "wasm-interceptor-plugin",
@@ -25,7 +26,17 @@ const wasmInterceptor = {
 export default defineConfig((x) => ({
     clearScreen: false,
     build: { chunkSizeWarningLimit: 800 },
-    plugins: [wasmInterceptor],
+    plugins: [
+        wasmInterceptor,
+        x.command === "build"
+            ? viteStaticCopy({
+                  targets: [
+                      { src: "./public/laz-perf.wasm", dest: "./assets" },
+                      // { src: "./public/lion_takanawa.copc.laz", dest: "./assets" },
+                  ],
+              })
+            : [],
+    ],
     base: "",
     test: {
         includeSource: ["src/**/*.ts"],
