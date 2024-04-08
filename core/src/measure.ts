@@ -74,6 +74,19 @@ export class Measure {
 
         this.activeMeasurement.line.geometry.getAttribute("position").needsUpdate = true;
         this.activeMeasurement.line.geometry.computeBoundingSphere();
+
+        if (positions.length > 1) {
+            const prev = positions.at(-2)!;
+            const cur = positions.at(-1)!;
+
+            const vec = new Vector3().subVectors(cur, prev);
+            const mid = vec.clone().multiplyScalar(0.5).add(prev);
+            const len = vec.length();
+
+            this.viewer?.addLabel(len.toFixed(2) + " m", null, mid);
+
+            // TODO: add total to last measure
+        }
     }
 
     stop() {

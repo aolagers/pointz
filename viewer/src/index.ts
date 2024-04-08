@@ -10,24 +10,21 @@ const canvas = document.querySelector("#viewer") as HTMLCanvasElement;
 
 const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
 
-const toggleDebugButton = document.getElementById("toggle-debug")!;
-const debugEl = document.getElementById("debug")!;
-toggleDebugButton.addEventListener("click", () => {
-    setDebug(!viewer.debug_mode);
-});
-function setDebug(to: boolean) {
-    console.log("DEBUG:", to);
-    viewer.debug_mode = to;
-
-    if (viewer.debug_mode) {
-        toggleDebugButton.classList.add("active");
-        debugEl.style.display = "block";
-    } else {
-        toggleDebugButton.classList.remove("active");
-        debugEl.style.display = "none";
-    }
-
-    localStorage.setItem("debug_mode", viewer.debug_mode ? "true" : "false");
+const toggleDebugButton = document.getElementById("toggle-debug");
+if (toggleDebugButton) {
+    toggleDebugButton.addEventListener("click", () => {
+        setDebug(!viewer.debug_mode);
+    });
+}
+const toggleMeasureButton = document.getElementById("toggle-measure");
+if (toggleMeasureButton) {
+    toggleMeasureButton.addEventListener("click", () => {
+        if (viewer.econtrols.measure.isActive) {
+            viewer.econtrols.measure.stop();
+        } else {
+            viewer.econtrols.measure.start();
+        }
+    });
 }
 
 const dbg_s = localStorage.getItem("debug_mode");
@@ -35,6 +32,21 @@ if (!dbg_s) {
     setDebug(true);
 } else {
     setDebug(dbg_s === "true");
+}
+function setDebug(to: boolean) {
+    const debugEl = document.getElementById("debug")!;
+    console.log("DEBUG:", to);
+    viewer.debug_mode = to;
+
+    if (viewer.debug_mode) {
+        toggleDebugButton?.classList.add("active");
+        debugEl.style.display = "block";
+    } else {
+        toggleDebugButton?.classList.remove("active");
+        debugEl.style.display = "none";
+    }
+
+    localStorage.setItem("debug_mode", viewer.debug_mode ? "true" : "false");
 }
 
 viewer.addEventListener("notice", (ev) => {

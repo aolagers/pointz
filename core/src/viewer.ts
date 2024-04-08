@@ -239,25 +239,30 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.renderer.domElement.style.display = "block";
     }
 
-    addLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
+    addPointcloudLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
+        const label = this.addLabel(text1, text2, pos);
+        label.element.addEventListener("click", () => {
+            this.econtrols.showPointCloud(pc);
+        });
+    }
+
+    addLabel(text1: string, text2: string | null, pos: Vector3) {
         const div = document.createElement("div");
         div.classList.add("nice", "label");
         div.style.textAlign = "right";
 
-        div.innerHTML = `
-            <span>${text1}</span><br>
-            <span style="color: rgba(255,255,255,0.3); fontSize: smaller;">${text2}</span>
-        `;
-
-        div.addEventListener("click", () => {
-            this.econtrols.showPointCloud(pc);
-        });
+        div.innerHTML = `<span>${text1}</span>`;
+        if (text2) {
+            div.innerHTML += `<br><span style="color: rgba(254,255,255,0.3); fontSize: smaller;">${text2}</span>`;
+        }
 
         const label = new CSS2DObject(div);
         label.position.copy(pos);
         label.center.set(0, 1);
 
         this.scene.add(label);
+
+        return label;
     }
 
     labelRenderer = new CSS2DRenderer();
@@ -533,7 +538,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         void pc.initializeNodes();
 
-        this.addLabel(
+        this.addPointcloudLabel(
             `${pc.name}`,
             `${pc.nodes.length} / ${(pc.pointCount / 1_000_000).toFixed(2)}M`,
             pc.tightBounds.max.clone().sub(this.customOffset),
