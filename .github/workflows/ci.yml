@@ -46,20 +46,39 @@ jobs:
                   retention-days: 3
 
     deploy:
-        runs-on: ubuntu-latest
-
         needs: build
 
+        permissions:
+            pages: write
+            id-token: write
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-
-            - uses: actions/download-artifact@v4
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
               with:
-                  name: client
-                  path: out
+                  artifact_name: client
 
-            - name: deploy to gh-pages
-              uses: JamesIves/github-pages-deploy-action@v4
-              with:
-                  single-commit: true
-                  folder: out
+    # deploy:
+    #     runs-on: ubuntu-latest
+
+    #     needs: build
+
+    #     steps:
+    #         - uses: actions/checkout@v4
+
+    #         - uses: actions/download-artifact@v4
+    #           with:
+    #               name: client
+    #               path: out
+
+    #         - name: deploy to gh-pages
+    #           uses: JamesIves/github-pages-deploy-action@v4
+    #           with:
+    #               single-commit: true
+    #               folder: out
