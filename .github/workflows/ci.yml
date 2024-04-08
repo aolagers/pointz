@@ -37,6 +37,10 @@ jobs:
               run: |
                   npm run build
 
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: viewer/dist
+
             - uses: actions/upload-artifact@v4
               with:
                   name: client
@@ -61,8 +65,6 @@ jobs:
             - name: Deploy to GitHub Pages
               id: deployment
               uses: actions/deploy-pages@v4
-              with:
-                  artifact_name: client
 
     # deploy:
     #     runs-on: ubuntu-latest
