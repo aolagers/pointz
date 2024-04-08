@@ -1,13 +1,17 @@
 {
   "name": "pointz",
   "version": "1.0.0",
+  "author": "Alex Lagerstedt <aolagers@iki.fi>",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aolagers/pointz"
+  },
   "type": "module",
   "scripts": {
     "dev": "npm run build --workspace core && npm run dev --workspace viewer",
     "build": "npm run build --workspaces"
   },
-  "author": "Alex Lagerstedt <aolagers@iki.fi>",
-  "license": "AGPL-3.0-or-later",
   "prettier": {
     "trailingComma": "es5"
   },

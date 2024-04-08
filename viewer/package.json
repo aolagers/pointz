@@ -1,6 +1,8 @@
 {
 	"name": "@pointz/viewer",
 	"version": "1.0.0",
+	"author": "Alex Lagerstedt <aolagers@iki.fi>",
+	"license": "AGPL-3.0-or-later",
 	"type": "module",
 	"private": true,
 	"scripts": {
