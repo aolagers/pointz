@@ -30,6 +30,7 @@ jobs:
 
             - name: npm test
               run: |
+                  cd core
                   npm run test
 
             - name: npm build
