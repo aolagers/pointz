@@ -7,7 +7,7 @@ export type PointCloudHeader = Pick<CopcType["header"], "min" | "max" | "offset"
 
 export type Hierarchy = Awaited<ReturnType<typeof Copc.loadHierarchyPage>>;
 
-type WorkerRequest = WorkerInfoRequest | WorkerPointsRequest;
+type WorkerRequest = WorkerInfo["Request"] | WorkerPoints["Request"] | WorkerHierarchy["Request"];
 
 export type CopcNodeInfo = {
     pointCount: number;
@@ -15,38 +15,47 @@ export type CopcNodeInfo = {
     pointDataLength: number;
 };
 
-export type WorkerPointsRequest = {
-    command: "points";
-    source: LazSource;
-    offset: number[];
-    nodeInfo: CopcNodeInfo;
+export type WorkerPoints = {
+    Request: {
+        command: "points";
+        source: LazSource;
+        offset: number[];
+        nodeInfo: CopcNodeInfo;
+    };
+    Response: {
+        msgType: "points";
+        pointCount: number;
+        positions: Float32Array;
+        colors: Uint8Array;
+        classifications: Uint8Array;
+        intensities: Uint16Array;
+        indices: Int32Array;
+    };
 };
 
-export type WorkerPointsResponse = {
-    msgType: "points";
-    pointCount: number;
-    positions: Float32Array;
-    colors: Uint8Array;
-    classifications: Uint8Array;
-    intensities: Uint16Array;
-    indices: Int32Array;
+export type WorkerInfo = {
+    Request: {
+        command: "info";
+        source: LazSource;
+    };
+
+    Response: {
+        msgType: "info";
+        header: PointCloudHeader;
+        info: CopcType["info"];
+    };
 };
 
-export type WorkerInfoRequest = {
-    command: "info";
-    source: LazSource;
-};
-
-export type WorkerInfoResponse = {
-    msgType: "info";
-    header: PointCloudHeader;
-    info: CopcType["info"];
-    hierarchy: Hierarchy;
-};
-
-export type WorkerResponseMapping = {
-    info: WorkerInfoResponse;
-    points: WorkerPointsResponse;
+export type WorkerHierarchy = {
+    Request: {
+        command: "hierarchy";
+        source: LazSource;
+        pageInfo: CopcType["info"]["rootHierarchyPage"];
+    };
+    Response: {
+        msgType: "hierarchy";
+        hierarchy: Hierarchy;
+    };
 };
 
 export type WorkerError = {
@@ -58,13 +67,11 @@ function log(...args: unknown[]) {
     console.log("%c!! WORKER !!", "color: cyan; font-weight: bold;", ...args);
 }
 
-function getGetter(source: LazSource) {
+function createCOPCFetcher(source: LazSource) {
     if (typeof source === "string") {
         return async (begin: number, end: number) => {
             const range = `bytes=${begin}-${end - 1}`;
-            const r = await fetch(source, {
-                headers: { Range: range },
-            });
+            const r = await fetch(source, { headers: { Range: range } });
             const blob = await r.arrayBuffer();
             return new Uint8Array(blob);
         };
@@ -79,30 +86,31 @@ function getGetter(source: LazSource) {
 
 onmessage = async function (e: MessageEvent<WorkerRequest>) {
     try {
-        const getter = getGetter(e.data.source);
+        const fetcher = createCOPCFetcher(e.data.source);
 
-        const copc = await Copc.create(getter);
+        const copc = await Copc.create(fetcher);
 
         if (e.data.command === "info") {
             log("READ INFO", copc);
 
-            const copcHierarchy = await Copc.loadHierarchyPage(getter, copc.info.rootHierarchyPage);
-
-            const response: WorkerInfoResponse = {
+            const response: WorkerInfo["Response"] = {
                 msgType: "info",
                 info: copc.info,
                 header: copc.header,
-                hierarchy: copcHierarchy,
             };
 
             postMessage(response);
-            return;
-        }
-
-        if (e.data.command === "points") {
+        } else if (e.data.command === "hierarchy") {
+            const hierarchy = await Copc.loadHierarchyPage(fetcher, e.data.pageInfo);
+            const response: WorkerHierarchy["Response"] = {
+                msgType: "hierarchy",
+                hierarchy: hierarchy,
+            };
+            postMessage(response);
+        } else if (e.data.command === "points") {
             const node = e.data.nodeInfo;
 
-            const view = await Copc.loadPointDataView(getter, copc, node);
+            const view = await Copc.loadPointDataView(fetcher, copc, node);
 
             const ptCount = view.pointCount;
 
@@ -136,10 +144,11 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
                 positions[pIdx++] = getters.y(i) - offset[1];
                 positions[pIdx++] = getters.z(i) - offset[2];
 
-                // TODO: recognize if 16bit colors or not
-                const r = getters.r(i) / div;
+                // Try to auto-recognize if 16bit colors or not
+                let r = getters.r(i) / div;
                 if (div === 1 && r > 255) {
                     div = 256;
+                    r /= div;
                 }
                 colors[cIdx++] = r;
                 colors[cIdx++] = getters.g(i) / div;
@@ -151,7 +160,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
                 indices[i] = i;
             }
 
-            const response: WorkerPointsResponse = {
+            const response: WorkerPoints["Response"] = {
                 msgType: "points",
                 pointCount: view.pointCount,
                 positions,

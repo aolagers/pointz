@@ -19,16 +19,16 @@ import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud } from "./pointcloud";
 import { Viewer } from "./viewer";
-import { CopcNodeInfo, WorkerPointsRequest, WorkerPointsResponse } from "./copc-loader";
+import { CopcNodeInfo, WorkerPoints } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
 import workerUrl from "./copc-loader?worker&url";
 
 export const pointsWorkerPool = new WorkerPool<
     {
         info: { abort: AbortController; score: number; node: PointCloudNode };
-        command: WorkerPointsRequest;
+        command: WorkerPoints["Request"];
     },
-    WorkerPointsResponse
+    WorkerPoints["Response"]
 >(workerUrl, 4);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -243,7 +243,7 @@ export class PointCloudNode {
         this.setState("unloaded");
     }
 
-    async getChunk(score: number, customOffset: Vector3){
+    async getChunk(score: number, customOffset: Vector3) {
         const data = await pointsWorkerPool.runTask({
             info: {
                 abort: new AbortController(),

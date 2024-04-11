@@ -1,5 +1,5 @@
 import { Box3, Vector3 } from "three";
-import type { Hierarchy, LazSource, WorkerInfoRequest, WorkerInfoResponse } from "./copc-loader";
+import type { Hierarchy, LazSource, WorkerHierarchy, WorkerInfo } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
 import { OctreePath } from "./octree";
 import { PointCloudNode } from "./pointcloud-node";
@@ -8,8 +8,13 @@ import { Viewer } from "./viewer";
 import { WorkerPool } from "./worker-pool";
 
 export const infoWorkerPool = new WorkerPool<
-    { info: { abort: AbortController; score: number }; command: WorkerInfoRequest },
-    WorkerInfoResponse
+    { info: { abort: AbortController; score: number }; command: WorkerInfo["Request"] },
+    WorkerInfo["Response"]
+>(workerUrl, 4);
+
+export const hierachyWorkerPool = new WorkerPool<
+    { info: { abort: AbortController; score: number }; command: WorkerHierarchy["Request"] },
+    WorkerHierarchy["Response"]
 >(workerUrl, 4);
 
 export class PointCloud {
@@ -91,6 +96,8 @@ export class PointCloud {
 
         octreeBounds.translate(headerOffset.clone().negate());
 
+        const rootHierarchy = await PointCloud.getHierachy(source, details.info.rootHierarchyPage);
+
         const pcloud = new PointCloud(
             viewer,
             pcloudName,
@@ -98,12 +105,28 @@ export class PointCloud {
             tightBounds,
             octreeBounds,
             headerOffset,
-            details.hierarchy,
+            rootHierarchy,
             details.info.spacing,
             details.header.pointCount
         );
 
         return pcloud;
+    }
+
+    static async getHierachy(source: LazSource, pageInfo: { pageOffset: number; pageLength: number }) {
+        const r = await hierachyWorkerPool.runTask({
+            info: {
+                score: Date.now(),
+                abort: new AbortController(),
+            },
+            command: {
+                command: "hierarchy",
+                source: source,
+                pageInfo: pageInfo,
+            },
+        });
+
+        return r.hierarchy;
     }
 
     static async getInfo(source: LazSource) {
