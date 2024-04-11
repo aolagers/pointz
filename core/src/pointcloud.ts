@@ -25,7 +25,6 @@ export class PointCloud {
     pointCount: number;
 
     id: string;
-    isDemo = false;
 
     constructor(
         viewer: Viewer,
@@ -54,13 +53,12 @@ export class PointCloud {
     }
 
     async initializeNodes() {
-        if (this.isDemo) {
-            const pcn = this.nodes[0];
-            this.viewer.addNode(pcn);
-            return;
-        }
+        const nodeIDs = Object.keys(this.hierarchy.nodes);
+        const pageIDs = Object.keys(this.hierarchy.pages);
 
         const nodePaths = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
+
+        console.info("HIERARCHY", nodeIDs, pageIDs, nodeIDs.length, pageIDs.length);
 
         console.log(this.name, { toLoad: nodePaths, l: nodePaths.length });
 
