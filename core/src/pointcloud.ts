@@ -1,7 +1,7 @@
 import { Box3, Vector3 } from "three";
 import type { Hierarchy, LazSource, WorkerHierarchy, WorkerInfo } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
-import { OctreePath } from "./octree";
+import { Octree, OctreePath } from "./octree";
 import { PointCloudNode } from "./pointcloud-node";
 import { nodeToBox } from "./utils";
 import { Viewer } from "./viewer";
@@ -25,9 +25,10 @@ export class PointCloud {
     tightBounds: Box3;
     octreeBounds: Box3;
     hierarchy: Hierarchy;
-    nodes: PointCloudNode[];
     rootSpacing: number;
     pointCount: number;
+
+    tree: Octree;
 
     id: string;
 
@@ -48,36 +49,46 @@ export class PointCloud {
         this.headerOffset = headerOffset;
         this.tightBounds = tightBounds;
         this.octreeBounds = octreeBounds;
-        this.nodes = [];
         this.hierarchy = hierarchy;
         this.rootSpacing = rootSpacing;
         this.pointCount = pointCount;
 
         this.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-        // TODO: fix offset if it seems too small
+        this.tree = new Octree();
     }
 
-    async initializeNodes() {
-        const nodeIDs = Object.keys(this.hierarchy.nodes);
-        const pageIDs = Object.keys(this.hierarchy.pages);
+    initialize() {
+        const bbox = nodeToBox(this.octreeBounds, [0, 0, 0, 0], this.viewer.customOffset);
+        const rootNode = new PointCloudNode(this, [0, 0, 0, 0], bbox, this.rootSpacing);
+        this.tree.add(rootNode);
+
+        // always load the root node by default
+        rootNode.load(this.viewer);
 
         const nodePaths = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
+        nodePaths.sort((a, b) => {
+            for (let i = 0; i < 4; i++) {
+                if (a[i]! < b[i]!) {
+                    return -1;
+                } else if (a[i]! > b[i]!) {
+                    return 1;
+                }
+            }
+            return 0;
+        });
 
-        console.info("HIERARCHY", nodeIDs, pageIDs, nodeIDs.length, pageIDs.length);
-
-        console.log(this.name, { toLoad: nodePaths, l: nodePaths.length });
+        // skip root node as it's already added
+        nodePaths.shift();
 
         for (const n of nodePaths) {
             const bbox = nodeToBox(this.octreeBounds, n, this.viewer.customOffset);
-            const pcn = new PointCloudNode(this, n, bbox, this.rootSpacing / Math.pow(2, n[0]));
-            this.nodes.push(pcn);
+            const node = new PointCloudNode(this, n, bbox, this.rootSpacing);
+            this.tree.add(node);
         }
+    }
 
-        // always load the root node by default
-        const root = this.nodes.find((n) => n.depth === 0);
-        if (root) {
-            await root.load(this.viewer);
-        }
+    *nodes() {
+        yield* this.tree.all();
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
@@ -97,6 +108,26 @@ export class PointCloud {
         octreeBounds.translate(headerOffset.clone().negate());
 
         const rootHierarchy = await PointCloud.getHierachy(source, details.info.rootHierarchyPage);
+
+        // TODO: do not block here for the full tree
+        // TODO: load full tree only when needed
+        const pageQueue: [string, { pageOffset: number; pageLength: number } | undefined][] = [];
+        pageQueue.push(...Object.entries(rootHierarchy.pages));
+
+        while (pageQueue.length > 0) {
+            const pageInfo = pageQueue.pop()!;
+
+            if (pageInfo[1]) {
+                console.log("LOAD EXTRA PAGE", pageInfo[0]);
+                const h = await PointCloud.getHierachy(source, pageInfo[1]);
+
+                for (const nodeID of Object.keys(h.nodes)) {
+                    rootHierarchy.nodes[nodeID] = h.nodes[nodeID];
+                }
+
+                pageQueue.push(...Object.entries(h.pages));
+            }
+        }
 
         const pcloud = new PointCloud(
             viewer,

@@ -358,7 +358,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     *getVisibleNodes() {
         for (const pc of this.pointClouds) {
-            for (const node of pc.nodes) {
+            for (const node of pc.nodes()) {
                 if (node.state === "visible") {
                     yield node;
                 }
@@ -381,7 +381,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         // check node visibility
         for (const pc of this.pointClouds) {
-            for (const node of pc.nodes) {
+            for (const node of pc.nodes()) {
                 if (node.depth === 0 || frustum.intersectsBox(node.bounds)) {
                     pq.push(node);
                 } else {
@@ -536,7 +536,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         console.log("ADD POINTCLOUD", pc);
 
-        void pc.initializeNodes();
+        void pc.initialize();
 
         this.addPointcloudLabel(
             `${pc.name}`,
