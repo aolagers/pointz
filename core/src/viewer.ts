@@ -30,16 +30,6 @@ import { PriorityQueue } from "./priority-queue";
 import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
 
 const debugEl = document.querySelector("#debug")!;
-const debug = {
-    jsmem: "",
-    camera: "",
-    touch: "",
-    pool: "",
-    render: "",
-    frames: "",
-    offset: "",
-    nodestats: "",
-};
 
 const raycaster = new Raycaster();
 raycaster.params.Points.threshold = 0.5;
@@ -86,6 +76,17 @@ export class Viewer extends EventDispatcher<TEvents> {
     initialized = false;
 
     debug_mode = false;
+
+    debugInfo = {
+        jsmem: "",
+        camera: "",
+        touch: "",
+        pool: "",
+        render: "",
+        frames: "",
+        offset: "",
+        nodestats: "",
+    };
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         super();
@@ -148,7 +149,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         // document.body.appendChild(this.stats.dom);
 
         this.econtrols.onChange = (why) => {
-            debug.camera = printVec(this.camera.position);
+            this.debugInfo.camera = printVec(this.camera.position);
 
             this.loadMoreNodesThrottled();
             this.requestRender("controls " + why);
@@ -305,32 +306,32 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.frame++;
 
-        debug.nodestats =
+        this.debugInfo.nodestats =
             `loads:${PointCloudNode.stats.loads} ` +
             `retries:${PointCloudNode.stats.retries} ` +
             `errs:${PointCloudNode.stats.errors}`;
 
-        debug.render =
+        this.debugInfo.render =
             // `progs:${this.renderer.info.programs?.length} ` +
             `geoms:${this.renderer.info.memory.geometries} ` +
             `calls:${this.renderer.info.render.calls} ` +
             `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
-        debug.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
+        this.debugInfo.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
 
-        debug.pool =
+        this.debugInfo.pool =
             ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queueLength}` + ` (${pointsWorkerPool.tasksFinished})`;
 
-        debug.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
+        this.debugInfo.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        debug.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
+        this.debugInfo.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
 
-        debugEl.innerHTML = Object.entries(debug)
+        this.debugInfo.offset = printVec(this.customOffset);
+
+        debugEl.innerHTML = Object.entries(this.debugInfo)
             .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
             .join("<br>");
-
-        debug.offset = printVec(this.customOffset);
 
         this.renderer.info.reset();
         const frameEnd = performance.now();
