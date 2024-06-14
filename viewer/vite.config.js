@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import { createReadStream } from "node:fs";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import solid from "vite-plugin-solid";
 
 const wasmInterceptor = {
     name: "wasm-interceptor-plugin",
@@ -27,6 +28,7 @@ export default defineConfig((x) => ({
     clearScreen: false,
     build: { chunkSizeWarningLimit: 800 },
     plugins: [
+        solid(),
         wasmInterceptor,
         x.command === "build"
             ? viteStaticCopy({

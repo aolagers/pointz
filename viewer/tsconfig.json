@@ -2,7 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "target": "ES2022",
+    "target": "ESNext",
 
     "strict": true,
     // "noUncheckedIndexedAccess": true,
@@ -12,7 +12,9 @@
     "allowImportingTsExtensions": true,
     "module": "ESNext",
 
-    "isolatedModules": true
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
 }
