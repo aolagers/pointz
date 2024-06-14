@@ -19,30 +19,6 @@ body {
 
 /* * { user-select: none; touch-action: none; -webkit-touch-callout: none; } */
 
-.nice,
-.notice {
-    padding: 0.4em 0.8em;
-    color: #ddd;
-    background-color: rgba(0, 0, 0, 0.3);
-    font-size: x-small;
-    border-radius: 0.2em;
-    font-family: sans-serif;
-    font-weight: bold;
-    line-height: 1.5;
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-    outline: 1px solid rgba(0, 0, 0, 0.5);
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-#debug {
-    z-index: 20;
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    text-align: right;
-}
-
 #viewer {
     margin: 0;
     padding: 0;
@@ -50,21 +26,7 @@ body {
     display: none;
 }
 
-#btns {
-    z-index: 10;
-    position: fixed;
-    top: 10px;
-    right: 10px;
-}
-
-#btns button:hover {
-    background-color: rgba(0, 0, 0, 0.6);
-}
-#btns button:hover.active {
-    background-color: rgba(255, 0, 0, 0.8);
-}
-
-#btns button {
+/* #btns button {
     border-top: 1px solid var(--light);
     border-left: 1px solid var(--light);
     border-right: 1px solid var(--dark);
@@ -76,11 +38,7 @@ body {
     border-left: 1px solid var(--dark);
     border-right: 1px solid var(--light);
     border-bottom: 1px solid var(--light);
-}
-
-.active {
-    background-color: rgba(255, 0, 0, 0.5);
-}
+} */
 
 .label {
     background-color: rgba(0, 0, 0, 0.3);
@@ -90,56 +48,8 @@ body {
     cursor: pointer;
 }
 
-#errormsg {
-    color: white;
-    font-size: medium;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    display: none;
-}
-
-.loader {
-    z-index: 20;
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    scale: 0.5;
-    /* transform: translate(0, -50%); */
-}
-
-#help {
-    z-index: 20;
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    color: white;
-    font-size: x-small;
-}
-
-#notices {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform: translate(-50%, 0);
-    z-index: 99;
-    text-align: center;
-}
-
-.notice {
-    font-size: small;
-    cursor: pointer;
-    margin-top: 10px;
-    width: fit-content;
-}
-.notice.error {
-    background-color: rgba(227, 76, 76, 0.75);
-}
-.notice.warn {
-    background-color: rgba(160, 120, 30, 0.75);
-}
-.notice.info {
-    background-color: rgba(95, 133, 190, 0.75); /*, rgba(23, 64, 112, 0.75));*/
+@layer components {
+    .nice {
+        @apply px-2 py-0.5 text-xs rounded-sm backdrop-blur-xs shadow-md  bg-black/30 outline outline-1 outline-black/50 text-gray-200;
+    }
 }
