@@ -70,10 +70,11 @@ export class Viewer extends EventDispatcher<TEvents> {
         resizing: false,
     };
 
-    errorElement: HTMLElement | null;
     initialized = false;
 
     debug_mode = false;
+
+    debugEl: HTMLElement | undefined = undefined;
 
     debugInfo = {
         jsmem: "",
@@ -138,13 +139,13 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.cameraOrtho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        this.errorElement = document.querySelector("#errormsg");
-
         this.setSize(this.width, this.height);
     }
 
-    init() {
+    init(opts: { debugEl?: HTMLElement } = {}) {
         // document.body.appendChild(this.stats.dom);
+
+        this.debugEl = opts.debugEl;
 
         this.econtrols.onChange = (why) => {
             this.debugInfo.camera = printVec(this.camera.position);
@@ -327,9 +328,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.debugInfo.offset = printVec(this.customOffset);
 
-        const debugEl = document.querySelector("#debug");
-        if (debugEl) {
-            debugEl.innerHTML = Object.entries(this.debugInfo)
+        if (this.debugEl) {
+            this.debugEl.innerHTML = Object.entries(this.debugInfo)
                 .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
                 .join("<br>");
         }
@@ -488,8 +488,6 @@ export class Viewer extends EventDispatcher<TEvents> {
     };
 
     setSize = throttle(200, (width: number, height: number) => {
-        this.setError("resizing", true);
-
         this.width = width;
         this.height = height;
         const pr = 1.0; //window.devicePixelRatio;
@@ -505,30 +503,10 @@ export class Viewer extends EventDispatcher<TEvents> {
         // this.renderer.domElement.style.width = `${this.width}px`;
 
         this.labelRenderer.setSize(this.width, this.height);
-        this.setError("resizing", false);
         this.requestRender("resize");
     });
 
-    private setError(k: keyof typeof this.errors, set_to: boolean) {
-        if (!this.errorElement) {
-            return;
-        }
-        if (!this.initialized) {
-            return;
-        }
-
-        this.errors[k] = set_to;
-
-        this.errorElement.style.display = "block";
-        if (this.errors.resizing) {
-            this.errorElement.textContent = "resizing...";
-        } else {
-            this.errorElement.style.display = "none";
-        }
-    }
-
     addPointCloud(pc: PointCloud, center = false) {
-        // this.setError("noPointClouds", false);
         this.pointClouds.push(pc);
 
         const cube = createTightBounds(pc);
