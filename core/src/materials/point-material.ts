@@ -26,7 +26,7 @@ class MaterialPool {
 
     returnMaterial(mat: Material | Material[]) {
         if (mat === DEFAULT_POINT_MATERIAL) {
-            console.warn("NO-OP returned default point material");
+            // console.warn("NO-OP returned default point material");
         } else if (mat instanceof PointMaterial) {
             this.stash.push(mat);
         } else {

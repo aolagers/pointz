@@ -1,6 +1,6 @@
 root = true
 
-[*.{ts,js,cjs,html,yml,css}]
+[*.{ts,tsx,js,cjs,html,yml,css}]
 indent_size = 4
 max_line_length = 120
 

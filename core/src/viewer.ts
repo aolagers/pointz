@@ -29,8 +29,6 @@ import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } fr
 import { PriorityQueue } from "./priority-queue";
 import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
 
-const debugEl = document.querySelector("#debug")!;
-
 const raycaster = new Raycaster();
 raycaster.params.Points.threshold = 0.5;
 
@@ -329,9 +327,12 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.debugInfo.offset = printVec(this.customOffset);
 
-        debugEl.innerHTML = Object.entries(this.debugInfo)
-            .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
-            .join("<br>");
+        const debugEl = document.querySelector("#debug");
+        if (debugEl) {
+            debugEl.innerHTML = Object.entries(this.debugInfo)
+                .map(([k, v]) => `${k}: ${v.length ? v : "-"}`)
+                .join("<br>");
+        }
 
         this.renderer.info.reset();
         const frameEnd = performance.now();
