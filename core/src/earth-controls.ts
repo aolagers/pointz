@@ -228,7 +228,13 @@ export class EarthControls {
 
     prevAngle = new Vector2(0, 0);
 
+    prevFrame = 0;
+
     pointerMove(e: PointerEvent) {
+        if (this.prevFrame === this.viewer.frame) {
+            return;
+        }
+
         const rect = this.domElement.getBoundingClientRect();
         if (e.isPrimary) {
             this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
@@ -335,6 +341,7 @@ export class EarthControls {
 
         this.saveCamera();
         this.changed("pointerMove");
+        this.prevFrame = this.viewer.frame;
     }
 
     update(_delta: number) {}
