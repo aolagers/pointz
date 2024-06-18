@@ -9,14 +9,22 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "npm run build --workspace core && npm run dev --workspace viewer",
-    "build": "npm run build --workspaces"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "dev-old": "npm run build --workspace core && npm run dev --workspace viewer",
+    "build-old": "npm run build --workspaces"
   },
   "prettier": {
     "trailingComma": "es5"
   },
+  "packageManager": "npm@10.7.0",
   "workspaces": [
     "core",
     "viewer"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^3.3.2",
+    "turbo": "^2.0.4"
+  }
 }

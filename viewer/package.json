@@ -11,17 +11,17 @@
 		"check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@pointz/core": "1.0.0",
-		"autoprefixer": "^10.4.19",
-		"postcss": "^8.4.38",
-		"solid-js": "^1.8.17",
-		"svelte": "^5.0.0-next.155",
-		"tailwindcss": "^3.4.4",
-		"vite-plugin-solid": "^2.10.2"
+		"@pointz/core": "*",
+		"solid-js": "^1.8.17"
 	},
 	"devDependencies": {
+		"autoprefixer": "^10.4.19",
+		"postcss": "^8.4.38",
+		"prettier-plugin-tailwindcss": "^0.6.4",
+		"tailwindcss": "^3.4.4",
 		"typescript": "^5.4.4",
 		"vite": "^5.2.8",
+		"vite-plugin-solid": "^2.10.2",
 		"vite-plugin-static-copy": "^1.0.5"
 	}
 }

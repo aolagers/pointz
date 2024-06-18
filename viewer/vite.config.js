@@ -16,7 +16,7 @@ const wasmInterceptor = {
             if (req.url.endsWith("/laz-perf.wasm")) {
                 console.log(">>> WASM", req.url);
                 res.setHeader("Content-Type", "application/wasm");
-                createReadStream("./dist/laz-perf.wasm").pipe(res);
+                createReadStream("./public/laz-perf.wasm").pipe(res);
             } else {
                 next();
             }

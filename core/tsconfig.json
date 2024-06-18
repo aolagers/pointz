@@ -1,24 +1,38 @@
 {
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "ES2022",
+    "compilerOptions": {
+        "composite": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "target": "ES2022",
 
-    "outDir": "dist",
+        "outDir": "dist",
 
-    "strict": true,
-    // "noUncheckedIndexedAccess": true,
+        "strict": true,
+        // "noUncheckedIndexedAccess": true,
 
-    "moduleResolution": "bundler",
-    // "noEmit": true,
-    // "allowImportingTsExtensions": true,
-    "module": "ESNext",
+        "moduleResolution": "bundler",
+        // "noEmit": true,
+        // "allowImportingTsExtensions": true,
+        "module": "ESNext",
 
-    "declaration": true,
+        "allowJs": true,
 
-    "isolatedModules": true,
+        "sourceMap": true,
 
-    "types": ["vite/client", "vite-plugin-glsl/ext", "vitest/importMeta"]
-  },
-  "include": ["src"]
+        "declaration": true,
+        "declarationMap": true,
+
+        "isolatedModules": true,
+
+        // "inlineSourceMap": true,
+        // "inlineSources": true,
+
+        "useDefineForClassFields": true,
+        "noEmit": true,
+
+        "types": ["vite/client", "vite-plugin-glsl/ext", "vitest/importMeta"],
+
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }

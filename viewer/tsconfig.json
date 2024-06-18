@@ -12,9 +12,11 @@
     "allowImportingTsExtensions": true,
     "module": "ESNext",
 
+    "allowJs": true,
+
     "isolatedModules": true,
     "jsx": "preserve",
-    "jsxImportSource": "solid-js",
+    "jsxImportSource": "solid-js"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

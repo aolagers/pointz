@@ -10,6 +10,7 @@ export default defineConfig({
             name: "core",
             formats: ["es"],
         },
+        sourcemap: true,
         minify: false,
     },
     base: "./",

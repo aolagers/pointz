@@ -9,15 +9,14 @@
 	"types": "./dist/viewer.d.ts",
 	"exports": {
 		".": {
-			"import": "./dist/core.js",
-			"types": "./dist/viewer.d.ts"
+			"types": "./dist/viewer.d.ts",
+			"default": "./dist/core.js"
 		}
 	},
 	"scripts": {
 		"build": "vite build",
-		"watch": "vite build --watch",
-		"dev": "vite",
-		"test": "vitest"
+		"dev": "vite build --watch",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"copc": "^0.0.6",
