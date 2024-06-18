@@ -344,7 +344,51 @@ export class EarthControls {
         this.prevFrame = this.viewer.frame;
     }
 
-    update(_delta: number) {}
+    keysDown = new Set<string>();
+
+    keyevent(key: string, down: boolean) {
+        if (down) {
+            this.keysDown.add(key);
+        } else {
+            this.keysDown.delete(key);
+        }
+    }
+
+    wasKeyPressedOnLastUpdate = false;
+
+    update(delta: number) {
+        if (this.keysDown.size > 0) {
+            if (!this.wasKeyPressedOnLastUpdate) {
+                // don't try to render on first frame after keypress because the deltatime might be huge
+                this.wasKeyPressedOnLastUpdate = true;
+                this.changed("wasd-movement");
+                return;
+            }
+            const fwd = this.camera.getWorldDirection(new Vector3());
+
+            const right = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+            const fwdLevel = fwd.clone().setZ(0).normalize();
+            // TODO: adjust speed somehow automatically by distance to the pointcloud (maybe by distance to smallest loaded node?)
+            const speed = 10.0;
+
+            if (this.keysDown.has("w")) {
+                this.camera.position.add(fwdLevel.multiplyScalar(delta * speed));
+            }
+            if (this.keysDown.has("s")) {
+                this.camera.position.add(fwdLevel.multiplyScalar(-delta * speed));
+            }
+            if (this.keysDown.has("d")) {
+                this.camera.position.add(right.multiplyScalar(delta * speed));
+            }
+            if (this.keysDown.has("a")) {
+                this.camera.position.add(right.multiplyScalar(-delta * speed));
+            }
+
+            this.changed("wasd-movement");
+        } else {
+            this.wasKeyPressedOnLastUpdate = false;
+        }
+    }
 
     targetAll() {
         const tbox = new Box3();
@@ -411,6 +455,10 @@ export class EarthControls {
 
     showPointCloud(pc: PointCloud) {
         this.showBox(pc.tightBounds);
+    }
+
+    move(arg0: number[]) {
+        throw new Error("Method not implemented.");
     }
 }
 

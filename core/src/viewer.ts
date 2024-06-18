@@ -172,6 +172,13 @@ export class Viewer extends EventDispatcher<TEvents> {
             }
         });
 
+        document.addEventListener("keyup", (ev) => {
+            if (["w", "s", "a", "d"].includes(ev.key)) {
+                this.econtrols.keyevent(ev.key, false);
+                this.requestRender("keyup");
+            }
+        });
+
         document.addEventListener("keydown", (ev) => {
             if (ev.ctrlKey || ev.metaKey || ev.altKey) {
                 console.log("skip key", ev.key);
@@ -192,6 +199,10 @@ export class Viewer extends EventDispatcher<TEvents> {
                 } else if (ev.key === "-") {
                     ptmat.updatePointSize(-1);
                 }
+            }
+
+            if (["w", "s", "a", "d"].includes(ev.key)) {
+                this.econtrols.keyevent(ev.key, true);
             }
 
             if (ev.key === "r") {
