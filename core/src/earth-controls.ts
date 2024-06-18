@@ -11,11 +11,11 @@ import {
     Vector3,
     Vector3Tuple,
 } from "three";
-import { Viewer } from "./viewer";
+import { Measure } from "./measure";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
 import { LOCALSTORAGE_KEYS } from "./settings";
-import { Measure } from "./measure";
+import { Viewer } from "./viewer";
 
 type CameraPosition = {
     position: Vector3Tuple;

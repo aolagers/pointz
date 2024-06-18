@@ -1,7 +1,7 @@
 import { Viewer } from "@pointz/core";
 import { Show, createSignal, onMount } from "solid-js";
-import { Loader } from "./Loader";
 import { Help } from "./Help";
+import { Loader } from "./Loader";
 
 type Notice = {
     kind: "error" | "warn" | "info";
@@ -97,22 +97,22 @@ export function App() {
         <>
             <div
                 ref={debugEl}
-                class={"nice z-20 fixed bottom-2 right-2 text-right " + (debugMode() ? "block" : "hidden")}
+                class={"nice fixed bottom-2 right-2 z-20 text-right " + (debugMode() ? "block" : "hidden")}
             ></div>
 
             <Show when={loading()}>
-                <div class="z-20 fixed top-2 left-2">
+                <div class="fixed left-2 top-2 z-20">
                     <Loader />
                 </div>
             </Show>
 
-            <Help className="z-20 fixed bottom-2 left-2 " />
+            <Help className="fixed bottom-2 left-2 z-20" />
 
-            <div class="fixed left-1/2 transform -translate-x-1/2 mt-2 z-20 flex flex-col gap-1">
+            <div class="fixed left-1/2 z-20 mt-2 flex -translate-x-1/2 transform flex-col gap-1">
                 {notices().map((notice, idx) => (
                     <div
                         class={
-                            "cursor-pointer mt-2 w-fit px-2 py-1 rounded-sm shadow-md backdrop-blur-xs text-sm outline outline-black/20"
+                            "mt-2 w-fit cursor-pointer rounded-sm px-2 py-1 text-sm shadow-md outline outline-black/20 backdrop-blur-xs"
                         }
                         classList={{
                             "bg-red-500/70": notice.kind === "error",
@@ -128,7 +128,7 @@ export function App() {
 
             <canvas id="viewer"></canvas>
 
-            <div class="z-20 fixed top-2 right-2 flex gap-1">
+            <div class="fixed right-2 top-2 z-20 flex gap-1">
                 <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
                     measure
                 </button>

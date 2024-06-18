@@ -1,6 +1,6 @@
 import { Box3, BoxGeometry, Camera, Frustum, Matrix4, Mesh, MeshBasicMaterial, Vector2, Vector3 } from "three";
-import { PointCloud } from "./pointcloud";
 import { OctreePath } from "./octree";
+import { PointCloud } from "./pointcloud";
 
 const tightBboxMaterial = new MeshBasicMaterial({ color: "lightgreen", wireframe: true });
 
@@ -86,10 +86,13 @@ export function throttle<F extends (...args: any[]) => void>(interval_ms: number
         } else {
             // run after the interval time has passed since last run
             clearTimeout(handle);
-            handle = setTimeout(() => {
-                lastRun = performance.now();
-                fn(...args);
-            }, interval_ms - (performance.now() - lastRun));
+            handle = setTimeout(
+                () => {
+                    lastRun = performance.now();
+                    fn(...args);
+                },
+                interval_ms - (performance.now() - lastRun)
+            );
         }
     };
 }

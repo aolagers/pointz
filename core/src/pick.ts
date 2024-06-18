@@ -10,10 +10,10 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
-import { Viewer } from "./viewer";
+import { pickMaterialPool } from "./materials/point-material";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
-import { pickMaterialPool } from "./materials/point-material";
+import { Viewer } from "./viewer";
 
 const raycaster = new Raycaster();
 

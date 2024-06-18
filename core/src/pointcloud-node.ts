@@ -1,3 +1,4 @@
+import { LRUCache } from "lru-cache";
 import {
     Box3,
     BufferGeometry,
@@ -13,15 +14,14 @@ import {
     Uint8BufferAttribute,
     Vector3,
 } from "three";
-import { LRUCache } from "lru-cache";
+import { CopcNodeInfo, WorkerPoints } from "./copc-loader";
+import workerUrl from "./copc-loader?worker&url";
 import { DEFAULT_POINT_MATERIAL, PointMaterial, pointMaterialPool } from "./materials/point-material";
-import { boxToMesh } from "./utils";
 import { OctreePath } from "./octree";
 import { PointCloud } from "./pointcloud";
+import { boxToMesh } from "./utils";
 import { Viewer } from "./viewer";
-import { CopcNodeInfo, WorkerPoints } from "./copc-loader";
 import { WorkerPool } from "./worker-pool";
-import workerUrl from "./copc-loader?worker&url";
 
 export const pointsWorkerPool = new WorkerPool<
     {
@@ -130,11 +130,11 @@ export class PointCloudNode {
         const dist = this.bounds.distanceToPoint(camera.position);
 
         const center = this.bounds.getCenter(new Vector3());
-        const centerDist = cameraRay.distanceToPoint(center);
 
-        const angle = Math.atan(this.spacing / (dist + centerDist));
+        // const centerDist = cameraRay.distanceToPoint(center);
+        // return Math.atan(this.spacing / (dist + centerDist));
 
-        return angle;
+        return Math.atan(this.spacing / dist);
     }
 
     setState(set_to: NodeState): NodeState {

@@ -1,6 +1,6 @@
 export function Help(props: { className?: string }) {
     return (
-        <div class={"text-white text-xs " + props.className}>
+        <div class={"text-xs text-white " + props.className}>
             <p>
                 <span class="font-bold">1</span>: Intensity
             </p>

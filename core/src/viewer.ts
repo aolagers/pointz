@@ -10,7 +10,6 @@ import {
     PerspectiveCamera,
     PlaneGeometry,
     RGBAFormat,
-    Raycaster,
     Scene,
     UnsignedIntType,
     Vector2,
@@ -18,19 +17,15 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from "three";
-import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
-
+import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import { EarthControls } from "./earth-controls";
+import { EDLMaterial } from "./materials/edl-material";
+import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
-import { EDLMaterial } from "./materials/edl-material";
-import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
-import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
 import { PriorityQueue } from "./priority-queue";
-import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-material";
-
-const raycaster = new Raycaster();
-raycaster.params.Points.threshold = 0.5;
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
+import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
 
 const clock = new Clock();
 

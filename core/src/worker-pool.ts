@@ -1,5 +1,5 @@
-import { PriorityQueue } from "./priority-queue";
 import { EventDispatcher } from "three";
+import { PriorityQueue } from "./priority-queue";
 
 type Wrapper = {
     worker: Worker;

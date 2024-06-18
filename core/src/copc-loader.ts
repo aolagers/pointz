@@ -1,5 +1,5 @@
-import { Copc } from "copc";
 import type { Copc as CopcType } from "copc";
+import { Copc } from "copc";
 
 export type LazSource = string | File;
 
