@@ -1,38 +1,37 @@
 {
-	"name": "@pointz/core",
-	"version": "1.0.0",
-	"author": "Alex Lagerstedt <aolagers@iki.fi>",
-	"license": "AGPL-3.0-or-later",
-	"type": "module",
-	"private": true,
-	"module": "./dist/core.js",
-	"types": "./dist/viewer.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/viewer.d.ts",
-			"default": "./dist/core.js"
-		}
-	},
-	"scripts": {
-		"build": "vite build",
-		"dev": "vite build --watch",
-		"test": "vitest run"
-	},
-	"dependencies": {
-		"copc": "^0.0.6",
-		"lru-cache": "^10.2.0",
-		"three": "^0.163.0"
-	},
-	"devDependencies": {
-		"@types/three": "^0.163.0",
-		"typescript": "^5.4.4",
-		"vite": "^5.2.8",
-		"vite-plugin-dts": "^3.8.1",
-		"vite-plugin-glsl": "^1.3.0",
-		"vitest": "^1.4.0"
-	},
-	"optionalDependencies": {
-		"@rollup/rollup-win32-x64-msvc": "^4.14.1",
-		"@rollup/rollup-linux-x64-gnu": "^4.14.1"
-	}
+  "name": "@pointz/core",
+  "version": "1.0.0",
+  "author": "Alex Lagerstedt <aolagers@iki.fi>",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "private": true,
+  "module": "./dist/core.js",
+  "types": "./dist/viewer.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/viewer.d.ts",
+      "default": "./dist/core.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@types/three": "^0.163.0",
+    "copc": "^0.0.6",
+    "lru-cache": "^10.2.0",
+    "three": "^0.163.0",
+    "typescript": "^5.4.4",
+    "vite": "^5.2.8",
+    "vite-plugin-dts": "^3.8.1",
+    "vite-plugin-glsl": "^1.3.0",
+    "vitest": "^1.4.0"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.14.1",
+    "@rollup/rollup-linux-x64-gnu": "^4.14.1"
+  }
 }

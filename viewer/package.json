@@ -1,27 +1,26 @@
 {
-	"name": "@pointz/viewer",
-	"version": "1.0.0",
-	"author": "Alex Lagerstedt <aolagers@iki.fi>",
-	"license": "AGPL-3.0-or-later",
-	"type": "module",
-	"private": true,
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"check": "tsc --noEmit"
-	},
-	"dependencies": {
-		"@pointz/core": "*",
-		"solid-js": "^1.8.17"
-	},
-	"devDependencies": {
-		"autoprefixer": "^10.4.19",
-		"postcss": "^8.4.38",
-		"prettier-plugin-tailwindcss": "^0.6.4",
-		"tailwindcss": "^3.4.4",
-		"typescript": "^5.4.4",
-		"vite": "^5.2.8",
-		"vite-plugin-solid": "^2.10.2",
-		"vite-plugin-static-copy": "^1.0.5"
-	}
+  "name": "@pointz/viewer",
+  "version": "1.0.0",
+  "author": "Alex Lagerstedt <aolagers@iki.fi>",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pointz/core": "*",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "prettier-plugin-tailwindcss": "^0.6.4",
+    "solid-js": "^1.8.17",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.4.4",
+    "vite": "^5.2.8",
+    "vite-plugin-solid": "^2.10.2",
+    "vite-plugin-static-copy": "^1.0.5"
+  },
+  "devDependencies": {}
 }
