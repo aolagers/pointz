@@ -82,7 +82,7 @@ export class PointCloud {
 
         for (const n of nodePaths) {
             const bbox = nodeToBox(this.octreeBounds, n, this.viewer.customOffset);
-            const node = new PointCloudNode(this, n, bbox, this.rootSpacing);
+            const node = new PointCloudNode(this, n, bbox, this.rootSpacing / Math.pow(2, n[0]));
             this.tree.add(node);
         }
     }
