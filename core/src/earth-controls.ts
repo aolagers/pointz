@@ -48,6 +48,8 @@ export class EarthControls {
         mouse: new Vector2(),
     };
 
+    speed = 10.0;
+
     down = {
         primary: false,
         secondary: false,
@@ -145,6 +147,10 @@ export class EarthControls {
             const dst = pt.position.clone().sub(this.camera.position).length();
             const scl = 0.1 + dst / 40;
             this.pivot.scale.set(scl, scl, scl);
+
+            const l = pt.position.distanceTo(this.camera.position);
+            this.speed = l / 10;
+
             // console.log("!!HIT!!", pt, scl, pt.position);
         } else {
             // console.log("miss");
@@ -368,20 +374,18 @@ export class EarthControls {
 
             const right = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
             const fwdLevel = fwd.clone().setZ(0).normalize();
-            // TODO: adjust speed somehow automatically by distance to the pointcloud (maybe by distance to smallest loaded node?)
-            const speed = 10.0;
 
             if (this.keysDown.has("w")) {
-                this.camera.position.add(fwdLevel.multiplyScalar(delta * speed));
+                this.camera.position.add(fwdLevel.multiplyScalar(delta * this.speed));
             }
             if (this.keysDown.has("s")) {
-                this.camera.position.add(fwdLevel.multiplyScalar(-delta * speed));
+                this.camera.position.add(fwdLevel.multiplyScalar(-delta * this.speed));
             }
             if (this.keysDown.has("d")) {
-                this.camera.position.add(right.multiplyScalar(delta * speed));
+                this.camera.position.add(right.multiplyScalar(delta * this.speed));
             }
             if (this.keysDown.has("a")) {
-                this.camera.position.add(right.multiplyScalar(-delta * speed));
+                this.camera.position.add(right.multiplyScalar(-delta * this.speed));
             }
 
             this.changed("wasd-movement");

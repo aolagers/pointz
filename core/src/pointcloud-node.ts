@@ -9,7 +9,6 @@ import {
     Mesh,
     MeshBasicMaterial,
     Points,
-    Ray,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
     Vector3,
@@ -126,15 +125,14 @@ export class PointCloudNode {
     estimateNodeError(camera: Camera) {
         // IDEA: use bounding sphere instead of box?
 
-        const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
+        // const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
         const dist = this.bounds.distanceToPoint(camera.position);
 
-        const center = this.bounds.getCenter(new Vector3());
-
+        // const center = this.bounds.getCenter(new Vector3());
         // const centerDist = cameraRay.distanceToPoint(center);
-        // return Math.atan(this.spacing / (dist + centerDist));
 
-        return Math.atan(this.spacing / dist);
+        // return this.spacing / (dist + centerDist);
+        return this.spacing / dist;
     }
 
     setState(set_to: NodeState): NodeState {
