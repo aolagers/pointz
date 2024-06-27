@@ -7,7 +7,7 @@ export class Queue<T> {
         return this.back - this.front;
     }
 
-    enqueue(item: any) {
+    enqueue(item: T) {
         this.queue[this.back++] = item;
     }
 
@@ -27,11 +27,13 @@ export class Queue<T> {
     }
 
     clear() {
-        if (this.back > 0) {
-            this.queue = [];
-            this.front = 0;
-            this.back = 0;
+        if (this.back > 16) {
+            console.error("clearing queue", this.size(), this.front, this.back);
         }
+
+        this.queue = [];
+        this.front = 0;
+        this.back = 0;
     }
 }
 

@@ -369,12 +369,6 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
     }
 
-    *getVisibleNodes() {
-        for (const n of PointCloudNode.visibleNodes) {
-            yield n;
-        }
-    }
-
     loadMoreNodesThrottled = throttle(300, () => {
         this.loadMoreNodes();
     });
@@ -390,20 +384,23 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         // check node visibility
         for (const pc of this.pointClouds) {
-            for (const node of pc.nodes()) {
+            if (!frustum.intersectsBox(pc.tree.root.node.bounds)) {
+                // console.log("skip showing of ", pc.name, "outside frustum", pc.octreeBounds, pc.tightBounds);
+                continue;
+            }
+
+            for (const node of pc.walkNodes((n) => n.estimateNodeError(this.camera) > ERROR_LIMIT)) {
+                let msg = `node: ${node.nodeName} error: ${node.estimateNodeError(this.camera).toFixed(3)} s: ${node.state}`;
                 if (node.depth === 0 || frustum.intersectsBox(node.bounds)) {
                     pq.push(node);
                 } else {
-                    nonVisibleNodes.push(node);
+                    msg += " (cull)";
+                    if (node.state === "visible") {
+                        node.cache();
+                    }
                 }
-            }
-        }
 
-        // unload culled nodes
-        for (const node of nonVisibleNodes) {
-            if (node.state === "visible") {
-                // node.unload(this);
-                node.cache();
+                this.debugMessage(msg);
             }
         }
 

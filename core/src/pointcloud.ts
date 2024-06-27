@@ -54,7 +54,7 @@ export class PointCloud {
         this.pointCount = pointCount;
 
         this.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-        this.tree = new Octree();
+        this.tree = new Octree(hierarchy);
     }
 
     createNode(n: OctreePath) {
@@ -87,8 +87,8 @@ export class PointCloud {
         }
     }
 
-    *nodes() {
-        yield* this.tree.all();
+    *walkNodes(stillGood: (node: PointCloudNode) => boolean) {
+        yield* this.tree.enumerate(stillGood);
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
@@ -109,25 +109,30 @@ export class PointCloud {
 
         const rootHierarchy = await PointCloud.getHierachy(source, details.info.rootHierarchyPage);
 
+        viewer.debugMessage("loaded hierarchy");
+
+        // console.log("NODES", rootHierarchy);
+
         // TODO: do not block here for the full tree
         // TODO: load full tree only when needed
-        const pageQueue: [string, { pageOffset: number; pageLength: number } | undefined][] = [];
-        pageQueue.push(...Object.entries(rootHierarchy.pages));
+        // const pageQueue: Array<[string, { pageOffset: number; pageLength: number } | undefined]> = [];
+        // pageQueue.push(["0-0-0-0", rootHierarchy.pages["0-0-0-0"]]);
+        // // pageQueue.push(...Object.entries(rootHierarchy.pages));
 
-        while (pageQueue.length > 0) {
-            const pageInfo = pageQueue.pop()!;
+        // while (pageQueue.length > 0) {
+        //     const pageInfo = pageQueue.pop()!;
 
-            if (pageInfo[1]) {
-                console.log("LOAD EXTRA PAGE", pageInfo[0]);
-                const h = await PointCloud.getHierachy(source, pageInfo[1]);
+        //     if (pageInfo[1]) {
+        //         console.log("LOAD EXTRA PAGE", pageInfo[0]);
+        //         const h = await PointCloud.getHierachy(source, pageInfo[1]);
 
-                for (const nodeID of Object.keys(h.nodes)) {
-                    rootHierarchy.nodes[nodeID] = h.nodes[nodeID];
-                }
+        //         for (const nodeID of Object.keys(h.nodes)) {
+        //             rootHierarchy.nodes[nodeID] = h.nodes[nodeID];
+        //         }
 
-                pageQueue.push(...Object.entries(h.pages));
-            }
-        }
+        //         // pageQueue.push(...Object.entries(h.pages));
+        //     }
+        // }
 
         const pcloud = new PointCloud(
             viewer,

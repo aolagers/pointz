@@ -11,8 +11,10 @@ import {
     WebGLRenderer,
 } from "three";
 import { pickMaterialPool } from "./materials/point-material";
+import { OctreeNode } from "./octree";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
+import { Queue } from "./queue";
 import { Viewer } from "./viewer";
 
 const raycaster = new Raycaster();
@@ -29,6 +31,8 @@ export function getMouseRay(mouse: Vector2, camera: Camera) {
     raycaster.setFromCamera(mouse, camera);
     return raycaster.ray;
 }
+
+const q = new Queue<OctreeNode>();
 
 export function getMouseIntersection(
     pointer: Vector2,
@@ -50,23 +54,38 @@ export function getMouseIntersection(
     );
 
     const ray = getMouseRay(pointer, camera);
-    const hitNodes = [];
+    const hitNodes: PointCloudNode[] = [];
+
     let hid = 1;
 
-    // TODO: proper octree traversal
-    for (const node of viewer.getVisibleNodes()) {
-        const isHit = ray.intersectsBox(node.bounds);
+    for (const pc of viewer.pointClouds) {
+        q.clear();
 
-        if (isHit) {
-            if (node.data) {
-                hitNodes.push(node);
-                node.data.pickIndex = hid;
-                hid++;
+        q.enqueue(pc.tree.root);
 
-                node.data.pco.userData.pointMaterial = node.data.pco.material;
-                const pmat = pickMaterialPool.getMaterial();
-                pmat.updateNodeIndex(node.data.pickIndex);
-                node.data.pco.material = pmat;
+        while (q.size() > 0) {
+            const it = q.dequeue();
+            if (!it) {
+                throw new Error("it is null");
+            }
+
+            const hit = ray.intersectsBox(it.node.bounds);
+
+            if (hit) {
+                if (it.node.data) {
+                    hitNodes.push(it.node);
+                    it.node.data.pickIndex = hid;
+                    hid++;
+
+                    it.node.data.pco.userData.pointMaterial = it.node.data.pco.material;
+                    const pmat = pickMaterialPool.getMaterial();
+                    pmat.updateNodeIndex(it.node.data.pickIndex);
+                    it.node.data.pco.material = pmat;
+                }
+
+                for (const c of it.children) {
+                    q.enqueue(pc.tree.items[c]);
+                }
             }
         }
     }

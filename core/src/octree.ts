@@ -1,76 +1,99 @@
+import { Hierarchy } from "./copc-loader";
 import { PointCloudNode } from "./pointcloud-node";
+import { Queue } from "./queue";
 
 export type OctreePath = [number, number, number, number];
 
-function parentPath(id: OctreePath) {
-    return [id[0] - 1, Math.floor(id[1] / 2), Math.floor(id[2] / 2), Math.floor(id[3] / 2)] as OctreePath;
+function parentPath(id: OctreePath, steps = 1) {
+    if (id[0] - steps < 0) {
+        throw new Error("Cannot go up that many steps");
+    }
+    return [
+        id[0] - steps,
+        Math.floor(id[1] / Math.pow(2, steps)),
+        Math.floor(id[2] / Math.pow(2, steps)),
+        Math.floor(id[3] / Math.pow(2, steps)),
+    ] as OctreePath;
 }
 
 export class Octree {
-    root?: TreeNode;
+    items: Record<string, OctreeNode> = {};
 
-    isLoaded = false;
+    hierarchy: Hierarchy;
 
-    constructor() {}
+    constructor(hierarchy: Hierarchy) {
+        this.hierarchy = hierarchy;
+    }
 
-    *all() {
-        if (this.root) {
-            yield* this.root.all();
+    get root() {
+        return this.items["0-0-0-0"];
+    }
+
+    queue = new Queue<OctreeNode>();
+
+    *enumerate(stillGood: (node: PointCloudNode) => boolean) {
+        this.queue.clear();
+        this.queue.enqueue(this.root);
+
+        let it: OctreeNode | null = null;
+
+        while ((it = this.queue.dequeue())) {
+            if (stillGood(it.node)) {
+                yield it.node;
+
+                for (const childID of it.children) {
+                    this.queue.enqueue(this.items[childID]);
+                }
+            }
         }
     }
 
+    initializeRoot(node: PointCloudNode) {
+        if (Object.keys(this.items).length > 0) {
+            throw new Error("Root node already exists");
+        }
+        this.items["0-0-0-0"] = new OctreeNode(node);
+    }
+
     add(node: PointCloudNode) {
-        if (this.root) {
-            this.root.addChild(node);
-        } else if (node.nodeName.every((x) => x === 0)) {
-            this.root = new TreeNode(node);
+        const nname = node.nodeName.join("-");
+        if (this.items[nname]) {
+            throw new Error("Node already exists");
+        }
+
+        const parentID = parentPath(node.nodeName);
+
+        const parent = this.items[parentID.join("-")];
+        if (parent) {
+            parent.children.push(nname);
+            this.items[nname] = new OctreeNode(node);
         } else {
-            throw new Error("Root node must be added first");
+            throw new Error(`Parent node does not exist for ${node.nodeName}`);
         }
     }
 }
 
-class TreeNode {
+export class OctreeNode {
     node: PointCloudNode;
+    hasChild = 0;
 
-    children: Record<string, TreeNode> = {};
-
-    get depth() {
-        return this.node.depth;
-    }
+    children: string[] = [];
 
     constructor(node: PointCloudNode) {
         this.node = node;
     }
+}
 
-    addChild(node: PointCloudNode) {
-        if (this.depth === node.depth - 1) {
-            console.info("add", node.nodeName, node);
-            this.children[node.nodeName.join("-")] = new TreeNode(node);
-        } else {
-            let nodeID = node.nodeName;
+if (import.meta.vitest) {
+    const { it, expect } = import.meta.vitest;
+    it("makes sense", () => {
+        const p0 = [0, 0, 0, 0] as OctreePath;
+        const p1 = [1, 1, 1, 1] as OctreePath;
+        const p2 = [2, 2, 2, 2] as OctreePath;
+        const p3 = [3, 4, 4, 4] as OctreePath;
 
-            // TODO: more efficient child lookup math
-            while (nodeID[0] > this.depth + 1) {
-                nodeID = parentPath(nodeID);
-            }
-
-            const parent = this.children[nodeID.join("-")];
-            if (parent) {
-                parent.addChild(node);
-                console.warn("add", node.nodeName, "indie", parent.node.nodeName);
-            } else {
-                console.warn("drop", node.nodeName, parentPath(node.nodeName), node);
-            }
-        }
-    }
-
-    // TODO: should be BFS
-    // TODO: should have callback to limit depth
-    *all(): Generator<PointCloudNode> {
-        yield this.node;
-        for (const child of Object.values(this.children)) {
-            yield* child.all();
-        }
-    }
+        expect(parentPath(p1)).toEqual(p0);
+        expect(parentPath(p2, 2)).toEqual(p0);
+        expect(parentPath(p3, 2)).toEqual(p1);
+    });
 }
