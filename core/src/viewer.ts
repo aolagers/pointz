@@ -31,6 +31,7 @@ const clock = new Clock();
 
 type TEvents = {
     loading: { nodes: number };
+    message: { text: string };
     notice: { kind: "error" | "warn" | "info"; message: string };
 };
 
@@ -245,6 +246,10 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.renderer.domElement.style.display = "block";
     }
 
+    debugMessage(text: string) {
+        this.dispatchEvent({ type: "message", text });
+    }
+
     addPointcloudLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
         const label = this.addLabel(text1, text2, pos);
         label.element.addEventListener("click", () => {
@@ -365,12 +370,8 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     *getVisibleNodes() {
-        for (const pc of this.pointClouds) {
-            for (const node of pc.nodes()) {
-                if (node.state === "visible") {
-                    yield node;
-                }
-            }
+        for (const n of PointCloudNode.visibleNodes) {
+            yield n;
         }
     }
 
@@ -385,7 +386,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
-        const nonVisibleNodes: PointCloudNode[] = [];
+        const ERROR_LIMIT = 0.002;
 
         // check node visibility
         for (const pc of this.pointClouds) {
@@ -407,8 +408,6 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
 
         let visiblePoints = 0;
-
-        const ERROR_LIMIT = 0.001;
 
         while (!pq.isEmpty()) {
             const node = pq.popOrThrow();
@@ -524,9 +523,10 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         void pc.initialize();
 
+        // TODO: show some node stats in the label
         this.addPointcloudLabel(
             `${pc.name}`,
-            `${pc.nodes.length} / ${(pc.pointCount / 1_000_000).toFixed(2)}M`,
+            `${(pc.pointCount / 1_000_000).toFixed(2)}M`,
             pc.tightBounds.max.clone().sub(this.customOffset),
             pc
         );
@@ -569,6 +569,8 @@ export class Viewer extends EventDispatcher<TEvents> {
             }
 
             this.addPointCloud(pc, center);
+
+            this.debugMessage(`Loaded laz file '${pc.name}' (${(pc.pointCount / 1_000_000).toFixed(2)}M)`);
         } catch (e) {
             console.error("ERROR!!!", e);
             this.dispatchEvent({

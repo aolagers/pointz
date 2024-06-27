@@ -13,6 +13,7 @@ export function App() {
     const [notices, setNotices] = createSignal<Array<Notice & { t: Number }>>([]);
     const [loading, setLoading] = createSignal(false);
     const [debugMode, setDebugMode] = createSignal(false);
+    const [messages, setMessages] = createSignal<string[]>([]);
 
     // addNotice({ kind: "error", message: "what" });
     // addNotice({ kind: "warn", message: "what the" });
@@ -72,6 +73,10 @@ export function App() {
             setLoading(ev.nodes > 0);
         });
 
+        viewer.addEventListener("message", (ev) => {
+            setMessages((prev) => [ev.text, ...prev]);
+        });
+
         viewer.init({ debugEl: debugEl });
 
         const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
@@ -95,11 +100,6 @@ export function App() {
 
     return (
         <>
-            <div
-                ref={debugEl}
-                class={"nice fixed bottom-2 right-2 z-20 text-right " + (debugMode() ? "block" : "hidden")}
-            ></div>
-
             <Show when={loading()}>
                 <div class="fixed left-2 top-2 z-20">
                     <Loader />
@@ -128,20 +128,35 @@ export function App() {
 
             <canvas id="viewer"></canvas>
 
-            <div class="fixed right-2 top-2 z-20 flex gap-1">
-                <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
-                    measure
-                </button>
-                <button
-                    class="nice hover:bg-black/50"
-                    onClick={() => setDebug(!debugMode())}
-                    classList={{ "bg-red-900": debugMode() }}
-                >
-                    debug
-                </button>
-                <button class="nice hover:bg-black/50" onClick={() => theViewer()?.econtrols.targetAll()}>
-                    reset cam
-                </button>
+            <div class="fixed right-2 top-2 z-20 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
+                <div class="flex gap-1">
+                    <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
+                        measure
+                    </button>
+                    <button
+                        class="nice hover:bg-black/50"
+                        onClick={() => setDebug(!debugMode())}
+                        classList={{ "bg-red-900": debugMode() }}
+                    >
+                        debug
+                    </button>
+                    <button class="nice hover:bg-black/50" onClick={() => theViewer()?.econtrols.targetAll()}>
+                        reset cam
+                    </button>
+                </div>
+
+                {/* {messages().length > 0 && (
+                    <div
+                        class="nice flex flex-col gap-1 overflow-y-auto whitespace-pre"
+                        onClick={() => setMessages([])}
+                    >
+                        {messages().join("\n")}
+                    </div>
+                )} */}
+
+                <div class="-mt-2 flex-1"></div>
+
+                <div ref={debugEl} class={"nice z-20 text-right " + (debugMode() ? "block" : "hidden")}></div>
             </div>
         </>
     );

@@ -57,14 +57,13 @@ export class PointCloud {
         this.tree = new Octree();
     }
 
+    createNode(n: OctreePath) {
+        const bbox = nodeToBox(this.octreeBounds, n, this.viewer.customOffset);
+        const node = new PointCloudNode(this, n, bbox, this.rootSpacing / Math.pow(2, n[0]));
+        return node;
+    }
+
     initialize() {
-        const bbox = nodeToBox(this.octreeBounds, [0, 0, 0, 0], this.viewer.customOffset);
-        const rootNode = new PointCloudNode(this, [0, 0, 0, 0], bbox, this.rootSpacing);
-        this.tree.add(rootNode);
-
-        // always load the root node by default
-        rootNode.load(this.viewer);
-
         const nodePaths = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
         nodePaths.sort((a, b) => {
             for (let i = 0; i < 4; i++) {
@@ -77,13 +76,14 @@ export class PointCloud {
             return 0;
         });
 
-        // skip root node as it's already added
-        nodePaths.shift();
-
         for (const n of nodePaths) {
-            const bbox = nodeToBox(this.octreeBounds, n, this.viewer.customOffset);
-            const node = new PointCloudNode(this, n, bbox, this.rootSpacing / Math.pow(2, n[0]));
-            this.tree.add(node);
+            const node = this.createNode(n);
+            if (n[0] === 0) {
+                this.tree.initializeRoot(node);
+                node.load(this.viewer);
+            } else {
+                this.tree.add(node);
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 export const CAMERA_NEAR = 0.1;
-export const CAMERA_FAR = 100_000.0;
+export const CAMERA_FAR = 200_000.0;
 
 export const POINT_BUDGET = 3_000_000;
 
@@ -17,5 +17,4 @@ export const COLOR_MODE = {
 export const LOCALSTORAGE_KEYS = {
     CAMERA: "camera",
     COLOR_MODE: "color_mode",
-    DEBUG_MODE: "debug_mode",
 };
