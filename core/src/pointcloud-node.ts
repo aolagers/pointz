@@ -31,7 +31,7 @@ export const pointsWorkerPool = new WorkerPool<
 >(workerUrl, 4);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-(window as any).pointsWorkerPool = pointsWorkerPool;
+(globalThis as any).pointsWorkerPool = pointsWorkerPool;
 
 const nodeCache = new LRUCache<string, PointCloudNode>({
     // max: 10,

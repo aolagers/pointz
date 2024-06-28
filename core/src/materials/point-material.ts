@@ -49,7 +49,9 @@ export class PointMaterial extends ShaderMaterial {
 
     constructor(pick: boolean) {
         const colorMode: keyof typeof COLOR_MODE =
-            (localStorage.getItem(LOCALSTORAGE_KEYS.COLOR_MODE) as keyof typeof COLOR_MODE) ?? "RGB";
+            ("localStorage" in globalThis
+                ? (localStorage.getItem(LOCALSTORAGE_KEYS.COLOR_MODE) as keyof typeof COLOR_MODE)
+                : null) || "RGB";
         super({
             glslVersion: "300 es",
             defines: {
