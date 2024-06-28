@@ -159,14 +159,14 @@ export function App() {
             <canvas id="viewer" class="m-0 hidden p-0"></canvas>
 
             <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
-                <div class="pointer-events-auto flex gap-1"></div>
-
-                {pclouds().length > 0 && (
-                    <div class="pointer-events-auto">
+                {pclouds().length > 0 ? (
+                    <div class="pointer-events-auto flex flex-col items-end gap-2 bg-transparent text-xs text-white">
+                        {/* <div>Pointclouds</div> */}
                         {pclouds().map((pcloud) => (
                             <div class="nice flex items-center gap-1">
                                 <div onClick={pcloud.onCenter} class="cursor-pointer">
-                                    {pcloud.name} ({(pcloud.pointCount / 1_000_000).toFixed(2)}M)
+                                    {pcloud.name}
+                                    {/* ({(pcloud.pointCount / 1_000_000).toFixed(2)}M) */}
                                 </div>
 
                                 <button onClick={pcloud.onRemove} title="Remove">
@@ -175,6 +175,8 @@ export function App() {
                             </div>
                         ))}
                     </div>
+                ) : (
+                    <div class="text-sm text-white">No pointclouds loaded. Drag & Drop a COPC LAZ file.</div>
                 )}
 
                 {/* {messages().length > 0 && (
@@ -192,7 +194,7 @@ export function App() {
                     <div
                         onClick={() => setDebug(false)}
                         ref={debugEl}
-                        class={"text-right text-xs text-white " + (debugMode() ? "" : "hidden")}
+                        class={"nice text-right text-xs text-white " + (debugMode() ? "" : "hidden")}
                     ></div>
 
                     <div class="flex gap-2">
