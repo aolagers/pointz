@@ -79,7 +79,21 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     initialized = false;
 
-    debug_mode = false;
+    #debug_mode = false;
+
+    get debug_mode() {
+        return this.#debug_mode;
+    }
+
+    set debug_mode(to: boolean) {
+        this.pointClouds.forEach((pc) => {
+            if (pc.tightBoundsMesh) {
+                pc.tightBoundsMesh.visible = to;
+            }
+        });
+        this.#debug_mode = to;
+        this.requestRender("debug mode toggled");
+    }
 
     debugEl: HTMLElement | undefined = undefined;
 
@@ -342,9 +356,9 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.debugInfo.render =
             // `progs:${this.renderer.info.programs?.length} ` +
-            `geoms:${this.renderer.info.memory.geometries} ` +
-            `calls:${this.renderer.info.render.calls} ` +
-            `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
+            `m_geoms:${this.renderer.info.memory.geometries} ` +
+            `r_calls:${this.renderer.info.render.calls} ` +
+            `r_pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
         this.avgFrameTime1 = 0.9 * this.avgFrameTime1 + 0.1 * this.lastFrameTime;
         this.avgFrameTime2 = 0.99 * this.avgFrameTime2 + 0.01 * this.lastFrameTime;
@@ -356,7 +370,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             tot += n.pointCount;
             cnt++;
         });
-        this.debugInfo.vis = `${cnt} pts:${(tot / 1_000_000).toFixed(1)}M`;
+        this.debugInfo.vis = `${cnt} pts:${(tot / 1_000_000).toFixed(2)}M`;
 
         this.debugInfo.pool =
             ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queueLength}` + ` (${pointsWorkerPool.tasksFinished})`;
@@ -552,6 +566,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         const tightBoundsCube = createTightBounds(pc);
         tightBoundsCube.position.sub(this.customOffset);
+        tightBoundsCube.visible = this.debug_mode;
         this.scene.add(tightBoundsCube);
 
         pc.tightBoundsMesh = tightBoundsCube;

@@ -97,19 +97,17 @@ export class PointCloudNode {
 
         this.cacheID = `${this.parent.id}-${this.nodeName.join("-")}`;
 
-        const cube = boxToMesh(this.bounds, name[0] === 0 ? "red" : name[0] === 1 ? "green" : "blue");
-        if (name[0] === 0) {
-            cube.scale.set(1.02, 1.02, 1.02);
+        const colors = ["yellowgreen", "lightskyblue", "pink", "springgreen", "coral", "aquamarine"];
+        let color = "white";
+        if (name[0] >= 2) {
+            color = colors[(name[0] - 2) % colors.length];
         }
-        if (name[0] === 1) {
-            cube.scale.set(1.0, 1.0, 1.0);
-        }
-        if (name[0] === 2) {
-            cube.scale.set(0.99, 0.99, 0.99);
-        }
-        if (name[0] > 2) {
-            cube.scale.set(0.98, 0.98, 0.98);
-        }
+
+        const cube = boxToMesh(this.bounds, color);
+
+        const s = 1 - name[0] / 300;
+        cube.scale.set(s, s, s);
+
         this.debugMesh = cube;
 
         this.debugMesh.visible = false;
@@ -240,6 +238,9 @@ export class PointCloudNode {
             }
             this.data.pco.geometry.dispose();
         }
+
+        viewer.scene.remove(this.debugMesh);
+        this.debugMesh.geometry.dispose();
 
         PointCloudNode.visibleNodes.delete(this);
 

@@ -4,9 +4,16 @@ import { PointCloud } from "./pointcloud";
 
 const tightBboxMaterial = new MeshBasicMaterial({ color: "lightgreen", wireframe: true });
 
-const redBboxMaterial = new MeshBasicMaterial({ color: "red", wireframe: true });
-const greenBboxMaterial = new MeshBasicMaterial({ color: "green", wireframe: true });
-const blueBboxMaterial = new MeshBasicMaterial({ color: "blue", wireframe: true });
+const colorCache = new Map<string, MeshBasicMaterial>();
+function getWireframeMaterial(color: string) {
+    if (colorCache.has(color)) {
+        return colorCache.get(color)!;
+    } else {
+        const mat = new MeshBasicMaterial({ color: color, wireframe: true });
+        colorCache.set(color, mat);
+        return mat;
+    }
+}
 
 export function createTightBounds(pc: PointCloud) {
     const size = pc.tightBounds.getSize(new Vector3());
@@ -26,12 +33,12 @@ export function printVec(v: Vector3 | Vector2) {
     }
 }
 
-export function boxToMesh(box: Box3, color: "green" | "blue" | "red") {
+export function boxToMesh(box: Box3, color: string) {
     const size = box.getSize(new Vector3());
     const halfSize = size.clone().divideScalar(2);
     const boundGeom = new BoxGeometry(...size);
 
-    const mat = color === "green" ? greenBboxMaterial : color === "blue" ? blueBboxMaterial : redBboxMaterial;
+    const mat = getWireframeMaterial(color);
     const cube = new Mesh(boundGeom, mat);
 
     cube.position.copy(box.min).add(halfSize);
