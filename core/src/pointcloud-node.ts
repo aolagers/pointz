@@ -55,8 +55,6 @@ const nodeCache = new LRUCache<string, PointCloudNode>({
 type NodeState = "unloaded" | "loading" | "visible" | "cached" | "error";
 
 export class PointCloudNode {
-    static visibleNodes = new Set<PointCloudNode>();
-
     parent: PointCloud;
     nodeName: OctreePath;
     bounds: Box3;
@@ -137,7 +135,7 @@ export class PointCloudNode {
         const err = () => new Error(`Invalid state change ${this.state} => ${set_to}`);
         switch (this.state) {
             case "unloaded":
-                if (set_to === "loading") {
+                if (set_to === "loading" || set_to === "unloaded") {
                     return (this.state = set_to);
                 }
                 throw err();
@@ -177,8 +175,6 @@ export class PointCloudNode {
 
         this.debugMesh.visible = false;
         this.setState("visible");
-
-        PointCloudNode.visibleNodes.add(this);
     }
 
     cache() {
@@ -186,8 +182,6 @@ export class PointCloudNode {
         this.data!.pco.visible = false;
         this.setState("cached");
         nodeCache.set(this.cacheID, this);
-
-        PointCloudNode.visibleNodes.delete(this);
     }
 
     async load(viewer: Viewer, retry = 2) {
@@ -209,7 +203,11 @@ export class PointCloudNode {
             this.data.pco.matrixAutoUpdate = false;
 
             PointCloudNode.stats.loads++;
-            this.show(viewer);
+            if (this.state === "unloaded") {
+                console.warn("node was unloaded before loading finished");
+            } else {
+                this.show(viewer);
+            }
         } catch (e) {
             this.setState("error");
             if (retry > 0) {
@@ -227,7 +225,7 @@ export class PointCloudNode {
     }
 
     unload(viewer: Viewer) {
-        this.assertState("loading", "cached");
+        this.assertState("loading", "cached", "unloaded");
 
         if (this.data) {
             viewer.scene.remove(this.data.pco);

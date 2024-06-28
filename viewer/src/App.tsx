@@ -14,6 +14,9 @@ export function App() {
     const [loading, setLoading] = createSignal(false);
     const [debugMode, setDebugMode] = createSignal(false);
     const [messages, setMessages] = createSignal<string[]>([]);
+    const [pclouds, setPclouds] = createSignal<
+        Array<{ name: string; pointCount: number; onCenter: () => void; onRemove: () => void }>
+    >([]);
 
     // addNotice({ kind: "error", message: "what" });
     // addNotice({ kind: "warn", message: "what the" });
@@ -75,6 +78,10 @@ export function App() {
 
         viewer.addEventListener("message", (ev) => {
             setMessages((prev) => [ev.text, ...prev]);
+        });
+
+        viewer.addEventListener("pointclouds", (ev) => {
+            setPclouds((prev) => ev.pclouds);
         });
 
         viewer.init({ debugEl: debugEl });
@@ -144,6 +151,20 @@ export function App() {
                         reset cam
                     </button>
                 </div>
+
+                {pclouds().length > 0 && (
+                    <div class="nice">
+                        {pclouds().map((pcloud) => (
+                            <div class="flex gap-1">
+                                <div onClick={pcloud.onCenter} class="cursor-pointer">
+                                    {pcloud.name} ({(pcloud.pointCount / 1_000_000).toFixed(2)}M)
+                                </div>
+
+                                <button onClick={pcloud.onRemove}> × </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* {messages().length > 0 && (
                     <div

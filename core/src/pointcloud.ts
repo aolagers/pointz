@@ -1,4 +1,5 @@
-import { Box3, Vector3 } from "three";
+import { Box3, Mesh, Vector3 } from "three";
+import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Hierarchy, LazSource, WorkerHierarchy, WorkerInfo } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
 import { Octree, OctreePath } from "./octree";
@@ -27,6 +28,9 @@ export class PointCloud {
     hierarchy: Hierarchy;
     rootSpacing: number;
     pointCount: number;
+
+    tightBoundsMesh: Mesh | null = null;
+    label: CSS2DObject | null = null;
 
     tree: Octree;
 

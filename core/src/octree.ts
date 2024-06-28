@@ -2,6 +2,7 @@ import { Hierarchy, LazSource } from "./copc-loader";
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode } from "./pointcloud-node";
 import { Queue } from "./queue";
+import { Viewer } from "./viewer";
 
 export type OctreePath = [number, number, number, number];
 
@@ -26,6 +27,8 @@ export class Octree {
     parentsWithUnloadedPages: Map<string, string[]> = new Map();
 
     source: LazSource;
+
+    isClosing = false;
 
     createNode: (n: OctreePath) => PointCloudNode;
 
@@ -84,6 +87,10 @@ export class Octree {
                         continue;
                     }
                     PointCloud.getHierachy(this.source, pageInfo).then((h) => {
+                        if (this.isClosing) {
+                            // discard data thats finished after the tree is closed
+                            return;
+                        }
                         // console.log("got extra page", pageID, Object.keys(h.nodes).length, Object.keys(h.pages).length, h);
 
                         for (const nodeID of Object.keys(h.nodes)) {
@@ -136,6 +143,24 @@ export class Octree {
         }
         this.items["0-0-0-0"] = new OctreeNode(node);
         this.itemCount++;
+    }
+
+    unload(viewer: Viewer) {
+        this.isClosing = true;
+
+        for (const key of Object.keys(this.items)) {
+            const it = this.items[key];
+
+            if (it.node.state === "visible") {
+                it.node.cache();
+            }
+            if (it.node.state === "loading" || it.node.state === "cached") {
+                it.node.unload(viewer);
+            }
+
+            it.children.length = 0;
+            delete this.items[key];
+        }
     }
 
     add(node: PointCloudNode) {

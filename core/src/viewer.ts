@@ -33,6 +33,14 @@ type TEvents = {
     loading: { nodes: number };
     message: { text: string };
     notice: { kind: "error" | "warn" | "info"; message: string };
+    pointclouds: {
+        pclouds: Array<{
+            name: string;
+            pointCount: number;
+            onCenter: () => void;
+            onRemove: () => void;
+        }>;
+    };
 };
 
 export class Viewer extends EventDispatcher<TEvents> {
@@ -252,9 +260,11 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     addPointcloudLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
         const label = this.addLabel(text1, text2, pos);
+        // TODO: drop this listener when pc closed
         label.element.addEventListener("click", () => {
             this.econtrols.showPointCloud(pc);
         });
+        return label;
     }
 
     addLabel(text1: string, text2: string | null, pos: Vector3) {
@@ -380,9 +390,8 @@ export class Viewer extends EventDispatcher<TEvents> {
             (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
-        const ERROR_LIMIT = 0.005;
+        const ERROR_LIMIT = 0.002;
 
-        // check node visibility
         for (const pc of this.pointClouds) {
             if (!frustum.intersectsBox(pc.tree.root.node.bounds)) {
                 // console.log("skip showing of ", pc.name, "outside frustum", pc.octreeBounds, pc.tightBounds);
@@ -511,28 +520,66 @@ export class Viewer extends EventDispatcher<TEvents> {
     addPointCloud(pc: PointCloud, center = false) {
         this.pointClouds.push(pc);
 
-        const cube = createTightBounds(pc);
+        const tightBoundsCube = createTightBounds(pc);
+        tightBoundsCube.position.sub(this.customOffset);
+        this.scene.add(tightBoundsCube);
 
-        cube.position.sub(this.customOffset);
-        this.scene.add(cube);
+        pc.tightBoundsMesh = tightBoundsCube;
 
         console.log("ADD POINTCLOUD", pc);
 
         void pc.initialize();
 
         // TODO: show some node stats in the label
-        this.addPointcloudLabel(
+        const label = this.addPointcloudLabel(
             `${pc.name}`,
             `${(pc.pointCount / 1_000_000).toFixed(2)}M`,
             pc.tightBounds.max.clone().sub(this.customOffset),
             pc
         );
 
+        pc.label = label;
+
         this.loadMoreNodesThrottled();
 
         if (center) {
             this.econtrols.showPointCloud(pc);
         }
+
+        this.dispatchEvent({
+            type: "pointclouds",
+            pclouds: this.pointClouds.map((p) => ({
+                name: p.name,
+                pointCount: p.pointCount,
+                onCenter: () => this.econtrols.showPointCloud(p),
+                onRemove: () => this.removePointcloud(p),
+            })),
+        });
+    }
+
+    removePointcloud(pc: PointCloud) {
+        this.pointClouds.splice(this.pointClouds.indexOf(pc), 1);
+
+        if (pc.tightBoundsMesh) {
+            this.scene.remove(pc.tightBoundsMesh);
+        }
+        if (pc.label) {
+            this.scene.remove(pc.label);
+        }
+
+        pc.tree.unload(this);
+
+        this.loadMoreNodesThrottled();
+
+        this.dispatchEvent({
+            type: "pointclouds",
+            pclouds: this.pointClouds.map((p) => ({
+                name: p.name,
+                pointCount: p.pointCount,
+                onCenter: () => this.econtrols.showPointCloud(p),
+                onRemove: () => this.removePointcloud(p),
+            })),
+        });
     }
 
     async addLAZ(what: string | File, center = false) {
