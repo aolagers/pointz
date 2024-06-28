@@ -50,6 +50,7 @@ export class Viewer extends EventDispatcher<TEvents> {
     econtrols: EarthControls;
 
     scene: Scene;
+    labelScene: Scene;
 
     pointClouds: PointCloud[] = [];
 
@@ -57,7 +58,9 @@ export class Viewer extends EventDispatcher<TEvents> {
     customOffsetInitialized = false;
 
     frame = 0;
-    frameTime = 0;
+    lastFrameTime = 0;
+    avgFrameTime1 = 0;
+    avgFrameTime2 = 0;
     renderTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
@@ -83,13 +86,16 @@ export class Viewer extends EventDispatcher<TEvents> {
     debugInfo = {
         jsmem: "",
         camera: "",
-        touch: "",
+        // touch: "",
         pool: "",
         render: "",
         frames: "",
         offset: "",
         nodestats: "",
+        vis: "",
     };
+
+    labelRenderer: CSS2DRenderer;
 
     constructor(canvasElement: HTMLCanvasElement, width: number, height: number) {
         super();
@@ -134,6 +140,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.econtrols = new EarthControls(this.camera, this.labelRenderer.domElement, this);
 
         this.scene = new Scene();
+        this.labelScene = new Scene();
 
         this.edlMaterial = new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
 
@@ -285,12 +292,10 @@ export class Viewer extends EventDispatcher<TEvents> {
         label.position.copy(pos);
         label.center.set(0, 1);
 
-        this.scene.add(label);
+        this.labelScene.add(label);
 
         return label;
     }
-
-    labelRenderer = new CSS2DRenderer();
 
     prevCam = new Vector3();
 
@@ -341,12 +346,22 @@ export class Viewer extends EventDispatcher<TEvents> {
             `calls:${this.renderer.info.render.calls} ` +
             `pts:${(this.renderer.info.render.points / 1_000_000).toFixed(2)}M`;
 
-        this.debugInfo.frames = ` ${this.frame} ${this.frameTime.toFixed(1)}ms`;
+        this.avgFrameTime1 = 0.9 * this.avgFrameTime1 + 0.1 * this.lastFrameTime;
+        this.avgFrameTime2 = 0.99 * this.avgFrameTime2 + 0.01 * this.lastFrameTime;
+        this.debugInfo.frames = ` ${this.frame} ${this.lastFrameTime.toFixed(1)}ms ${this.avgFrameTime1.toFixed(1)}ms ${this.avgFrameTime2.toFixed(1)}ms`;
+
+        let tot = 0;
+        let cnt = 0;
+        const tpoints = PointCloudNode.visibleNodes.forEach((n) => {
+            tot += n.pointCount;
+            cnt++;
+        });
+        this.debugInfo.vis = `${cnt} pts:${(tot / 1_000_000).toFixed(1)}M`;
 
         this.debugInfo.pool =
             ` ${pointsWorkerPool.running()} ${pointsWorkerPool.queueLength}` + ` (${pointsWorkerPool.tasksFinished})`;
 
-        this.debugInfo.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
+        // this.debugInfo.touch = `z:${this.econtrols.isZooming} 1:${this.econtrols.down.primary} 2:${this.econtrols.down.secondary}`;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         this.debugInfo.jsmem = (((performance as any).memory?.usedJSHeapSize ?? 0) / 1024 / 1024).toFixed(2);
@@ -361,9 +376,9 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.renderer.info.reset();
         const frameEnd = performance.now();
-        this.frameTime = frameEnd - frameStart;
+        this.lastFrameTime = frameEnd - frameStart;
 
-        this.labelRenderer.render(this.scene, this.camera);
+        this.labelRenderer.render(this.labelScene, this.camera);
 
         if (SHOW_RENDERS && why) {
             const dx = this.camera.position.x - this.prevCam.x;
@@ -579,7 +594,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.scene.remove(pc.tightBoundsMesh);
         }
         if (pc.label) {
-            this.scene.remove(pc.label);
+            this.labelScene.remove(pc.label);
         }
 
         pc.tree.unload(this);
