@@ -116,10 +116,6 @@ export class PointCloudNode {
         this.parent.viewer.scene.add(this.debugMesh);
     }
 
-    get sizeBytes() {
-        return this.copcInfo.pointDataLength;
-    }
-
     get depth() {
         return this.nodeName[0];
     }

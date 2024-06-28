@@ -18,8 +18,7 @@ export class Queue<T> {
 
         const v = this.queue[this.front++];
 
-        if (this.size() === 0 && this.front > 16) {
-            console.log("clear on dequeue");
+        if (this.size() === 0 && this.front > 32) {
             this.clear();
         }
 
@@ -27,11 +26,11 @@ export class Queue<T> {
     }
 
     clear() {
-        if (this.back > 16) {
+        if (this.back > 128) {
             console.error("clearing queue", this.size(), this.front, this.back);
+            this.queue = [];
         }
 
-        this.queue = [];
         this.front = 0;
         this.back = 0;
     }

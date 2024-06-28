@@ -373,14 +373,14 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.loadMoreNodes();
     });
 
-    loadMoreNodes() {
+    async loadMoreNodes() {
         const frustum = getCameraFrustum(this.camera);
 
         const pq = new PriorityQueue<PointCloudNode>(
             (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
-        const ERROR_LIMIT = 0.002;
+        const ERROR_LIMIT = 0.005;
 
         // check node visibility
         for (const pc of this.pointClouds) {
@@ -389,7 +389,7 @@ export class Viewer extends EventDispatcher<TEvents> {
                 continue;
             }
 
-            for (const node of pc.walkNodes((n) => n.estimateNodeError(this.camera) > ERROR_LIMIT)) {
+            for (const node of pc.tree.walk((n) => n.estimateNodeError(this.camera) > ERROR_LIMIT)) {
                 let msg = `node: ${node.nodeName} error: ${node.estimateNodeError(this.camera).toFixed(3)} s: ${node.state}`;
                 if (node.depth === 0 || frustum.intersectsBox(node.bounds)) {
                     pq.push(node);
@@ -478,7 +478,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             });
         }
 
-        console.log("RESCORE dropped", drops, visiblePoints);
+        // console.log("RESCORE dropped", drops, visiblePoints);
 
         this.requestRender("load more");
     }

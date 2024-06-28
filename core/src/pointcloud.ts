@@ -54,7 +54,7 @@ export class PointCloud {
         this.pointCount = pointCount;
 
         this.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-        this.tree = new Octree(hierarchy);
+        this.tree = new Octree(hierarchy, this.source, (n) => this.createNode(n));
     }
 
     createNode(n: OctreePath) {
@@ -65,16 +65,8 @@ export class PointCloud {
 
     initialize() {
         const nodePaths = Object.keys(this.hierarchy.nodes).map((n) => n.split("-").map(Number) as OctreePath);
-        nodePaths.sort((a, b) => {
-            for (let i = 0; i < 4; i++) {
-                if (a[i]! < b[i]!) {
-                    return -1;
-                } else if (a[i]! > b[i]!) {
-                    return 1;
-                }
-            }
-            return 0;
-        });
+        // sort by ascending zoom level
+        nodePaths.sort((a, b) => a[0] - b[0]);
 
         for (const n of nodePaths) {
             const node = this.createNode(n);
@@ -85,10 +77,6 @@ export class PointCloud {
                 this.tree.add(node);
             }
         }
-    }
-
-    *walkNodes(stillGood: (node: PointCloudNode) => boolean) {
-        yield* this.tree.enumerate(stillGood);
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {
@@ -108,31 +96,6 @@ export class PointCloud {
         octreeBounds.translate(headerOffset.clone().negate());
 
         const rootHierarchy = await PointCloud.getHierachy(source, details.info.rootHierarchyPage);
-
-        viewer.debugMessage("loaded hierarchy");
-
-        // console.log("NODES", rootHierarchy);
-
-        // TODO: do not block here for the full tree
-        // TODO: load full tree only when needed
-        // const pageQueue: Array<[string, { pageOffset: number; pageLength: number } | undefined]> = [];
-        // pageQueue.push(["0-0-0-0", rootHierarchy.pages["0-0-0-0"]]);
-        // // pageQueue.push(...Object.entries(rootHierarchy.pages));
-
-        // while (pageQueue.length > 0) {
-        //     const pageInfo = pageQueue.pop()!;
-
-        //     if (pageInfo[1]) {
-        //         console.log("LOAD EXTRA PAGE", pageInfo[0]);
-        //         const h = await PointCloud.getHierachy(source, pageInfo[1]);
-
-        //         for (const nodeID of Object.keys(h.nodes)) {
-        //             rootHierarchy.nodes[nodeID] = h.nodes[nodeID];
-        //         }
-
-        //         // pageQueue.push(...Object.entries(h.pages));
-        //     }
-        // }
 
         const pcloud = new PointCloud(
             viewer,
