@@ -180,6 +180,9 @@ export class EarthControls {
         } else if (e.button === 1) {
             this.dragging = "mid";
         } else if (e.button === 2) {
+            if (this.measure.isActive) {
+                this.measure.stop();
+            }
             this.dragging = "right";
         } else {
             this.pointerEnd(e);
