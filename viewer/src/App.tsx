@@ -147,7 +147,7 @@ export function App() {
 
             <canvas id="viewer"></canvas>
 
-            <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
+            <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
                 <div class="pointer-events-auto flex gap-1">
                     <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
                         measure
@@ -189,7 +189,7 @@ export function App() {
 
                 <div class="-mt-2 flex-1"></div>
 
-                <div ref={debugEl} class={"nice text-right " + (!debugMode() ? "hidden" : "")}></div>
+                <div ref={debugEl} class={"text-right text-xs text-white " + (!debugMode() ? "hidden" : "")}></div>
             </div>
         </>
     );

@@ -588,6 +588,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
             const offset = pc.tightBounds.min.clone();
 
+            let shouldCenterToAdded = center;
+
             if (!this.customOffsetInitialized) {
                 if (offset.length() > 100_000) {
                     console.warn("set coordinate offset to", offset);
@@ -600,8 +602,6 @@ export class Viewer extends EventDispatcher<TEvents> {
                 }
 
                 this.customOffsetInitialized = true;
-
-                this.econtrols.restoreCamera();
             } else {
                 if (offset.sub(this.customOffset).length() > 100_000) {
                     this.dispatchEvent({
@@ -612,7 +612,12 @@ export class Viewer extends EventDispatcher<TEvents> {
                 }
             }
 
-            this.addPointCloud(pc, center);
+            const wasRestored = this.econtrols.restoreCamera();
+            if (!wasRestored) {
+                shouldCenterToAdded = true;
+            }
+
+            this.addPointCloud(pc, shouldCenterToAdded);
 
             this.debugMessage(`Loaded laz file '${pc.name}' (${(pc.pointCount / 1_000_000).toFixed(2)}M)`);
         } catch (e) {
