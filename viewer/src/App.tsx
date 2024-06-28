@@ -3,6 +3,11 @@ import { createSignal, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
+import icon_bug from "../assets/bug.svg";
+import icon_ruler from "../assets/ruler.svg";
+import icon_switch_camera from "../assets/switch-camera.svg";
+import icon_x from "../assets/x.svg";
+
 type Notice = {
     kind: "error" | "warn" | "info";
     message: string;
@@ -156,14 +161,16 @@ export function App() {
                 <div class="pointer-events-auto flex gap-1"></div>
 
                 {pclouds().length > 0 && (
-                    <div class="nice pointer-events-auto">
+                    <div class="pointer-events-auto">
                         {pclouds().map((pcloud) => (
-                            <div class="flex gap-1">
+                            <div class="nice flex items-center gap-1">
                                 <div onClick={pcloud.onCenter} class="cursor-pointer">
                                     {pcloud.name} ({(pcloud.pointCount / 1_000_000).toFixed(2)}M)
                                 </div>
 
-                                <button onClick={pcloud.onRemove}> × </button>
+                                <button onClick={pcloud.onRemove} title="Remove">
+                                    <img class="h-4 invert hover:backdrop-invert-0" src={icon_x} />
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -188,14 +195,21 @@ export function App() {
                     ></div>
 
                     <div class="flex gap-2">
-                        <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
-                            measure
+                        <button class="nice flex items-center gap-2 hover:bg-black/50" onClick={() => toggleMeasure()}>
+                            <img class="h-5 invert" src={icon_ruler} /> Measure
                         </button>
-                        <button class="nice hover:bg-black/50" onClick={() => theViewer()?.econtrols.targetAll()}>
-                            reset cam
+                        <div></div>
+                        <button
+                            class="nice flex items-center gap-2 hover:bg-black/50"
+                            onClick={() => theViewer()?.econtrols.targetAll()}
+                        >
+                            <img class="h-5 invert" src={icon_switch_camera} /> Reset Camera
                         </button>
-                        <button class="nice hover:bg-black/50" onClick={() => setDebug(!debugMode())}>
-                            debug
+                        <button
+                            class="nice flex items-center gap-2 hover:bg-black/50"
+                            onClick={() => setDebug(!debugMode())}
+                        >
+                            <img class="h-5 invert" src={icon_bug} /> Debug
                         </button>
                     </div>
                 </div>
