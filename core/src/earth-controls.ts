@@ -282,7 +282,7 @@ export class EarthControls {
 
                 this.setCursor("grab");
                 const ax = dp.x * 2 * Math.PI * sensitivity;
-                const ay = dp.y * 2 * Math.PI * sensitivity;
+                const ay = (dp.y * 2 * Math.PI * sensitivity) / 2;
 
                 const dx = this.prevAngle.x - ax;
                 let dy = this.prevAngle.y - ay;
