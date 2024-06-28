@@ -170,12 +170,10 @@ export class EarthControls {
                 this.zoomStart3D.copy(pt.position);
                 this.isZooming = true;
             }
-
-            this.lastClickDown = performance.now();
         }
 
         if (e.button === 0) {
-            if (this.measure.isActive) {
+            if (this.measure.isActive && performance.now() - this.lastClickDown > 200) {
                 this.measure.addPoint(pt.position);
             }
             this.dragging = "left";
@@ -192,7 +190,9 @@ export class EarthControls {
         this.start.mouse.copy(this.pointer);
         this.prevAngle.set(0, 0);
 
-        // console.log("pointer DOWN", this.dragging, e);
+        if (e.isPrimary) {
+            this.lastClickDown = performance.now();
+        }
     }
 
     pointerUp(e: PointerEvent) {

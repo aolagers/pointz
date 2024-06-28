@@ -3,12 +3,19 @@ export class Queue<T> {
     front = 0;
     back = 0;
 
+    maxSize = 0;
+
     size() {
         return this.back - this.front;
     }
 
     enqueue(item: T) {
         this.queue[this.back++] = item;
+
+        if (this.size() > this.maxSize) {
+            // console.warn("MAX SIZE", this.size(), "BACK", this.back, "FRONT", this.front, "QUEUE", this.queue);
+            this.maxSize = this.size();
+        }
     }
 
     dequeue() {
@@ -26,10 +33,7 @@ export class Queue<T> {
     }
 
     clear() {
-        if (this.back > 128) {
-            console.error("clearing queue", this.size(), this.front, this.back);
-            this.queue = [];
-        }
+        this.queue = [];
 
         this.front = 0;
         this.back = 0;

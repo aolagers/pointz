@@ -24,6 +24,7 @@ export class Measure {
             new MeshBasicMaterial({ color: "rgb(0, 255,0)", opacity: 0.8, transparent: true })
         );
 
+        this.mark.visible = false;
         this.mark.layers.set(1);
         this.viewer = null;
     }

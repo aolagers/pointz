@@ -580,6 +580,10 @@ export class Viewer extends EventDispatcher<TEvents> {
                 onRemove: () => this.removePointcloud(p),
             })),
         });
+
+        if (this.pointClouds.length === 0) {
+            this.customOffsetInitialized = false;
+        }
     }
 
     async addLAZ(what: string | File, center = false) {

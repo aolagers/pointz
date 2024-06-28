@@ -21,6 +21,8 @@ const raycaster = new Raycaster();
 
 const PICK_WINDOW = 31;
 
+const pickBuffer = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
+
 const pickRenderTarget = new WebGLRenderTarget(PICK_WINDOW, PICK_WINDOW, {
     format: RGBAFormat,
     minFilter: NearestFilter,
@@ -83,6 +85,13 @@ export function getMouseIntersection(
                     it.node.data.pco.material = pmat;
                 }
 
+                // TODO: sort nodes by distance to camera?
+                // it.children.sort((a, b) => {
+                //     const x = pc.tree.items[a].node.bounds.distanceToPoint(ray.origin);
+                //     const y = pc.tree.items[b].node.bounds.distanceToPoint(ray.origin);
+                //     return x - y;
+                // });
+
                 for (const c of it.children) {
                     q.enqueue(pc.tree.items[c]);
                 }
@@ -100,23 +109,21 @@ export function getMouseIntersection(
     // turn extra objects back on
     camera.layers.enable(1);
 
-    const pbuf = new Uint8Array(4 * PICK_WINDOW * PICK_WINDOW);
-
-    renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, PICK_WINDOW, PICK_WINDOW, pbuf);
+    renderer.readRenderTargetPixels(pickRenderTarget, 0, 0, PICK_WINDOW, PICK_WINDOW, pickBuffer);
 
     let closest = Infinity;
     let best = 0;
 
     // find closest point pixel
-    for (let i = 0; i < pbuf.length / 4; i++) {
+    for (let i = 0; i < pickBuffer.length / 4; i++) {
         const x = i % PICK_WINDOW;
         const y = Math.floor(i / PICK_WINDOW);
         const sqdist = (x - PICK_WINDOW / 2) ** 2 + (y - PICK_WINDOW / 2) ** 2;
 
-        const r = pbuf[i * 4 + 0];
-        const g = pbuf[i * 4 + 1];
-        const b = pbuf[i * 4 + 2];
-        const a = pbuf[i * 4 + 3];
+        const r = pickBuffer[i * 4 + 0];
+        const g = pickBuffer[i * 4 + 1];
+        const b = pickBuffer[i * 4 + 2];
+        const a = pickBuffer[i * 4 + 3];
         if ((r || g || b) && a != 255) {
             if (sqdist < closest) {
                 closest = sqdist;
@@ -126,11 +133,11 @@ export function getMouseIntersection(
     }
 
     if (closest < Infinity) {
-        const vals = pbuf.slice(best * 4, best * 4 + 4);
-        const r = pbuf[best * 4 + 0];
-        const g = pbuf[best * 4 + 1];
-        const b = pbuf[best * 4 + 2];
-        const a = pbuf[best * 4 + 3];
+        const vals = pickBuffer.slice(best * 4, best * 4 + 4);
+        const r = pickBuffer[best * 4 + 0];
+        const g = pickBuffer[best * 4 + 1];
+        const b = pickBuffer[best * 4 + 2];
+        const a = pickBuffer[best * 4 + 3];
         const idx = r * 256 * 256 + g * 256 + b;
         let nodehit = null;
         let pchit = null;
