@@ -93,8 +93,9 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
             (a, b) => b.request.info.score - a.request.info.score
         );
 
-        while (!this.queue.isEmpty()) {
-            const item = this.queue.popOrThrow();
+        let item: QueuedItem<Input, Output> | null = null;
+
+        while ((item = this.queue.pop())) {
             const newScore = scoringFunc(item.request);
             if (newScore) {
                 item.request.info.score = newScore;

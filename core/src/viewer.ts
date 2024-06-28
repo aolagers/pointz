@@ -415,8 +415,9 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         let visiblePoints = 0;
 
-        while (!pq.isEmpty()) {
-            const node = pq.popOrThrow();
+        let node: PointCloudNode | null = null;
+
+        while ((node = pq.pop())) {
             const err = node.estimateNodeError(this.camera);
 
             const shouldBeShown = node.depth == 0 || (visiblePoints < POINT_BUDGET && err > ERROR_LIMIT);
@@ -471,23 +472,33 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
 
         let drops = 0;
+        let caches = 0;
+        for (const vnode of PointCloudNode.visibleNodes) {
+            const err = vnode.estimateNodeError(this.camera);
+            const shouldBeHidden = vnode.depth > 0 && err < ERROR_LIMIT;
+
+            if (shouldBeHidden) {
+                vnode.cache();
+                caches++;
+            }
+        }
+
         if (pointsWorkerPool.queueLength > 0) {
             pointsWorkerPool.rescore((x) => {
-                const score = x.info.node.estimateNodeError(this.camera);
+                const err = x.info.node.estimateNodeError(this.camera);
 
-                if (x.info.node.depth === 0 || (score > ERROR_LIMIT && visiblePoints < POINT_BUDGET)) {
+                if (x.info.node.depth === 0 || (visiblePoints < POINT_BUDGET && err > ERROR_LIMIT)) {
                     visiblePoints += x.info.node.pointCount;
-                    return score;
+                    return err;
                 } else {
                     drops++;
-
                     x.info.node.unload(this);
                     return null;
                 }
             });
         }
 
-        // console.log("RESCORE dropped", drops, visiblePoints);
+        // console.log("RESCORE dropped", drops, "cached", caches);
 
         this.requestRender("load more");
     }

@@ -55,6 +55,8 @@ const nodeCache = new LRUCache<string, PointCloudNode>({
 type NodeState = "unloaded" | "loading" | "visible" | "cached" | "error";
 
 export class PointCloudNode {
+    static visibleNodes = new Set<PointCloudNode>();
+
     parent: PointCloud;
     nodeName: OctreePath;
     bounds: Box3;
@@ -173,6 +175,8 @@ export class PointCloudNode {
             viewer.addNode(this);
         }
 
+        PointCloudNode.visibleNodes.add(this);
+
         this.debugMesh.visible = false;
         this.setState("visible");
     }
@@ -181,6 +185,8 @@ export class PointCloudNode {
         this.assertState("visible");
         this.data!.pco.visible = false;
         this.setState("cached");
+
+        PointCloudNode.visibleNodes.delete(this);
         nodeCache.set(this.cacheID, this);
     }
 
@@ -235,13 +241,17 @@ export class PointCloudNode {
             this.data.pco.geometry.dispose();
         }
 
+        PointCloudNode.visibleNodes.delete(this);
+
         this.debugMesh.visible = false;
 
         this.data = null;
+
         this.setState("unloaded");
     }
 
     async getChunk(score: number, customOffset: Vector3) {
+        // TODO: figure out how to abort this
         const data = await pointsWorkerPool.runTask({
             info: {
                 abort: new AbortController(),

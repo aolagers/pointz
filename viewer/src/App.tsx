@@ -1,5 +1,5 @@
 import { Viewer } from "@pointz/core";
-import { Show, createSignal, onMount } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
@@ -11,10 +11,10 @@ type Notice = {
 export function App() {
     const [theViewer, setTheViewer] = createSignal<Viewer | null>(null);
     const [notices, setNotices] = createSignal<Array<Notice & { t: Number }>>([]);
-    const [loading, setLoading] = createSignal(false);
+    const [loading, setLoading] = createSignal(0);
     const [showHelp, setShowHelp] = createSignal(!(localStorage.getItem("show_help") === "false"));
     const [debugMode, setDebugMode] = createSignal(false);
-    const [messages, setMessages] = createSignal<string[]>([]);
+    // const [messages, setMessages] = createSignal<string[]>([]);
     const [pclouds, setPclouds] = createSignal<
         Array<{ name: string; pointCount: number; onCenter: () => void; onRemove: () => void }>
     >([]);
@@ -74,12 +74,12 @@ export function App() {
         });
 
         viewer.addEventListener("loading", (ev) => {
-            setLoading(ev.nodes > 0);
+            setLoading(ev.nodes);
         });
 
-        viewer.addEventListener("message", (ev) => {
-            setMessages((prev) => [ev.text, ...prev]);
-        });
+        // viewer.addEventListener("message", (ev) => {
+        //     setMessages((prev) => [ev.text, ...prev]);
+        // });
 
         viewer.addEventListener("pointclouds", (ev) => {
             setPclouds((prev) => ev.pclouds);
@@ -109,11 +109,16 @@ export function App() {
 
     return (
         <>
-            <Show when={loading()}>
-                <div class="fixed left-2 top-2 z-20">
-                    <Loader />
-                </div>
-            </Show>
+            <div
+                class={
+                    "fixed left-2 top-2 z-20 flex items-center gap-2 text-sm text-white transition-opacity duration-500 " +
+                    (loading() === 0 ? "opacity-0" : "opacity-100")
+                }
+            >
+                <Loader />
+
+                <div>{loading()}</div>
+            </div>
 
             <div
                 class="fixed bottom-2 left-2 z-20 cursor-pointer"
@@ -148,21 +153,7 @@ export function App() {
             <canvas id="viewer"></canvas>
 
             <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
-                <div class="pointer-events-auto flex gap-1">
-                    <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
-                        measure
-                    </button>
-                    <button
-                        class="nice hover:bg-black/50"
-                        onClick={() => setDebug(!debugMode())}
-                        classList={{ "bg-red-900": debugMode() }}
-                    >
-                        debug
-                    </button>
-                    <button class="nice hover:bg-black/50" onClick={() => theViewer()?.econtrols.targetAll()}>
-                        reset cam
-                    </button>
-                </div>
+                <div class="pointer-events-auto flex gap-1"></div>
 
                 {pclouds().length > 0 && (
                     <div class="nice pointer-events-auto">
@@ -189,7 +180,25 @@ export function App() {
 
                 <div class="-mt-2 flex-1"></div>
 
-                <div ref={debugEl} class={"text-right text-xs text-white " + (!debugMode() ? "hidden" : "")}></div>
+                <div class="pointer-events-auto flex flex-col items-end gap-2">
+                    <div
+                        onClick={() => setDebug(false)}
+                        ref={debugEl}
+                        class={"text-right text-xs text-white " + (debugMode() ? "" : "hidden")}
+                    ></div>
+
+                    <div class="flex gap-2">
+                        <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
+                            measure
+                        </button>
+                        <button class="nice hover:bg-black/50" onClick={() => theViewer()?.econtrols.targetAll()}>
+                            reset cam
+                        </button>
+                        <button class="nice hover:bg-black/50" onClick={() => setDebug(!debugMode())}>
+                            debug
+                        </button>
+                    </div>
+                </div>
             </div>
         </>
     );
