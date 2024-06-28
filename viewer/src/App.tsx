@@ -12,6 +12,7 @@ export function App() {
     const [theViewer, setTheViewer] = createSignal<Viewer | null>(null);
     const [notices, setNotices] = createSignal<Array<Notice & { t: Number }>>([]);
     const [loading, setLoading] = createSignal(false);
+    const [showHelp, setShowHelp] = createSignal(!(localStorage.getItem("show_help") === "false"));
     const [debugMode, setDebugMode] = createSignal(false);
     const [messages, setMessages] = createSignal<string[]>([]);
     const [pclouds, setPclouds] = createSignal<
@@ -114,7 +115,17 @@ export function App() {
                 </div>
             </Show>
 
-            <Help className="fixed bottom-2 left-2 z-20" />
+            <div
+                class="fixed bottom-2 left-2 z-20 cursor-pointer"
+                onClick={() =>
+                    setShowHelp((prev) => {
+                        localStorage.setItem("show_help", prev ? "false" : "true");
+                        return !prev;
+                    })
+                }
+            >
+                {showHelp() ? <Help className="" /> : <div class="text-xs font-bold text-white">?</div>}
+            </div>
 
             <div class="fixed left-1/2 z-20 mt-2 flex -translate-x-1/2 transform flex-col gap-1">
                 {notices().map((notice, idx) => (
@@ -136,8 +147,8 @@ export function App() {
 
             <canvas id="viewer"></canvas>
 
-            <div class="fixed right-2 top-2 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
-                <div class="z-20 flex gap-1">
+            <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
+                <div class="pointer-events-auto flex gap-1">
                     <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
                         measure
                     </button>
@@ -154,7 +165,7 @@ export function App() {
                 </div>
 
                 {pclouds().length > 0 && (
-                    <div class="nice z-20">
+                    <div class="nice pointer-events-auto">
                         {pclouds().map((pcloud) => (
                             <div class="flex gap-1">
                                 <div onClick={pcloud.onCenter} class="cursor-pointer">
@@ -178,7 +189,7 @@ export function App() {
 
                 <div class="-mt-2 flex-1"></div>
 
-                <div ref={debugEl} class={"nice z-20 text-right " + (debugMode() ? "block" : "hidden")}></div>
+                <div ref={debugEl} class={"nice text-right " + (!debugMode() ? "hidden" : "")}></div>
             </div>
         </>
     );
