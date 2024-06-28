@@ -259,17 +259,16 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     addPointcloudLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
-        const label = this.addLabel(text1, text2, pos);
-        // TODO: drop this listener when pc closed
-        label.element.addEventListener("click", () => {
-            this.econtrols.showPointCloud(pc);
-        });
+        const label = this.addLabel(text1, text2, pos, () => this.econtrols.showPointCloud(pc));
         return label;
     }
 
-    addLabel(text1: string, text2: string | null, pos: Vector3) {
+    addLabel(text1: string, text2: string | null, pos: Vector3, onClick: null | (() => void)) {
         const div = document.createElement("div");
         div.classList.add("nice", "label");
+        if (onClick) {
+            div.classList.add("cursor-pointer");
+        }
         div.style.textAlign = "right";
 
         div.innerHTML = `<span>${text1}</span>`;
@@ -278,6 +277,11 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
 
         const label = new CSS2DObject(div);
+
+        if (onClick) {
+            label.element.addEventListener("click", onClick);
+        }
+
         label.position.copy(pos);
         label.center.set(0, 1);
 

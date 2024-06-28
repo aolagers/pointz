@@ -12,44 +12,17 @@ body {
     background: radial-gradient(rgb(95, 133, 190), rgb(23, 64, 112));
 
     overflow: hidden;
-
-    --dark: rgba(0, 0, 0, 0.5);
-    --light: rgba(128, 128, 128, 0.5);
 }
-
-/* * { user-select: none; touch-action: none; -webkit-touch-callout: none; } */
-
-#viewer {
-    margin: 0;
-    padding: 0;
-    /* changed to 'block' by viewer.init() */
-    display: none;
-}
-
-/* #btns button {
-    border-top: 1px solid var(--light);
-    border-left: 1px solid var(--light);
-    border-right: 1px solid var(--dark);
-    border-bottom: 1px solid var(--dark);
-}
-
-#btns button:active {
-    border-top: 1px solid var(--dark);
-    border-left: 1px solid var(--dark);
-    border-right: 1px solid var(--light);
-    border-bottom: 1px solid var(--light);
-} */
 
 .label {
     background-color: rgba(0, 0, 0, 0.3);
     padding: 0.2em 0.5em;
     color: #ddd;
     font-size: x-small;
-    cursor: pointer;
 }
 
 @layer components {
     .nice {
-        @apply px-2 py-0.5 text-xs rounded-sm backdrop-blur-xs shadow-md  bg-black/30 outline outline-1 outline-black/50 text-gray-200;
+        @apply select-none rounded-sm bg-black/30 px-2 py-0.5 text-xs text-gray-200 shadow-md outline outline-1 outline-black/50 backdrop-blur-xs;
     }
 }

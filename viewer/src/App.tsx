@@ -155,7 +155,8 @@ export function App() {
                 ))}
             </div>
 
-            <canvas id="viewer"></canvas>
+            {/* made visible by viewer.init()  */}
+            <canvas id="viewer" class="m-0 hidden p-0"></canvas>
 
             <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
                 <div class="pointer-events-auto flex gap-1"></div>
