@@ -89,10 +89,11 @@ export function App() {
         const here = window.location.origin + window.location.pathname.replace(/\/$/, "");
 
         if (window.location.hostname === "localhost") {
-            //void viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
+            // void viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
             // void viewer.addLAZ(here + "/lion_takanawa.copc.laz");
             // void viewer.addLAZ(here + "/490000_7505000.laz.copc.laz");
             void viewer.addLAZ("https://kartta.aolagers.org/urban.copc.laz");
+            // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
         } else {
             // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
             void viewer.addLAZ(here + "/assets/lion_takanawa.copc.laz");
@@ -135,8 +136,8 @@ export function App() {
 
             <canvas id="viewer"></canvas>
 
-            <div class="fixed right-2 top-2 z-20 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
-                <div class="flex gap-1">
+            <div class="fixed right-2 top-2 flex h-[calc(100vh-1rem)] flex-col items-end gap-2">
+                <div class="z-20 flex gap-1">
                     <button class="nice hover:bg-black/50" onClick={() => toggleMeasure()}>
                         measure
                     </button>
@@ -153,7 +154,7 @@ export function App() {
                 </div>
 
                 {pclouds().length > 0 && (
-                    <div class="nice">
+                    <div class="nice z-20">
                         {pclouds().map((pcloud) => (
                             <div class="flex gap-1">
                                 <div onClick={pcloud.onCenter} class="cursor-pointer">
