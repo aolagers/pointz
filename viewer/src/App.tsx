@@ -1,10 +1,11 @@
 import { PointCloud, Viewer } from "@pointz/core";
+import { directoryOpen, fileOpen } from "browser-fs-access";
 import { createSignal, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
-import { directoryOpen, fileOpen } from "browser-fs-access";
 import icon_bug from "../assets/bug.svg";
+import icon_eye_off from "../assets/eye-off.svg";
 import icon_eye from "../assets/eye.svg";
 import icon_file_plus from "../assets/file-plus.svg";
 import icon_folder_plus from "../assets/folder-plus.svg";
@@ -103,19 +104,6 @@ export function App() {
         //         theViewer()?.addLAZ();
         //     }
         // }
-    }
-
-    function mouseOver(pcloud: PointCloud, over: boolean) {
-        if (over) {
-            if (pcloud.tightBoundsMesh) {
-                pcloud.tightBoundsMesh.visible = true;
-            }
-        } else {
-            if (pcloud.tightBoundsMesh) {
-                pcloud.tightBoundsMesh.visible = theViewer()?.debug_mode || false;
-            }
-        }
-        theViewer()?.requestRender("mouse stuff");
     }
 
     onMount(() => {
@@ -246,21 +234,27 @@ export function App() {
                         {/* <div>Pointclouds</div> */}
                         {pclouds().map((pcloud) => (
                             <div
-                                class="nice flex items-center gap-1"
-                                onMouseEnter={() => mouseOver(pcloud.item, true)}
-                                onMouseLeave={() => mouseOver(pcloud.item, false)}
+                                class="nice flex items-center pr-1"
+                                onMouseEnter={() => pcloud.item.setHighlight(true)}
+                                onMouseLeave={() => pcloud.item.setHighlight(false)}
                             >
-                                <div onClick={pcloud.onCenter} class="cursor-pointer">
-                                    {pcloud.name}
-                                    {/* ({(pcloud.pointCount / 1_000_000).toFixed(2)}M) */}
+                                <div onClick={pcloud.onCenter} class="flex cursor-pointer items-center">
+                                    <span>{pcloud.name}</span>
+                                    <span class="text-xxs px-2 font-bold text-gray-400">
+                                        {(pcloud.pointCount / 1_000_000).toFixed(2)}M
+                                    </span>
                                 </div>
 
-                                <button onClick={pcloud.onToggleVisibility} title="Toggle Visibility">
-                                    <img class="h-4 invert hover:backdrop-invert-0" src={icon_eye} />
+                                <button
+                                    onClick={pcloud.onToggleVisibility}
+                                    title="Toggle Visibility"
+                                    class="px-1 hover:backdrop-invert"
+                                >
+                                    <img class="h-4 invert" src={pcloud.item.visible ? icon_eye : icon_eye_off} />
                                 </button>
 
-                                <button onClick={pcloud.onRemove} title="Remove">
-                                    <img class="h-4 invert hover:backdrop-invert-0" src={icon_x} />
+                                <button onClick={pcloud.onRemove} title="Remove" class="px-1 hover:backdrop-invert">
+                                    <img class="h-4 invert" src={icon_x} />
                                 </button>
                             </div>
                         ))}

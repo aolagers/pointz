@@ -66,6 +66,10 @@ export class PointCloud {
         this.group.name = name;
     }
 
+    get visible() {
+        return this.group.visible;
+    }
+
     createNode(n: OctreePath) {
         const bbox = nodeToBox(this.octreeBounds, n, this.viewer.customOffset);
         const node = new PointCloudNode(this, n, bbox, this.rootSpacing / Math.pow(2, n[0]));
@@ -91,6 +95,19 @@ export class PointCloud {
     toggleVisibility() {
         this.group.visible = !this.group.visible;
         this.viewer.requestRender("toggleVisibility");
+        this.viewer.dispatchCloudsUpdated();
+    }
+
+    setHighlight(to: boolean) {
+        if (!this.tightBoundsMesh) {
+            return;
+        }
+        if (to) {
+            this.tightBoundsMesh.visible = true;
+        } else {
+            this.tightBoundsMesh.visible = this.viewer.debug_mode || false;
+        }
+        this.viewer.requestRender("highlight");
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {

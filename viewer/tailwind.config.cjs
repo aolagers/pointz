@@ -6,6 +6,9 @@ export default {
             backdropBlur: {
                 xs: "2px",
             },
+            fontSize: {
+                xxs: ".60rem",
+            },
         },
     },
     plugins: [],

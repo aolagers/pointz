@@ -281,7 +281,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.dispatchEvent({ type: "message", text });
     }
 
-    addPointcloudLabel(text1: string, text2: string, pos: Vector3, pc: PointCloud) {
+    addPointcloudLabel(text1: string, text2: string | null, pos: Vector3, pc: PointCloud) {
         const label = this.addLabel(text1, text2, pos, () => this.econtrols.showPointCloud(pc));
         return label;
     }
@@ -570,7 +570,8 @@ export class Viewer extends EventDispatcher<TEvents> {
         // TODO: show some node stats in the label
         const label = this.addPointcloudLabel(
             `${pc.name}`,
-            `${(pc.pointCount / 1_000_000).toFixed(2)}M`,
+            null,
+            // `${(pc.pointCount / 1_000_000).toFixed(2)}M`,
             pc.tightBounds.max.clone().sub(this.customOffset),
             pc
         );
