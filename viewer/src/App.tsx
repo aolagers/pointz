@@ -1,4 +1,4 @@
-import { Viewer } from "@pointz/core";
+import { PointCloud, Viewer } from "@pointz/core";
 import { createSignal, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
@@ -24,7 +24,7 @@ export function App() {
     const [debugMode, setDebugMode] = createSignal(false);
     // const [messages, setMessages] = createSignal<string[]>([]);
     const [pclouds, setPclouds] = createSignal<
-        Array<{ name: string; pointCount: number; onCenter: () => void; onRemove: () => void }>
+        Array<{ name: string; pointCount: number; item: PointCloud; onCenter: () => void; onRemove: () => void }>
     >([]);
 
     // addNotice({ kind: "error", message: "what" });
@@ -95,6 +95,19 @@ export function App() {
         //         theViewer()?.addLAZ();
         //     }
         // }
+    }
+
+    function mouseOver(pcloud: PointCloud, over: boolean) {
+        if (over) {
+            if (pcloud.tightBoundsMesh) {
+                pcloud.tightBoundsMesh.visible = true;
+            }
+        } else {
+            if (pcloud.tightBoundsMesh) {
+                pcloud.tightBoundsMesh.visible = theViewer()?.debug_mode || false;
+            }
+        }
+        theViewer()?.requestRender("mouse stuff");
     }
 
     onMount(() => {
@@ -213,7 +226,11 @@ export function App() {
                     <div class="pointer-events-auto flex flex-col items-end gap-2 bg-transparent text-xs text-white">
                         {/* <div>Pointclouds</div> */}
                         {pclouds().map((pcloud) => (
-                            <div class="nice flex items-center gap-1">
+                            <div
+                                class="nice flex items-center gap-1"
+                                onMouseEnter={() => mouseOver(pcloud.item, true)}
+                                onMouseLeave={() => mouseOver(pcloud.item, false)}
+                            >
                                 <div onClick={pcloud.onCenter} class="cursor-pointer">
                                     {pcloud.name}
                                     {/* ({(pcloud.pointCount / 1_000_000).toFixed(2)}M) */}

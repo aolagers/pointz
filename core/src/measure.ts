@@ -84,7 +84,7 @@ export class Measure {
             const mid = vec.clone().multiplyScalar(0.5).add(prev);
             const len = vec.length();
 
-            this.viewer?.addLabel(len.toFixed(2) + " m", null, mid);
+            this.viewer?.addLabel(len.toFixed(2) + " m", null, mid, null);
 
             // TODO: add total to last measure
         }

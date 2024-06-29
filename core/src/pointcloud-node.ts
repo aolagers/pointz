@@ -18,6 +18,7 @@ import workerUrl from "./copc-loader?worker&url";
 import { DEFAULT_POINT_MATERIAL, PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { OctreePath } from "./octree";
 import { PointCloud } from "./pointcloud";
+import { POINT_BUDGET } from "./settings";
 import { boxToMesh } from "./utils";
 import { Viewer } from "./viewer";
 import { WorkerPool } from "./worker-pool";
@@ -35,16 +36,16 @@ export const pointsWorkerPool = new WorkerPool<
 
 const nodeCache = new LRUCache<string, PointCloudNode>({
     // max: 10,
-    maxSize: 4_000_000,
+    maxSize: POINT_BUDGET * 2,
 
-    sizeCalculation: (value) => {
+    sizeCalculation(value) {
         // console.log("SIZE", value, value.pointCount);
         if (!value) return 1;
         if (value.pointCount === 0) return 1;
         return value.pointCount;
     },
 
-    dispose: (node, key, reason) => {
+    dispose(node, key, reason) {
         if (reason === "set" || reason === "evict") {
             console.log("CACHE DROP", reason, key, node.state, nodeCache.size, nodeCache.calculatedSize, node);
             node.unload(node.parent.viewer);
@@ -121,13 +122,13 @@ export class PointCloudNode {
     estimateNodeError(camera: Camera) {
         // IDEA: use bounding sphere instead of box?
 
-        // const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
         const dist = this.bounds.distanceToPoint(camera.position);
 
+        // const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
         // const center = this.bounds.getCenter(new Vector3());
         // const centerDist = cameraRay.distanceToPoint(center);
-
         // return this.spacing / (dist + centerDist);
+
         return this.spacing / dist;
     }
 

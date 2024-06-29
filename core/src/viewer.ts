@@ -24,7 +24,7 @@ import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-mat
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { PriorityQueue } from "./priority-queue";
-import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, POINT_BUDGET, SHOW_RENDERS } from "./settings";
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, ERROR_LIMIT, POINT_BUDGET, SHOW_RENDERS } from "./settings";
 import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
 
 const clock = new Clock();
@@ -37,6 +37,7 @@ type TEvents = {
         pclouds: Array<{
             name: string;
             pointCount: number;
+            item: PointCloud;
             onCenter: () => void;
             onRemove: () => void;
         }>;
@@ -423,8 +424,6 @@ export class Viewer extends EventDispatcher<TEvents> {
             (a, b) => b.estimateNodeError(this.camera) - a.estimateNodeError(this.camera)
         );
 
-        const ERROR_LIMIT = 0.002;
-
         for (const pc of this.pointClouds) {
             if (!frustum.intersectsBox(pc.tree.root.node.bounds)) {
                 // console.log("skip showing of ", pc.name, "outside frustum", pc.octreeBounds, pc.tightBounds);
@@ -596,6 +595,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             pclouds: this.pointClouds.map((p) => ({
                 name: p.name,
                 pointCount: p.pointCount,
+                item: p,
                 onCenter: () => this.econtrols.showPointCloud(p),
                 onRemove: () => this.removePointcloud(p),
             })),
@@ -607,6 +607,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         if (pc.tightBoundsMesh) {
             this.scene.remove(pc.tightBoundsMesh);
+            pc.tightBoundsMesh.geometry.dispose();
         }
         if (pc.label) {
             this.labelScene.remove(pc.label);
@@ -621,6 +622,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             pclouds: this.pointClouds.map((p) => ({
                 name: p.name,
                 pointCount: p.pointCount,
+                item: p,
                 onCenter: () => this.econtrols.showPointCloud(p),
                 onRemove: () => this.removePointcloud(p),
             })),
@@ -679,3 +681,5 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
     }
 }
+
+export { PointCloud };
