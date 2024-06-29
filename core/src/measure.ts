@@ -1,4 +1,13 @@
-import { BufferGeometry, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from "three";
+import {
+    BufferGeometry,
+    Group,
+    Line,
+    LineBasicMaterial,
+    Mesh,
+    MeshBasicMaterial,
+    SphereGeometry,
+    Vector3,
+} from "three";
 import { Viewer } from "./viewer";
 
 type Measurement = {
@@ -16,13 +25,19 @@ export class Measure {
 
     viewer: Viewer | null;
 
+    group: Group;
+
     isActive = false;
+
+    lineMaterial = new LineBasicMaterial({ color: "rgb(0, 255, 0)", depthTest: false });
 
     constructor() {
         this.mark = new Mesh(
             new SphereGeometry(0.5, 16, 16),
-            new MeshBasicMaterial({ color: "rgb(0, 255,0)", opacity: 0.8, transparent: true })
+            new MeshBasicMaterial({ color: "rgb(0, 255,0)", opacity: 0.8, transparent: true, depthTest: false })
         );
+        this.group = new Group();
+        this.group.layers.set(1);
 
         this.mark.visible = false;
         this.mark.layers.set(1);
@@ -30,7 +45,8 @@ export class Measure {
     }
 
     init(viewer: Viewer) {
-        viewer.scene.add(this.mark);
+        viewer.scene.add(this.group);
+        this.group.add(this.mark);
         this.viewer = viewer;
     }
 
@@ -38,13 +54,13 @@ export class Measure {
         this.isActive = true;
         const g = new BufferGeometry();
         this.activeMeasurement = {
-            line: new Line(g, new LineBasicMaterial({ color: "rgb(0, 255, 0)" })),
+            line: new Line(g, this.lineMaterial),
             lineGeom: g,
             nodes: [],
         };
 
         this.activeMeasurement.line.layers.set(1);
-        this.viewer?.scene.add(this.activeMeasurement.line);
+        this.group.add(this.activeMeasurement.line);
         console.log("LINE", this.activeMeasurement.line);
     }
 
@@ -65,7 +81,7 @@ export class Measure {
 
         const node = this.mark.clone();
 
-        this.viewer?.scene.add(node);
+        this.group.add(node);
 
         this.activeMeasurement.nodes.push(node);
 

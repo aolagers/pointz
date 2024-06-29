@@ -330,24 +330,18 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.requestRender("loop");
         }
 
-        // this.stats.update();
         const delta = clock.getDelta();
 
         // this.controls.update(delta);
         this.econtrols.update(delta);
 
-        // this.gpuPanel.startQuery();
-
         // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
-        // this.renderer.setRenderTarget(null);
         this.renderer.render(this.scene, this.camera);
 
         // render to screen quad
         this.renderer.setRenderTarget(null);
         this.renderer.render(this.sceneOrtho, this.cameraOrtho);
-
-        // this.gpuPanel.endQuery();
 
         this.frame++;
 
