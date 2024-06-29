@@ -1,4 +1,4 @@
-import { Box3, Mesh, Vector3 } from "three";
+import { Box3, Group, Mesh, Vector3 } from "three";
 import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Hierarchy, LazSource, WorkerHierarchy, WorkerInfo } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
@@ -28,6 +28,8 @@ export class PointCloud {
     hierarchy: Hierarchy;
     rootSpacing: number;
     pointCount: number;
+
+    group: Group;
 
     tightBoundsMesh: Mesh | null = null;
     label: CSS2DObject | null = null;
@@ -59,6 +61,9 @@ export class PointCloud {
 
         this.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
         this.tree = new Octree(hierarchy, this.source, (n) => this.createNode(n));
+
+        this.group = new Group();
+        this.group.name = name;
     }
 
     createNode(n: OctreePath) {
@@ -81,6 +86,11 @@ export class PointCloud {
                 this.tree.add(node);
             }
         }
+    }
+
+    toggleVisibility() {
+        this.group.visible = !this.group.visible;
+        this.viewer.requestRender("toggleVisibility");
     }
 
     static async loadLAZ(viewer: Viewer, source: string | File) {

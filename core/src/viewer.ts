@@ -40,6 +40,7 @@ type TEvents = {
             item: PointCloud;
             onCenter: () => void;
             onRemove: () => void;
+            onToggleVisibility: () => void;
         }>;
     };
 };
@@ -403,16 +404,6 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.prevCam.copy(this.camera.position);
     }
 
-    addNode(n: PointCloudNode) {
-        if (n.state === "loading") {
-            const o = n.data!.pco;
-            this.scene.add(o);
-            this.requestRender("new node");
-        } else {
-            throw new Error("cannot add node that is not loaded");
-        }
-    }
-
     loadMoreNodesThrottled = throttle(300, () => {
         this.loadMoreNodes();
     });
@@ -468,7 +459,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
                 case "cached":
                     if (shouldBeShown) {
-                        node.show(this);
+                        node.show();
                         visiblePoints += node.pointCount;
                     }
                     break;
@@ -574,6 +565,8 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         void pc.initialize();
 
+        this.scene.add(pc.group);
+
         // TODO: show some node stats in the label
         const label = this.addPointcloudLabel(
             `${pc.name}`,
@@ -590,16 +583,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.econtrols.showPointCloud(pc);
         }
 
-        this.dispatchEvent({
-            type: "pointclouds",
-            pclouds: this.pointClouds.map((p) => ({
-                name: p.name,
-                pointCount: p.pointCount,
-                item: p,
-                onCenter: () => this.econtrols.showPointCloud(p),
-                onRemove: () => this.removePointcloud(p),
-            })),
-        });
+        this.dispatchCloudsUpdated();
     }
 
     removePointcloud(pc: PointCloud) {
@@ -617,6 +601,14 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.loadMoreNodesThrottled();
 
+        this.dispatchCloudsUpdated();
+
+        if (this.pointClouds.length === 0) {
+            this.customOffsetInitialized = false;
+        }
+    }
+
+    dispatchCloudsUpdated() {
         this.dispatchEvent({
             type: "pointclouds",
             pclouds: this.pointClouds.map((p) => ({
@@ -625,12 +617,9 @@ export class Viewer extends EventDispatcher<TEvents> {
                 item: p,
                 onCenter: () => this.econtrols.showPointCloud(p),
                 onRemove: () => this.removePointcloud(p),
+                onToggleVisibility: () => p.toggleVisibility(),
             })),
         });
-
-        if (this.pointClouds.length === 0) {
-            this.customOffsetInitialized = false;
-        }
     }
 
     async addLAZ(what: string | File, center = false) {
@@ -650,6 +639,8 @@ export class Viewer extends EventDispatcher<TEvents> {
                     //     kind: "info",
                     //     message: "Coordinate offset set to " + printVec(this.customOffset),
                     // });
+                } else {
+                    this.customOffset.set(0, 0, 0);
                 }
 
                 this.customOffsetInitialized = true;

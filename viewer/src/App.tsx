@@ -5,6 +5,7 @@ import { Loader } from "./Loader";
 
 import { directoryOpen, fileOpen } from "browser-fs-access";
 import icon_bug from "../assets/bug.svg";
+import icon_eye from "../assets/eye.svg";
 import icon_file_plus from "../assets/file-plus.svg";
 import icon_folder_plus from "../assets/folder-plus.svg";
 import icon_ruler from "../assets/ruler.svg";
@@ -24,7 +25,14 @@ export function App() {
     const [debugMode, setDebugMode] = createSignal(false);
     // const [messages, setMessages] = createSignal<string[]>([]);
     const [pclouds, setPclouds] = createSignal<
-        Array<{ name: string; pointCount: number; item: PointCloud; onCenter: () => void; onRemove: () => void }>
+        Array<{
+            name: string;
+            pointCount: number;
+            item: PointCloud;
+            onCenter: () => void;
+            onRemove: () => void;
+            onToggleVisibility: () => void;
+        }>
     >([]);
 
     // addNotice({ kind: "error", message: "what" });
@@ -212,7 +220,7 @@ export function App() {
             <canvas id="viewer" class="m-0 hidden p-0"></canvas>
 
             <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
-                <div class="pointer-events-auto flex gap-2">
+                <div class="pointer-events-auto mb-2 flex gap-2">
                     <button class="nice flex items-center gap-2 hover:bg-black/50" onClick={() => openFile()}>
                         <img class="h-4 invert hover:backdrop-invert-0" src={icon_file_plus} />
                         Add File
@@ -220,6 +228,17 @@ export function App() {
                     <button class="nice flex items-center gap-2 hover:bg-black/50" onClick={() => openDir()}>
                         <img class="h-4 invert hover:backdrop-invert-0" src={icon_folder_plus} />
                         Add Folder
+                    </button>
+                    <button
+                        class={
+                            "nice flex items-center gap-2 hover:bg-black/50" +
+                            (pclouds().length === 0 ? " opacity-20" : "")
+                        }
+                        disabled={pclouds().length === 0}
+                        onClick={() => pclouds().forEach((p) => p.onRemove())}
+                        title="Remove all Pointclouds"
+                    >
+                        <img class="h-4 invert" src={icon_x} />
                     </button>
                 </div>
                 {pclouds().length > 0 ? (
@@ -236,6 +255,10 @@ export function App() {
                                     {/* ({(pcloud.pointCount / 1_000_000).toFixed(2)}M) */}
                                 </div>
 
+                                <button onClick={pcloud.onToggleVisibility} title="Toggle Visibility">
+                                    <img class="h-4 invert hover:backdrop-invert-0" src={icon_eye} />
+                                </button>
+
                                 <button onClick={pcloud.onRemove} title="Remove">
                                     <img class="h-4 invert hover:backdrop-invert-0" src={icon_x} />
                                 </button>
@@ -243,9 +266,9 @@ export function App() {
                         ))}
                     </div>
                 ) : loading() > 0 ? (
-                    <div class="text-sm text-white">Loading...</div>
+                    <div class="text-xs text-white">Loading...</div>
                 ) : (
-                    <div class="text-sm text-white">No pointclouds loaded. Drag & Drop a COPC LAZ file.</div>
+                    <div class="text-xs text-white">No pointclouds loaded. Drag & Drop a COPC LAZ file.</div>
                 )}
 
                 {/* {messages().length > 0 && (

@@ -163,15 +163,20 @@ export class PointCloudNode {
         }
     }
 
-    show(viewer: Viewer) {
+    show() {
         this.assertState("loading", "cached");
+
+        if (!this.data) {
+            throw new Error("node claims to be loading but has no data");
+        }
 
         if (this.state === "cached") {
             nodeCache.delete(this.cacheID);
             // console.log("CACHE STATS", nodeCache.size, nodeCache.calculatedSize);
-            this.data!.pco.visible = true;
+            this.data.pco.visible = true;
         } else if (this.state === "loading") {
-            viewer.addNode(this);
+            this.parent.group.add(this.data.pco);
+            this.parent.viewer.requestRender("new node");
         }
 
         PointCloudNode.visibleNodes.add(this);
@@ -211,7 +216,7 @@ export class PointCloudNode {
             if (this.state === "unloaded") {
                 console.warn("node was unloaded before loading finished");
             } else {
-                this.show(viewer);
+                this.show();
             }
         } catch (e) {
             this.setState("error");
@@ -233,7 +238,7 @@ export class PointCloudNode {
         this.assertState("loading", "cached", "unloaded");
 
         if (this.data) {
-            viewer.scene.remove(this.data.pco);
+            this.parent.group.remove(this.data.pco);
             if (this.data.pco.material instanceof PointMaterial) {
                 pointMaterialPool.returnMaterial(this.data.pco.material);
             }
