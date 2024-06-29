@@ -3,7 +3,10 @@ import { createSignal, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
+import { directoryOpen, fileOpen } from "browser-fs-access";
 import icon_bug from "../assets/bug.svg";
+import icon_file_plus from "../assets/file-plus.svg";
+import icon_folder_plus from "../assets/folder-plus.svg";
 import icon_ruler from "../assets/ruler.svg";
 import icon_switch_camera from "../assets/switch-camera.svg";
 import icon_x from "../assets/x.svg";
@@ -59,6 +62,41 @@ export function App() {
         }
     }
 
+    function openFile() {
+        fileOpen({ multiple: true, extensions: [".laz", ".copc.laz"] }).then((files) => {
+            if (!files) return;
+            files.forEach((file) => {
+                theViewer()?.addLAZ(file);
+            });
+        });
+    }
+
+    async function openDir() {
+        const dir = await directoryOpen({ recursive: false });
+
+        console.log("DIR", dir);
+        for (const entry of dir) {
+            if ("entries" in entry) {
+                // is FileSystemDirectoryHandle
+                console.log("weirdo", entry);
+                for await (const x of entry.entries()) {
+                    console.log("*", x);
+                }
+            } else {
+                // is FileSystemDirectoryAndFileHandle
+                console.log("duple", entry);
+                theViewer()?.addLAZ(entry);
+            }
+        }
+        // for (const y of x) {
+        //     if ("directoryHandle" in y) {
+        //         theViewer()?.addLAZ(y);
+        //     } else {
+        //         theViewer()?.addLAZ();
+        //     }
+        // }
+    }
+
     onMount(() => {
         const canvas = document.querySelector("#viewer") as HTMLCanvasElement;
         const viewer = new Viewer(canvas, window.innerWidth, window.innerHeight);
@@ -98,10 +136,12 @@ export function App() {
             // void viewer.addLAZ("http://localhost:5173/autzen-classified.copc.laz");
             // void viewer.addLAZ(here + "/lion_takanawa.copc.laz");
             // void viewer.addLAZ(here + "/490000_7505000.laz.copc.laz");
-            void viewer.addLAZ("https://kartta.aolagers.org/urban.copc.laz");
-            // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+            // void viewer.addLAZ("https://kartta.aolagers.org/urban.copc.laz");
+            setLoading(1);
+            void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
         } else {
             // void viewer.addLAZ("https://s3.amazonaws.com/hobu-lidar/autzen-classified.copc.laz");
+            setLoading(1);
             void viewer.addLAZ(here + "/assets/lion_takanawa.copc.laz");
             void viewer.addLAZ("https://kartta.aolagers.org/autzen-classified.copc.laz");
         }
@@ -159,6 +199,16 @@ export function App() {
             <canvas id="viewer" class="m-0 hidden p-0"></canvas>
 
             <div class="pointer-events-none fixed right-2 top-2 z-20 flex h-[calc(100dvh-1rem)] flex-col items-end gap-2">
+                <div class="pointer-events-auto flex gap-2">
+                    <button class="nice flex items-center gap-2 hover:bg-black/50" onClick={() => openFile()}>
+                        <img class="h-4 invert hover:backdrop-invert-0" src={icon_file_plus} />
+                        Add File
+                    </button>
+                    <button class="nice flex items-center gap-2 hover:bg-black/50" onClick={() => openDir()}>
+                        <img class="h-4 invert hover:backdrop-invert-0" src={icon_folder_plus} />
+                        Add Folder
+                    </button>
+                </div>
                 {pclouds().length > 0 ? (
                     <div class="pointer-events-auto flex flex-col items-end gap-2 bg-transparent text-xs text-white">
                         {/* <div>Pointclouds</div> */}
@@ -175,6 +225,8 @@ export function App() {
                             </div>
                         ))}
                     </div>
+                ) : loading() > 0 ? (
+                    <div class="text-sm text-white">Loading...</div>
                 ) : (
                     <div class="text-sm text-white">No pointclouds loaded. Drag & Drop a COPC LAZ file.</div>
                 )}
