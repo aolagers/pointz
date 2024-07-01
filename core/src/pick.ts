@@ -168,7 +168,7 @@ export function getMouseIntersection(
             //         `p:${X} ${Y} ${Z} pts:${attrs.count} idx:${idx}`
             // );
         } else {
-            console.warn("NOPE", a, vals.join("/"), idx, nodehit, "hit boxes: --");
+            console.warn("NOPE", a, vals.join("/"), idx, nodehit, pchit, nodehit?.data);
         }
     }
 

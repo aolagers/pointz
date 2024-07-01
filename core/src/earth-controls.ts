@@ -15,6 +15,7 @@ import { Measure } from "./measure";
 import { getMouseIntersection, getMouseRay } from "./pick";
 import { PointCloud } from "./pointcloud";
 import { LOCALSTORAGE_KEYS } from "./settings";
+import { getCameraFrustum } from "./utils";
 import { Viewer } from "./viewer";
 
 type CameraPosition = {
@@ -56,6 +57,8 @@ export class EarthControls {
     };
 
     onChange: null | ((why: string) => void) = null;
+
+    warningElement: HTMLDivElement;
 
     constructor(camera: PerspectiveCamera, element: HTMLElement, viewer: Viewer) {
         this.camera = camera;
@@ -99,9 +102,45 @@ export class EarthControls {
                 this.changed("wheel");
             }
         });
+
+        this.warningElement = document.createElement("div");
+        document.body.appendChild(this.warningElement);
+        this.warningElement.classList.add(
+            "fixed",
+            "z-20",
+            "top-2",
+            "text-white",
+            "cursor-pointer",
+            "opacity-75",
+            "left-1/2",
+            "-translate-x-1/2",
+            "hidden"
+        );
+        this.warningElement.innerText = "No pointclouds visible. Click to here reset camera.";
+        this.warningElement.addEventListener("click", () => {
+            this.targetAll();
+        });
     }
 
+    lastVisibilityCheck = 0;
+
     changed(why: string) {
+        if (performance.now() - this.lastVisibilityCheck > 500) {
+            const frustum = getCameraFrustum(this.camera);
+            let hasVisible = false;
+
+            for (const pc of this.viewer.pointClouds) {
+                if (frustum.intersectsBox(pc.tree.root.node.bounds)) {
+                    hasVisible = true;
+                    this.warningElement.classList.add("hidden");
+                }
+            }
+            if (!hasVisible && this.viewer.pointClouds.length > 0) {
+                this.warningElement.classList.remove("hidden");
+            }
+            this.lastVisibilityCheck = performance.now();
+        }
+
         this.onChange?.(why);
     }
 
@@ -449,9 +488,12 @@ export class EarthControls {
         tbox.max.sub(this.viewer.customOffset);
 
         const center = tbox.getCenter(new Vector3());
-        const size = tbox.getSize(new Vector3()).x;
+        const boxSize = tbox.getSize(new Vector3());
+        const maxEdge = Math.max(boxSize.x, boxSize.y, boxSize.z);
+        const fovRad = this.camera.fov * (Math.PI / 180);
+        const cdist = (0.5 * maxEdge) / Math.sin(fovRad / 2);
 
-        this.camera.position.copy(center).add(new Vector3(0, -1, 0.5).multiplyScalar(size * 1.1));
+        this.camera.position.copy(center).add(new Vector3(0, -1, 0.8).normalize().multiplyScalar(cdist * 1.1));
         this.camera.lookAt(center);
 
         console.log("cam", this.camera.position);

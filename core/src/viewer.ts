@@ -75,10 +75,6 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     edlMaterial: EDLMaterial;
 
-    errors: Record<string, boolean> = {
-        resizing: false,
-    };
-
     initialized = false;
 
     #debug_mode = false;
