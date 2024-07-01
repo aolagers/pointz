@@ -17,19 +17,21 @@ export type CopcNodeInfo = {
 
 export type WorkerPoints = {
     Request: {
-        command: "points";
+        command: "getChunk";
         source: LazSource;
         offset: number[];
         nodeInfo: CopcNodeInfo;
     };
     Response: {
-        msgType: "points";
+        msgType: "getChunk";
         pointCount: number;
         positions: Float32Array;
         colors: Uint8Array;
         classifications: Uint8Array;
         intensities: Uint16Array;
         indices: Int32Array;
+        workerID: number;
+        loadID: number;
     };
 };
 
@@ -84,13 +86,17 @@ function createCOPCFetcher(source: LazSource) {
     }
 }
 
+let loadID = 0;
+
 onmessage = async function (e: MessageEvent<WorkerRequest>) {
     try {
-        const fetcher = createCOPCFetcher(e.data.source);
+        const command = e.data;
+
+        const fetcher = createCOPCFetcher(command.source);
 
         const copc = await Copc.create(fetcher);
 
-        if (e.data.command === "info") {
+        if (command.command === "info") {
             log("READ INFO", copc);
 
             const response: WorkerInfo["Response"] = {
@@ -100,15 +106,15 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             };
 
             postMessage(response);
-        } else if (e.data.command === "hierarchy") {
-            const hierarchy = await Copc.loadHierarchyPage(fetcher, e.data.pageInfo);
+        } else if (command.command === "hierarchy") {
+            const hierarchy = await Copc.loadHierarchyPage(fetcher, command.pageInfo);
             const response: WorkerHierarchy["Response"] = {
                 msgType: "hierarchy",
                 hierarchy: hierarchy,
             };
             postMessage(response);
-        } else if (e.data.command === "points") {
-            const node = e.data.nodeInfo;
+        } else if (command.command === "getChunk") {
+            const node = command.nodeInfo;
 
             const view = await Copc.loadPointDataView(fetcher, copc, node);
 
@@ -137,7 +143,7 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             let pIdx = 0;
             let cIdx = 0;
 
-            const offset = e.data.offset;
+            const offset = command.offset;
 
             for (let i = 0; i < view.pointCount; i++) {
                 positions[pIdx++] = getters.x(i) - offset[0];
@@ -161,13 +167,16 @@ onmessage = async function (e: MessageEvent<WorkerRequest>) {
             }
 
             const response: WorkerPoints["Response"] = {
-                msgType: "points",
+                msgType: "getChunk",
                 pointCount: view.pointCount,
                 positions,
                 colors,
                 classifications,
                 intensities,
                 indices,
+                // this will be overridden by the worker pool which known the worker id
+                workerID: -1,
+                loadID: ++loadID,
             };
 
             postMessage(response, {

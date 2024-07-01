@@ -13,7 +13,7 @@ import {
     Uint8BufferAttribute,
     Vector3,
 } from "three";
-import { CopcNodeInfo, WorkerPoints } from "./copc-loader";
+import type { CopcNodeInfo, WorkerPoints } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
 import { DEFAULT_POINT_MATERIAL, PointMaterial, pointMaterialPool } from "./materials/point-material";
 import { OctreePath } from "./octree";
@@ -25,7 +25,7 @@ import { WorkerPool } from "./worker-pool";
 
 export const pointsWorkerPool = new WorkerPool<
     {
-        info: { abort: AbortController; score: number; node: PointCloudNode };
+        info: { score: number; node: PointCloudNode };
         command: WorkerPoints["Request"];
     },
     WorkerPoints["Response"]
@@ -261,12 +261,11 @@ export class PointCloudNode {
         // TODO: figure out how to abort this
         const data = await pointsWorkerPool.runTask({
             info: {
-                abort: new AbortController(),
                 score: score,
                 node: this,
             },
             command: {
-                command: "points",
+                command: "getChunk",
                 nodeInfo: this.copcInfo,
                 offset: new Vector3().addVectors(this.parent.headerOffset, customOffset).toArray(),
                 source: this.parent.source,

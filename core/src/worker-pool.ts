@@ -4,12 +4,11 @@ import { PriorityQueue } from "./priority-queue";
 type Wrapper = {
     worker: Worker;
     busy: boolean;
-    id: number;
+    workerID: number;
 };
 
 type Request = {
     info: {
-        abort: AbortController;
         score: number;
     };
     command: unknown;
@@ -59,7 +58,7 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
         const wrapped = {
             worker: worker,
             busy: false,
-            id: i,
+            workerID: i,
         };
         this.pool.push(wrapped);
         return wrapped;
@@ -74,6 +73,9 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
                 if (e.data.msgType === "error") {
                     next.reject(e.data);
                 } else {
+                    if ("workerID" in e.data) {
+                        e.data.workerID = w.workerID;
+                    }
                     next.resolve(e.data);
                 }
                 this.onTaskFinished(w);
@@ -119,6 +121,9 @@ export class WorkerPool<Input extends Request, Output extends { msgType: string 
                     if (e.data.msgType === "error") {
                         reject(e.data);
                     } else {
+                        if ("workerID" in e.data) {
+                            e.data.workerID = available.workerID;
+                        }
                         resolve(e.data);
                     }
 

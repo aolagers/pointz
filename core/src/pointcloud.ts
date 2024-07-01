@@ -9,12 +9,12 @@ import { Viewer } from "./viewer";
 import { WorkerPool } from "./worker-pool";
 
 export const infoWorkerPool = new WorkerPool<
-    { info: { abort: AbortController; score: number }; command: WorkerInfo["Request"] },
+    { info: { score: number }; command: WorkerInfo["Request"] },
     WorkerInfo["Response"]
 >(workerUrl, 4);
 
 export const hierachyWorkerPool = new WorkerPool<
-    { info: { abort: AbortController; score: number }; command: WorkerHierarchy["Request"] },
+    { info: { score: number }; command: WorkerHierarchy["Request"] },
     WorkerHierarchy["Response"]
 >(workerUrl, 4);
 
@@ -147,7 +147,6 @@ export class PointCloud {
         const r = await hierachyWorkerPool.runTask({
             info: {
                 score: Date.now(),
-                abort: new AbortController(),
             },
             command: {
                 command: "hierarchy",
@@ -163,7 +162,6 @@ export class PointCloud {
         return await infoWorkerPool.runTask({
             info: {
                 score: Date.now(),
-                abort: new AbortController(),
             },
             command: {
                 command: "info",
