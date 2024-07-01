@@ -244,6 +244,9 @@ export class Viewer extends EventDispatcher<TEvents> {
                     this.econtrols.measure.start();
                 }
             }
+            if (ev.key === "l") {
+                this.toggleLabels();
+            }
 
             this.requestRender("keydown");
         });
@@ -278,11 +281,27 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     addPointcloudLabel(text1: string, text2: string | null, pos: Vector3, pc: PointCloud) {
-        const label = this.addLabel(text1, text2, pos, () => this.econtrols.showPointCloud(pc));
+        const label = this.addLabel(
+            text1,
+            text2,
+            pos,
+            () => this.econtrols.showPointCloud(pc),
+            (hovering) => pc.setHighlight(hovering)
+        );
+
+        if (!this.#show_labels) {
+            label.element.classList.add("hidden");
+        }
         return label;
     }
 
-    addLabel(text1: string, text2: string | null, pos: Vector3, onClick: null | (() => void)) {
+    addLabel(
+        text1: string,
+        text2: string | null,
+        pos: Vector3,
+        onClick: null | (() => void),
+        onHover: null | ((hovering: boolean) => void) = null
+    ) {
         const div = document.createElement("div");
         div.classList.add("label");
         if (onClick) {
@@ -299,6 +318,10 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         if (onClick) {
             label.element.addEventListener("click", onClick);
+        }
+        if (onHover) {
+            label.element.addEventListener("mouseenter", () => onHover(true));
+            label.element.addEventListener("mouseleave", () => onHover(false));
         }
 
         label.position.copy(pos);
@@ -620,6 +643,19 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         if (this.pointClouds.length === 0) {
             this.customOffsetInitialized = false;
+        }
+    }
+
+    #show_labels = false;
+    toggleLabels() {
+        this.#show_labels = !this.#show_labels;
+
+        for (const pc of this.pointClouds) {
+            if (this.#show_labels) {
+                pc.label?.element.classList.remove("hidden");
+            } else {
+                pc.label?.element.classList.add("hidden");
+            }
         }
     }
 
