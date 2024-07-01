@@ -286,14 +286,13 @@ export class EarthControls {
     }
 
     prevAngle = new Vector2(0, 0);
+    prevPanTime = 0;
+    intersectionToPivot = new Vector3();
+    panSpeed = 0.0;
 
     prevFrame = 0;
 
     pointerMove(e: PointerEvent) {
-        if (this.prevFrame === this.viewer.frame) {
-            return;
-        }
-
         const rect = this.domElement.getBoundingClientRect();
         if (e.isPrimary) {
             this.pointer.x = ((e.clientX - rect.x) / rect.width) * 2 - 1;
@@ -373,9 +372,19 @@ export class EarthControls {
                 const plane = new Plane().setFromNormalAndCoplanarPoint(UNIT_Z, this.pivot.position);
                 const ray = getMouseRay(this.pointer, this.camera);
                 const intersection = ray.intersectPlane(plane, new Vector3());
+
                 if (intersection) {
-                    const intersectionToPivot = new Vector3().subVectors(this.pivot.position, intersection);
-                    this.camera.position.add(intersectionToPivot);
+                    this.intersectionToPivot.subVectors(this.pivot.position, intersection);
+
+                    const meters = this.intersectionToPivot.length();
+                    const dt = performance.now() - this.prevPanTime;
+                    const speed = meters / dt;
+                    this.panSpeed = speed;
+                    this.prevPanTime = performance.now();
+
+                    if (this.prevFrame !== this.viewer.frame) {
+                        this.camera.position.add(this.intersectionToPivot);
+                    }
                 }
             }
         }

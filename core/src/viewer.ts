@@ -318,12 +318,32 @@ export class Viewer extends EventDispatcher<TEvents> {
         }
     }
 
+    prevTime = 0;
+
     private render(why: string) {
         const frameStart = performance.now();
+        const dt = frameStart - this.prevTime;
         this.renderRequested = false;
 
         if (ALWAYS_RENDER) {
             this.requestRender("loop");
+        }
+
+        // flick animation
+        if (this.econtrols.panSpeed > 0.001 && !this.econtrols.dragging) {
+            const da = performance.now() - this.econtrols.prevPanTime;
+            this.econtrols.panSpeed = this.econtrols.panSpeed * Math.exp(-0.005 * da);
+
+            const n = new Vector3()
+                .copy(this.econtrols.intersectionToPivot)
+                .normalize()
+                .multiplyScalar((dt * this.econtrols.panSpeed) / 2);
+
+            this.camera.position.add(n);
+
+            this.econtrols.prevPanTime = performance.now();
+
+            this.econtrols.changed("anim");
         }
 
         const delta = clock.getDelta();
@@ -395,6 +415,7 @@ export class Viewer extends EventDispatcher<TEvents> {
             console.log("requestRender", why, dx.toFixed(2), dy.toFixed(2));
         }
         this.prevCam.copy(this.camera.position);
+        this.prevTime = frameStart;
     }
 
     loadMoreNodesThrottled = throttle(300, () => {
