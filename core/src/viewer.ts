@@ -288,7 +288,7 @@ export class Viewer extends EventDispatcher<TEvents> {
 
     addLabel(text1: string, text2: string | null, pos: Vector3, onClick: null | (() => void)) {
         const div = document.createElement("div");
-        div.classList.add("nice", "label");
+        div.classList.add("label");
         if (onClick) {
             div.classList.add("cursor-pointer");
         }

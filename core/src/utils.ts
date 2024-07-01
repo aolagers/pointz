@@ -9,7 +9,7 @@ function getWireframeMaterial(color: string) {
     if (colorCache.has(color)) {
         return colorCache.get(color)!;
     } else {
-        const mat = new MeshBasicMaterial({ color: color, wireframe: true });
+        const mat = new MeshBasicMaterial({ color: color, wireframe: true, depthWrite: false });
         colorCache.set(color, mat);
         return mat;
     }

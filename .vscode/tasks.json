@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "core",
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": ["$vite"],
+      "options": { "cwd": "${workspaceFolder}/core" },
+      "presentation": { "group": "dgroup" }
+    },
+    {
+      "label": "viewer",
+      "type": "shell",
+      "command": "npm run dev:sleep",
+      "problemMatcher": ["$vite"],
+      "options": { "cwd": "${workspaceFolder}/viewer" },
+      "presentation": { "group": "dgroup" }
+    },
+    {
+      "label": "both",
+      "dependsOn": ["core", "viewer"],
+      "dependsOrder": "parallel",
+      "problemMatcher": ["$vite"],
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "group": "dgroup",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    }
+  ]
+}

@@ -7,9 +7,13 @@ export default {
                 xs: "2px",
             },
             fontSize: {
-                xxs: ".60rem",
+                xxs: ".65rem",
+            },
+            borderRadius: {
+                xs: "0.0625rem",
             },
         },
     },
+    safelist: ["label"],
     plugins: [],
 };

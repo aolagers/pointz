@@ -4,24 +4,31 @@
 
 html,
 body {
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-    height: 100%;
-
     background: radial-gradient(rgb(95, 133, 190), rgb(23, 64, 112));
 
-    overflow: hidden;
-}
+    /* https://modernfontstacks.com/#font-stacks */
 
-.label {
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 0.2em 0.5em;
-    color: #ddd;
-    font-size: x-small;
+    /* industrial */
+    font-family: Bahnschrift, "DIN Alternate", "Franklin Gothic Medium", "Nimbus Sans Narrow", sans-serif-condensed,
+        sans-serif;
+
+    /* humanist */
+    /* font-family: Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans", source-sans-pro, sans-serif; */
+
+    /* geometric humanist */
+    /* font-family: Avenir, Montserrat, Corbel, "URW Gothic", source-sans-pro, sans-serif; */
+
+    /* neo-grotesque */
+    /* font-family: Inter, Roboto, "Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif; */
+
+    /* font-family: system-ui, sans-serif; */
+    /* font-family: sans-serif; */
 }
 
 @layer components {
+    .label {
+        @apply pointer-events-auto select-none rounded-xs bg-black/30 px-1.5 py-px text-xxs text-gray-100 shadow-md outline outline-1 outline-black/50 backdrop-blur-xs;
+    }
     .nice {
         @apply select-none rounded-sm bg-black/30 px-2 py-0.5 text-xs text-gray-200 shadow-md outline outline-1 outline-black/50 backdrop-blur-xs;
     }

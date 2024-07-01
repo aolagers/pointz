@@ -229,12 +229,13 @@ export function App() {
                         <img class="h-4 invert" src={icon_x} />
                     </button>
                 </div>
+
                 {pclouds().length > 0 ? (
                     <div class="pointer-events-auto flex flex-col items-end gap-2 bg-transparent text-xs text-white">
                         {/* <div>Pointclouds</div> */}
                         {pclouds().map((pcloud) => (
                             <div
-                                class="nice flex items-center pr-1"
+                                class="nice flex items-center pr-1 hover:outline-green-600/70"
                                 onMouseEnter={() => pcloud.item.setHighlight(true)}
                                 onMouseLeave={() => pcloud.item.setHighlight(false)}
                             >
