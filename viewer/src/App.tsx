@@ -1,6 +1,6 @@
 import { PointCloud, Viewer } from "@pointz/core";
 import { directoryOpen, fileOpen } from "browser-fs-access";
-import { createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, on, onMount } from "solid-js";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
@@ -24,7 +24,6 @@ export function App() {
     const [loading, setLoading] = createSignal(0);
     const [showHelp, setShowHelp] = createSignal(!(localStorage.getItem("show_help") === "false"));
     const [debugMode, setDebugMode] = createSignal(false);
-    // const [messages, setMessages] = createSignal<string[]>([]);
     const [pclouds, setPclouds] = createSignal<
         Array<{
             name: string;
@@ -35,6 +34,18 @@ export function App() {
             onToggleVisibility: () => void;
         }>
     >([]);
+
+    const elems: HTMLElement[] = [];
+
+    function updatePositions() {
+        let i = 0;
+        for (const pc of pclouds()) {
+            pc.item.uiLabel = elems[i];
+            i++;
+        }
+    }
+
+    createEffect(on(pclouds, () => updatePositions()));
 
     // addNotice({ kind: "error", message: "what" });
     // addNotice({ kind: "warn", message: "what the" });
@@ -189,9 +200,7 @@ export function App() {
             <div class="fixed left-1/2 z-20 mt-2 flex -translate-x-1/2 transform flex-col gap-1">
                 {notices().map((notice, idx) => (
                     <div
-                        class={
-                            "mt-2 w-fit cursor-pointer rounded-sm px-2 py-1 text-sm shadow-md outline outline-black/20 backdrop-blur-xs"
-                        }
+                        class="mt-2 w-fit cursor-pointer rounded-sm px-2 py-1 text-sm shadow-md outline outline-black/20 backdrop-blur-xs"
                         classList={{
                             "bg-red-500/70": notice.kind === "error",
                             "bg-blue-500/70": notice.kind === "info",
@@ -233,15 +242,16 @@ export function App() {
                 {pclouds().length > 0 ? (
                     <div class="pointer-events-auto flex flex-col items-end gap-2 bg-transparent text-xs text-white">
                         {/* <div>Pointclouds</div> */}
-                        {pclouds().map((pcloud) => (
+                        {pclouds().map((pcloud, idx) => (
                             <div
                                 class="nice flex items-center pr-1 hover:outline-green-600/70"
+                                ref={(el) => (elems[idx] = el)}
                                 onMouseEnter={() => pcloud.item.setHighlight(true)}
                                 onMouseLeave={() => pcloud.item.setHighlight(false)}
                             >
                                 <div onClick={pcloud.onCenter} class="flex cursor-pointer items-center">
                                     <span>{pcloud.name}</span>
-                                    <span class="text-xxs px-2 font-bold text-gray-400">
+                                    <span class="px-2 text-xxs font-bold text-gray-400">
                                         {(pcloud.pointCount / 1_000_000).toFixed(2)}M
                                     </span>
                                 </div>

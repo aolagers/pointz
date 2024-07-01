@@ -1,7 +1,11 @@
 import {
     Box3,
+    BufferAttribute,
+    BufferGeometry,
     Euler,
     EulerOrder,
+    LineBasicMaterial,
+    LineSegments,
     Mesh,
     MeshNormalMaterial,
     PerspectiveCamera,
@@ -26,6 +30,8 @@ type CameraPosition = {
 const UNIT_Z = new Vector3(0, 0, 1);
 
 // see: https://www.redblobgames.com/making-of/draggable/
+
+const lines = new LineSegments(new BufferGeometry(), new LineBasicMaterial({ color: 0x00ff00, depthWrite: false }));
 
 export class EarthControls {
     camera: PerspectiveCamera;
@@ -147,6 +153,11 @@ export class EarthControls {
     init() {
         this.viewer.scene.add(this.pivot);
         this.measure.init(this.viewer);
+
+        const vertices = new Float32Array(128 * 3);
+        lines.geometry.setAttribute("position", new BufferAttribute(vertices, 3));
+
+        this.viewer.scene.add(lines);
     }
 
     setCursor(cursor: string) {
@@ -390,6 +401,43 @@ export class EarthControls {
         this.saveCamera();
         this.changed("pointerMove");
         this.prevFrame = this.viewer.frame;
+    }
+
+    updateLines() {
+        let hpid = 0;
+        for (let pcid = 0; pcid < this.viewer.pointClouds.length; pcid++) {
+            const pc = this.viewer.pointClouds[pcid];
+            if (!pc.isHighlighted) {
+                continue;
+            }
+            console.log("HI", hpid, pc);
+
+            const corner = pc.tightBounds.max.clone().sub(this.viewer.customOffset);
+
+            let x = 0.8;
+            let y = 0.9;
+
+            if (pc.uiLabel) {
+                const rect = this.domElement.getBoundingClientRect();
+                const labelRect = pc.uiLabel.getBoundingClientRect();
+                x = ((labelRect.x - rect.x) / rect.width) * 2 - 1;
+                y = -((labelRect.y + labelRect.height / 2 - rect.y) / rect.height) * 2 + 1;
+            }
+
+            const ray = getMouseRay(new Vector2(x, y), this.camera);
+            const to = ray.origin.addScaledVector(ray.direction, 1);
+            // const to = ray.origin;
+
+            lines.geometry.attributes.position.setXYZ(hpid * 2, to.x, to.y, to.z);
+            lines.geometry.attributes.position.setXYZ(hpid * 2 + 1, corner.x, corner.y, corner.z);
+            lines.geometry.attributes.position.needsUpdate = true;
+            lines.geometry.computeBoundingSphere();
+
+            hpid++;
+            // lines.computeLineDistances();
+        }
+
+        lines.geometry.setDrawRange(0, hpid * 2);
     }
 
     keysDown = new Set<string>();

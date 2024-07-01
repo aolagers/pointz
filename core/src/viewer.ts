@@ -328,6 +328,9 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         const delta = clock.getDelta();
 
+        this.camera.updateMatrixWorld();
+        this.econtrols.updateLines();
+
         // this.controls.update(delta);
         this.econtrols.update(delta);
 
