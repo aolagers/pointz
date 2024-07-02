@@ -2,12 +2,13 @@ import { LRUCache } from "lru-cache";
 import {
     Box3,
     BufferGeometry,
-    Camera,
     Float32BufferAttribute,
     Int32BufferAttribute,
     IntType,
     Mesh,
     MeshBasicMaterial,
+    OrthographicCamera,
+    PerspectiveCamera,
     Points,
     Uint16BufferAttribute,
     Uint8BufferAttribute,
@@ -119,10 +120,13 @@ export class PointCloudNode {
         return this.nodeName[0];
     }
 
-    estimateNodeError(camera: Camera) {
+    estimateNodeError(camera: PerspectiveCamera | OrthographicCamera) {
         // IDEA: use bounding sphere instead of box?
 
-        const dist = this.bounds.distanceToPoint(camera.position);
+        const dist =
+            camera instanceof OrthographicCamera
+                ? camera.right - camera.left
+                : this.bounds.distanceToPoint(camera.position);
 
         // const cameraRay = new Ray(camera.position, camera.getWorldDirection(new Vector3()));
         // const center = this.bounds.getCenter(new Vector3());
@@ -259,34 +263,54 @@ export class PointCloudNode {
 
     async getChunk(score: number, customOffset: Vector3) {
         // TODO: figure out how to abort this
-        const data = await pointsWorkerPool.runTask({
-            info: {
-                score: score,
-                node: this,
-            },
-            command: {
-                command: "getChunk",
-                nodeInfo: this.copcInfo,
-                offset: new Vector3().addVectors(this.parent.headerOffset, customOffset).toArray(),
-                source: this.parent.source,
-            },
-        });
 
         const geometry = new BufferGeometry();
+        let ptCount = this.copcInfo.pointCount;
 
-        geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
-        geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
-        geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
+        if (this.copcInfo.pointCount > 0) {
+            // only try fetching if the are points available
+            const data = await pointsWorkerPool.runTask({
+                info: {
+                    score: score,
+                    node: this,
+                },
+                command: {
+                    command: "getChunk",
+                    nodeInfo: this.copcInfo,
+                    offset: new Vector3().addVectors(this.parent.headerOffset, customOffset).toArray(),
+                    source: this.parent.source,
+                },
+            });
+            geometry.setAttribute("position", new Float32BufferAttribute(data.positions, 3));
+            geometry.setAttribute("color", new Uint8BufferAttribute(data.colors, 3, true));
+            geometry.setAttribute("intensity", new Uint16BufferAttribute(data.intensities, 1, true));
 
-        const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
-        classificationAttribute.gpuType = IntType;
-        geometry.setAttribute("classification", classificationAttribute);
+            const classificationAttribute = new Int32BufferAttribute(data.classifications, 1);
+            classificationAttribute.gpuType = IntType;
+            geometry.setAttribute("classification", classificationAttribute);
 
-        const ptIndexAttribute = new Int32BufferAttribute(data.indices, 1);
-        ptIndexAttribute.gpuType = IntType;
-        geometry.setAttribute("ptIndex", ptIndexAttribute);
+            const ptIndexAttribute = new Int32BufferAttribute(data.indices, 1);
+            ptIndexAttribute.gpuType = IntType;
+            geometry.setAttribute("ptIndex", ptIndexAttribute);
+            ptCount = data.pointCount;
+            if (this.copcInfo.pointCount !== ptCount) {
+                alert("point count mismatch: " + this.copcInfo.pointCount + "" + ptCount);
+            }
+        } else {
+            // create a dummy geometry with no points
+            geometry.setAttribute("position", new Float32BufferAttribute([], 3));
+            geometry.setAttribute("color", new Uint8BufferAttribute([], 3, true));
+            geometry.setAttribute("intensity", new Uint16BufferAttribute([], 1, true));
 
-        return { geometry: geometry, pointCount: data.pointCount };
+            const classificationAttribute = new Int32BufferAttribute([], 1);
+            classificationAttribute.gpuType = IntType;
+            geometry.setAttribute("classification", classificationAttribute);
+
+            const ptIndexAttribute = new Int32BufferAttribute([], 1);
+            ptIndexAttribute.gpuType = IntType;
+            geometry.setAttribute("ptIndex", ptIndexAttribute);
+        }
+        return { geometry: geometry, pointCount: ptCount };
     }
 
     assertState(...states: NodeState[]) {

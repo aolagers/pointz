@@ -53,7 +53,6 @@ export class Octree {
         if (keys.length === 0) {
             return;
         }
-        console.error("NEW PAGES!!!", keys.length, pages);
         for (const pageID of keys) {
             const parent = parentPath(pageID.split("-").map(Number) as OctreePath);
             const parentID = parent.join("-");

@@ -24,30 +24,28 @@ import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-mat
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { PriorityQueue } from "./priority-queue";
-import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, ERROR_LIMIT, POINT_BUDGET, SHOW_RENDERS } from "./settings";
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, ERROR_LIMIT, POINT_BUDGET } from "./settings";
 import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
 
-const clock = new Clock();
+export type PointCloudInfo = {
+    name: string;
+    pointCount: number;
+    item: PointCloud;
+    onCenter: () => void;
+    onRemove: () => void;
+    onToggleVisibility: () => void;
+};
 
 type TEvents = {
     loading: { nodes: number };
     message: { text: string };
     notice: { kind: "error" | "warn" | "info"; message: string };
-    pointclouds: {
-        pclouds: Array<{
-            name: string;
-            pointCount: number;
-            item: PointCloud;
-            onCenter: () => void;
-            onRemove: () => void;
-            onToggleVisibility: () => void;
-        }>;
-    };
+    pointclouds: { pclouds: PointCloudInfo[] };
 };
 
 export class Viewer extends EventDispatcher<TEvents> {
     renderer: WebGLRenderer;
-    camera: PerspectiveCamera;
+    camera: PerspectiveCamera | OrthographicCamera;
 
     econtrols: EarthControls;
 
@@ -63,6 +61,8 @@ export class Viewer extends EventDispatcher<TEvents> {
     lastFrameTime = 0;
     avgFrameTime1 = 0;
     avgFrameTime2 = 0;
+    clock = new Clock();
+
     renderTarget: WebGLRenderTarget;
 
     sceneOrtho: Scene;
@@ -135,18 +135,16 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.renderer.info.autoReset = false;
 
+        const depthTex = new DepthTexture(this.width, this.height, UnsignedIntType);
         this.renderTarget = new WebGLRenderTarget(this.width, this.height, {
             format: RGBAFormat,
             minFilter: NearestFilter,
             magFilter: NearestFilter,
             stencilBuffer: false,
-            depthTexture: new DepthTexture(this.width, this.height, UnsignedIntType),
+            depthTexture: depthTex,
         });
 
-        this.camera = new PerspectiveCamera(60, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
-        this.camera.up.set(0, 0, 1);
-        this.camera.position.set(0, -50, 25);
-        this.camera.lookAt(0, 0, 0);
+        this.camera = this.createCamera("perspective");
 
         this.labelRenderer = new CSS2DRenderer();
         this.econtrols = new EarthControls(this.camera, this.labelRenderer.domElement, this);
@@ -154,7 +152,7 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.scene = new Scene();
         this.labelScene = new Scene();
 
-        this.edlMaterial = new EDLMaterial(this.renderTarget.texture, this.renderTarget.depthTexture);
+        this.edlMaterial = new EDLMaterial(this.renderTarget.texture, depthTex);
 
         const tquad = new Mesh(new PlaneGeometry(2, 2), this.edlMaterial);
         this.sceneOrtho = new Scene();
@@ -165,13 +163,35 @@ export class Viewer extends EventDispatcher<TEvents> {
         this.setSize(this.width, this.height);
     }
 
+    createCamera(type: "ortho" | "perspective") {
+        // TODO: calculate sensible values from the other type of cam
+        if (type === "ortho") {
+            const camera = new OrthographicCamera(-200, 200, 200, -200, CAMERA_NEAR, CAMERA_FAR);
+            camera.up.set(0, 0, 1);
+            camera.position.set(0, -5000, 2500);
+            camera.lookAt(0, 0, 0);
+            camera.updateMatrixWorld();
+            return camera;
+        } else {
+            const camera = new PerspectiveCamera(60, this.width / this.height, CAMERA_NEAR, CAMERA_FAR);
+            camera.up.set(0, 0, 1);
+            camera.position.set(0, -50, 25);
+            camera.lookAt(0, 0, 0);
+            camera.updateMatrixWorld();
+            return camera;
+        }
+    }
+
     init(opts: { debugEl?: HTMLElement } = {}) {
         // document.body.appendChild(this.stats.dom);
 
         this.debugEl = opts.debugEl;
 
         this.econtrols.onChange = (why) => {
-            this.debugInfo.camera = printVec(this.camera.position);
+            this.debugInfo.camera =
+                printVec(this.camera.position) +
+                " " +
+                (this.camera instanceof OrthographicCamera ? (this.camera.right - this.camera.left).toFixed(1) : "");
 
             this.loadMoreNodesThrottled();
             this.requestRender("controls " + why);
@@ -246,6 +266,18 @@ export class Viewer extends EventDispatcher<TEvents> {
             }
             if (ev.key === "l") {
                 this.toggleLabels();
+            }
+            if (ev.key === "p") {
+                if (this.camera instanceof PerspectiveCamera) {
+                    this.camera = this.createCamera("ortho");
+                } else {
+                    this.camera = this.createCamera("perspective");
+                }
+
+                this.camera.updateProjectionMatrix();
+                this.econtrols.camera = this.camera;
+                this.econtrols.targetAll();
+                this.loadMoreNodes();
             }
 
             this.requestRender("keydown");
@@ -342,10 +374,11 @@ export class Viewer extends EventDispatcher<TEvents> {
     }
 
     prevTime = 0;
+    animDirection = new Vector3();
 
     private render(why: string) {
         const frameStart = performance.now();
-        const dt = frameStart - this.prevTime;
+        const dt = this.clock.getDelta();
         this.renderRequested = false;
 
         if (ALWAYS_RENDER) {
@@ -357,10 +390,10 @@ export class Viewer extends EventDispatcher<TEvents> {
             const da = performance.now() - this.econtrols.prevPanTime;
             this.econtrols.panSpeed = this.econtrols.panSpeed * Math.exp(-0.005 * da);
 
-            const n = new Vector3()
+            const n = this.animDirection
                 .copy(this.econtrols.intersectionToPivot)
                 .normalize()
-                .multiplyScalar((dt * this.econtrols.panSpeed) / 2);
+                .multiplyScalar((1000 * dt * this.econtrols.panSpeed) / 2);
 
             this.camera.position.add(n);
 
@@ -369,13 +402,11 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.econtrols.changed("anim");
         }
 
-        const delta = clock.getDelta();
-
         this.camera.updateMatrixWorld();
         this.econtrols.updateLines();
 
         // this.controls.update(delta);
-        this.econtrols.update(delta);
+        this.econtrols.update(dt);
 
         // render to texture
         this.renderer.setRenderTarget(this.renderTarget);
@@ -432,11 +463,6 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.labelRenderer.render(this.labelScene, this.camera);
 
-        if (SHOW_RENDERS && why) {
-            const dx = this.camera.position.x - this.prevCam.x;
-            const dy = this.camera.position.y - this.prevCam.y;
-            console.log("requestRender", why, dx.toFixed(2), dy.toFixed(2));
-        }
         this.prevCam.copy(this.camera.position);
         this.prevTime = frameStart;
     }
@@ -578,7 +604,14 @@ export class Viewer extends EventDispatcher<TEvents> {
 
         this.renderTarget.setSize(this.width * pr, this.height * pr);
         this.renderer.setSize(this.width * pr, this.height * pr, false);
-        this.camera.aspect = this.width / this.height;
+        if (this.camera instanceof PerspectiveCamera) {
+            this.camera.aspect = this.width / this.height;
+        } else {
+            this.camera.left = -this.width / 2;
+            this.camera.right = this.width / 2;
+            this.camera.top = this.height / 2;
+            this.camera.bottom = -this.height / 2;
+        }
         this.camera.updateProjectionMatrix();
         const sz = new Vector2();
         this.renderer.getDrawingBufferSize(sz);

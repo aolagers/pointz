@@ -4,10 +4,14 @@ import {
     BufferGeometry,
     Euler,
     EulerOrder,
+    Intersection,
     LineBasicMaterial,
     LineSegments,
     Mesh,
+    MeshBasicMaterial,
     MeshNormalMaterial,
+    Object3D,
+    OrthographicCamera,
     PerspectiveCamera,
     Plane,
     SphereGeometry,
@@ -23,18 +27,21 @@ import { getCameraFrustum } from "./utils";
 import { Viewer } from "./viewer";
 
 type CameraPosition = {
+    type: "perspective" | "ortho";
     position: Vector3Tuple;
     rotation: [number, number, number, EulerOrder];
+    size: number[];
 };
 
 const UNIT_Z = new Vector3(0, 0, 1);
+const DBLCLICK_LEN = 300;
 
 // see: https://www.redblobgames.com/making-of/draggable/
 
 const lines = new LineSegments(new BufferGeometry(), new LineBasicMaterial({ color: 0x00ff00, depthWrite: false }));
 
 export class EarthControls {
-    camera: PerspectiveCamera;
+    camera: PerspectiveCamera | OrthographicCamera;
     domElement: HTMLElement;
     viewer: Viewer;
     pivot: Mesh;
@@ -50,6 +57,7 @@ export class EarthControls {
 
     lastClickUp = performance.now();
     lastClickDown = performance.now();
+    lastMove = performance.now();
 
     start = {
         mouse: new Vector2(),
@@ -66,7 +74,7 @@ export class EarthControls {
 
     warningElement: HTMLDivElement;
 
-    constructor(camera: PerspectiveCamera, element: HTMLElement, viewer: Viewer) {
+    constructor(camera: PerspectiveCamera | OrthographicCamera, element: HTMLElement, viewer: Viewer) {
         this.camera = camera;
         this.domElement = element;
         this.viewer = viewer;
@@ -75,10 +83,7 @@ export class EarthControls {
             new SphereGeometry(0.5, 16, 16),
             new MeshNormalMaterial({ wireframe: false, opacity: 0.8, transparent: true })
         );
-
-        this.camera.layers.disable(1);
         this.pivot.layers.set(1);
-
         this.pivot.visible = false;
 
         this.measure = new Measure();
@@ -142,6 +147,7 @@ export class EarthControls {
                 }
             }
             if (!hasVisible && this.viewer.pointClouds.length > 0) {
+                console.log("no clouds visible!", this.camera, frustum);
                 this.warningElement.classList.remove("hidden");
             }
             this.lastVisibilityCheck = performance.now();
@@ -165,8 +171,15 @@ export class EarthControls {
     }
 
     zoomTo(target: Vector3, factor: number) {
-        const targetToCam = new Vector3().subVectors(this.camera.position, target);
-        this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
+        if (this.camera instanceof OrthographicCamera) {
+            this.camera.left *= factor;
+            this.camera.right *= factor;
+            this.camera.top *= factor;
+            this.camera.bottom *= factor;
+        } else {
+            const targetToCam = new Vector3().subVectors(this.camera.position, target);
+            this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
+        }
         this.saveCamera();
         this.changed("zoomTo");
     }
@@ -194,9 +207,14 @@ export class EarthControls {
         if (pt) {
             this.pivot.position.copy(pt.position);
             this.pivot.visible = true;
-            const dst = pt.position.clone().sub(this.camera.position).length();
-            const scl = 0.1 + dst / 40;
-            this.pivot.scale.set(scl, scl, scl);
+            if (this.camera instanceof PerspectiveCamera) {
+                const dst = pt.position.clone().sub(this.camera.position).length();
+                const scl = 0.1 + dst / 40;
+                this.pivot.scale.set(scl, scl, scl);
+            } else {
+                const scl = (this.camera.right - this.camera.left) / 50;
+                this.pivot.scale.set(scl, scl, scl);
+            }
 
             const l = pt.position.distanceTo(this.camera.position);
             this.speed = l / 10;
@@ -215,7 +233,7 @@ export class EarthControls {
 
         // TODO: check for double click zoom thing
         if (e.isPrimary) {
-            if (performance.now() - this.lastClickDown < 200) {
+            if (performance.now() - this.lastClickDown < DBLCLICK_LEN && this.lastClickDown > this.lastMove) {
                 this.zoomPrevY = this.pointer.y;
                 this.zoomStart3D.copy(pt.position);
                 this.isZooming = true;
@@ -223,7 +241,7 @@ export class EarthControls {
         }
 
         if (e.button === 0) {
-            if (this.measure.isActive && performance.now() - this.lastClickDown > 200) {
+            if (this.measure.isActive && performance.now() - this.lastClickDown > DBLCLICK_LEN) {
                 this.measure.addPoint(pt.position);
             }
             this.dragging = "left";
@@ -252,7 +270,7 @@ export class EarthControls {
         if (e.isPrimary) {
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
             if (pt) {
-                if (performance.now() - this.lastClickUp < 200) {
+                if (performance.now() - this.lastClickUp < DBLCLICK_LEN && this.lastClickUp > this.lastMove) {
                     if (this.measure.isActive) {
                         this.measure.stop();
                     } else {
@@ -378,8 +396,7 @@ export class EarthControls {
 
                     const meters = this.intersectionToPivot.length();
                     const dt = performance.now() - this.prevPanTime;
-                    const speed = meters / dt;
-                    this.panSpeed = speed;
+                    this.panSpeed = meters / dt;
                     this.prevPanTime = performance.now();
 
                     if (this.prevFrame !== this.viewer.frame) {
@@ -433,8 +450,7 @@ export class EarthControls {
             }
 
             const ray = getMouseRay(new Vector2(x, y), this.camera);
-            const to = ray.origin.addScaledVector(ray.direction, 1);
-            // const to = ray.origin;
+            const to = ray.origin.addScaledVector(ray.direction, 100);
 
             lines.geometry.attributes.position.setXYZ(hpid * 2, to.x, to.y, to.z);
             lines.geometry.attributes.position.setXYZ(hpid * 2 + 1, corner.x, corner.y, corner.z);
@@ -442,7 +458,6 @@ export class EarthControls {
             lines.geometry.computeBoundingSphere();
 
             hpid++;
-            // lines.computeLineDistances();
         }
 
         lines.geometry.setDrawRange(0, hpid * 2);
@@ -475,14 +490,13 @@ export class EarthControls {
 
             if (this.keysDown.has("w")) {
                 this.camera.position.add(fwdLevel.multiplyScalar(delta * this.speed));
-            }
-            if (this.keysDown.has("s")) {
+            } else if (this.keysDown.has("s")) {
                 this.camera.position.add(fwdLevel.multiplyScalar(-delta * this.speed));
             }
+
             if (this.keysDown.has("d")) {
                 this.camera.position.add(right.multiplyScalar(delta * this.speed));
-            }
-            if (this.keysDown.has("a")) {
+            } else if (this.keysDown.has("a")) {
                 this.camera.position.add(right.multiplyScalar(-delta * this.speed));
             }
 
@@ -510,10 +524,15 @@ export class EarthControls {
         }
 
         this.saveHandle = setTimeout(() => {
-            const campos = {
+            const campos: CameraPosition = {
+                type: this.camera instanceof PerspectiveCamera ? "perspective" : "ortho",
                 position: new Vector3().addVectors(this.camera.position, this.viewer.customOffset).toArray(),
-                rotation: this.camera.rotation.toArray(),
-            } as CameraPosition;
+                rotation: this.camera.rotation.toArray() as [number, number, number, EulerOrder],
+                size:
+                    this.camera instanceof OrthographicCamera
+                        ? [this.camera.left, this.camera.right, this.camera.top, this.camera.bottom]
+                        : [],
+            };
             localStorage.setItem(LOCALSTORAGE_KEYS.CAMERA, JSON.stringify(campos));
             this.saveHandle = 0;
         }, 100);
@@ -528,8 +547,28 @@ export class EarthControls {
 
         try {
             const camJSON = JSON.parse(camText) as CameraPosition;
+
+            if (camJSON.type === "perspective" && !(this.camera instanceof PerspectiveCamera)) {
+                this.viewer.camera = this.viewer.createCamera("perspective");
+                this.camera = this.viewer.camera;
+            }
+            if (camJSON.type === "ortho" && !(this.camera instanceof OrthographicCamera)) {
+                this.viewer.camera = this.viewer.createCamera("ortho");
+                this.camera = this.viewer.camera;
+            }
+
             this.camera.position.copy(new Vector3().fromArray(camJSON.position).sub(this.viewer.customOffset));
             this.camera.rotation.copy(new Euler().fromArray(camJSON.rotation));
+            console.log("RESTORE", camJSON);
+
+            if (camJSON.type === "ortho" && this.camera instanceof OrthographicCamera) {
+                this.camera.left = camJSON.size[0];
+                this.camera.right = camJSON.size[1];
+                this.camera.top = camJSON.size[2];
+                this.camera.bottom = camJSON.size[3];
+            }
+            this.camera.updateProjectionMatrix();
+
             this.changed("restoreCam");
             return true;
         } catch (e) {
@@ -546,11 +585,30 @@ export class EarthControls {
         const center = tbox.getCenter(new Vector3());
         const boxSize = tbox.getSize(new Vector3());
         const maxEdge = Math.max(boxSize.x, boxSize.y, boxSize.z);
-        const fovRad = this.camera.fov * (Math.PI / 180);
-        const cdist = (0.5 * maxEdge) / Math.sin(fovRad / 2);
 
-        this.camera.position.copy(center).add(new Vector3(0, -1, 0.8).normalize().multiplyScalar(cdist * 1.1));
+        if (this.camera instanceof OrthographicCamera) {
+            const sx = this.camera.right - this.camera.left;
+            const sy = this.camera.top - this.camera.bottom;
+
+            const xmult = (1.05 * maxEdge) / sy;
+            const ymult = (1.05 * maxEdge) / sx;
+
+            this.camera.left *= xmult;
+            this.camera.right *= xmult;
+            this.camera.top *= ymult;
+            this.camera.bottom *= ymult;
+
+            this.camera.position.copy(center).add(new Vector3(0, -1, 0.8).normalize().multiplyScalar(10_000));
+            this.camera.updateProjectionMatrix();
+        }
+        if (this.camera instanceof PerspectiveCamera) {
+            const fovRad = this.camera.fov * (Math.PI / 180);
+            const cdist = (0.5 * maxEdge) / Math.sin(fovRad / 2);
+            this.camera.position.copy(center).add(new Vector3(0, -1, 0.8).normalize().multiplyScalar(cdist * 1.1));
+        }
+
         this.camera.lookAt(center);
+        this.camera.updateProjectionMatrix();
 
         console.log("cam", this.camera.position);
 

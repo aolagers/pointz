@@ -2,6 +2,7 @@ import {
     Camera,
     Material,
     NearestFilter,
+    OrthographicCamera,
     PerspectiveCamera,
     RGBAFormat,
     Raycaster,
@@ -38,7 +39,7 @@ const q = new Queue<OctreeNode>();
 
 export function getMouseIntersection(
     pointer: Vector2,
-    camera: PerspectiveCamera,
+    camera: PerspectiveCamera | OrthographicCamera,
     renderer: WebGLRenderer,
     viewer: Viewer
 ) {

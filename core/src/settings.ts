@@ -5,8 +5,6 @@ export const POINT_BUDGET = 4_000_000;
 
 export const ALWAYS_RENDER = false;
 
-export const SHOW_RENDERS = false;
-
 export const ERROR_LIMIT = 0.002;
 
 export const COLOR_MODE = {
