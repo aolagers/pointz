@@ -10,8 +10,16 @@ export default defineConfig({
             name: "core",
             formats: ["es"],
         },
+        emptyOutDir: false,
         sourcemap: true,
         minify: false,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    three: ["three"],
+                },
+            },
+        },
     },
     base: "./",
     test: {
