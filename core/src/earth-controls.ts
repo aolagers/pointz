@@ -419,7 +419,6 @@ export class EarthControls {
             if (!pc.isHighlighted) {
                 continue;
             }
-            console.log("HI", hpid, pc);
 
             const corner = pc.tightBounds.max.clone().sub(this.viewer.customOffset);
 

@@ -1,16 +1,31 @@
-import { Box3, BoxGeometry, Camera, Frustum, Matrix4, Mesh, MeshBasicMaterial, Vector2, Vector3 } from "three";
+import {
+    Box3,
+    BoxGeometry,
+    Camera,
+    EdgesGeometry,
+    Frustum,
+    LineBasicMaterial,
+    LineSegments,
+    Material,
+    Matrix4,
+    Mesh,
+    MeshBasicMaterial,
+    Vector2,
+    Vector3,
+} from "three";
 import { OctreePath } from "./octree";
 import { PointCloud } from "./pointcloud";
 
-const tightBboxMaterial = new MeshBasicMaterial({ color: "lightgreen", wireframe: true });
+// const tightBboxMaterial = new MeshBasicMaterial({ color: "lightgreen", wireframe: true });
+const _wireMat = new LineBasicMaterial({ color: "lightgreen" });
 
-const colorCache = new Map<string, MeshBasicMaterial>();
+const _colorCache = new Map<string, Material>();
 function getWireframeMaterial(color: string) {
-    if (colorCache.has(color)) {
-        return colorCache.get(color)!;
+    if (_colorCache.has(color)) {
+        return _colorCache.get(color)!;
     } else {
         const mat = new MeshBasicMaterial({ color: color, wireframe: true, depthWrite: false });
-        colorCache.set(color, mat);
+        _colorCache.set(color, mat);
         return mat;
     }
 }
@@ -19,7 +34,10 @@ export function createTightBounds(pc: PointCloud) {
     const size = pc.tightBounds.getSize(new Vector3());
     const halfSize = size.clone().divideScalar(2);
     const boundGeom = new BoxGeometry(...size);
-    const cube = new Mesh(boundGeom, tightBboxMaterial);
+    const edgeGeom = new EdgesGeometry(boundGeom);
+    // const cube = new Mesh(boundGeom, tightBboxMaterial);
+    const cube = new LineSegments(edgeGeom, _wireMat);
+    // const cube = new Mesh(edgeGeom, wireMat);
     cube.position.copy(pc.tightBounds.min).add(halfSize);
 
     return cube;

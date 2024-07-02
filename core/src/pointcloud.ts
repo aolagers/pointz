@@ -1,4 +1,4 @@
-import { Box3, Group, Mesh, Vector3 } from "three";
+import { Box3, Group, LineSegments, Mesh, Vector3 } from "three";
 import type { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Hierarchy, LazSource, WorkerHierarchy, WorkerInfo } from "./copc-loader";
 import workerUrl from "./copc-loader?worker&url";
@@ -31,7 +31,7 @@ export class PointCloud {
 
     group: Group;
 
-    tightBoundsMesh: Mesh | null = null;
+    tightBoundsMesh: LineSegments | Mesh | null = null;
     label: CSS2DObject | null = null;
 
     tree: Octree;
