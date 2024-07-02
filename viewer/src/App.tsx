@@ -1,4 +1,4 @@
-import { PointCloud, Viewer } from "@pointz/core";
+import { Viewer, type PointCloudInfo } from "@pointz/core";
 import { directoryOpen, fileOpen } from "browser-fs-access";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 import { Help } from "./Help";
@@ -20,20 +20,10 @@ type Notice = {
 
 export function App() {
     const [theViewer, setTheViewer] = createSignal<Viewer | null>(null);
-    const [notices, setNotices] = createSignal<Array<Notice & { t: Number }>>([]);
+    const [notices, setNotices] = createSignal<Array<Notice & { created: Number }>>([]);
     const [loading, setLoading] = createSignal(0);
-    const [showHelp, setShowHelp] = createSignal(!(localStorage.getItem("show_help") === "false"));
     const [debugMode, setDebugMode] = createSignal(false);
-    const [pclouds, setPclouds] = createSignal<
-        Array<{
-            name: string;
-            pointCount: number;
-            item: PointCloud;
-            onCenter: () => void;
-            onRemove: () => void;
-            onToggleVisibility: () => void;
-        }>
-    >([]);
+    const [pclouds, setPclouds] = createSignal<PointCloudInfo[]>([]);
 
     const elems: HTMLElement[] = [];
 
@@ -65,10 +55,10 @@ export function App() {
     }
 
     function addNotice(ev: Notice) {
-        const newNotice = { kind: ev.kind, message: ev.message, t: Math.random() };
+        const newNotice = { kind: ev.kind, message: ev.message, created: Math.random() };
         setNotices((prev) => [...prev, newNotice]);
         setTimeout(() => {
-            setNotices((prev) => prev.filter((n) => n.t !== newNotice.t));
+            setNotices((prev) => prev.filter((n) => n.created !== newNotice.created));
         }, 5000);
     }
 
@@ -185,17 +175,7 @@ export function App() {
                 <div>{loading()}</div>
             </div>
 
-            <div
-                class="fixed bottom-2 left-2 z-20 cursor-pointer"
-                onClick={() =>
-                    setShowHelp((prev) => {
-                        localStorage.setItem("show_help", prev ? "false" : "true");
-                        return !prev;
-                    })
-                }
-            >
-                {showHelp() ? <Help className="" /> : <div class="text-xs font-bold text-white">?</div>}
-            </div>
+            <Help />
 
             <div class="fixed left-1/2 z-20 mt-2 flex -translate-x-1/2 transform flex-col gap-1">
                 {notices().map((notice, idx) => (
