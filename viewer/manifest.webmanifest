@@ -1,0 +1,13 @@
+{
+  "name": "pointz",
+  "short_name": "pointz",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon-black.png",
+      "sizes": "128x128"
+    }
+  ]
+}
