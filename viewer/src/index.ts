@@ -22,3 +22,19 @@ function stringifyError(e: unknown) {
         return JSON.stringify(e);
     }
 }
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+        .register("/service-worker.js")
+        .then((registration) => {
+            console.log("Service Worker registered with scope:", registration.scope);
+
+            registration.addEventListener("updatefound", () => {
+                alert("installing new version of service worker");
+                console.log("A new service worker is being installed:", registration.installing);
+            });
+        })
+        .catch((error) => {
+            console.error("Service Worker registration failed:", error);
+        });
+}

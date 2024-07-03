@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import { createReadStream } from "node:fs";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { buildSync } from "esbuild";
 import solid from "vite-plugin-solid";
 
 const wasmInterceptor = {
@@ -14,9 +15,11 @@ const wasmInterceptor = {
             res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
 
             if (req.url.endsWith("/laz-perf.wasm")) {
-                console.log(">>> WASM", req.url);
+                // console.log(">>> WASM", req.url);
                 res.setHeader("Content-Type", "application/wasm");
                 createReadStream("./public/laz-perf.wasm").pipe(res);
+            } else if (req.url.endsWith("/service-worker.js")) {
+                createReadStream("./dist/service-worker.js").pipe(res);
             } else {
                 next();
             }
@@ -24,11 +27,28 @@ const wasmInterceptor = {
     },
 };
 
+const serviceWorkerBuilder = {
+    name: "service-worker-builder",
+    enforce: "post",
+    transformIndexHtml() {
+        console.log(">>> Building service worker");
+        buildSync({
+            entryPoints: ["service-worker.ts"],
+            outfile: "dist/service-worker.js",
+            bundle: true,
+            minify: true,
+            sourcemap: false,
+        });
+    },
+};
+
+const PORT = 5173;
 export default defineConfig((x) => ({
     clearScreen: false,
     build: { chunkSizeWarningLimit: 800 },
     plugins: [
         solid(),
+        serviceWorkerBuilder,
         wasmInterceptor,
         x.command === "build"
             ? viteStaticCopy({
