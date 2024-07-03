@@ -172,10 +172,23 @@ export class EarthControls {
 
     zoomTo(target: Vector3, factor: number) {
         if (this.camera instanceof OrthographicCamera) {
+            // move camera to keep target in place
+            const right = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+            const up = new Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+
+            const cw = this.camera.right - this.camera.left;
+            const ch = this.camera.top - this.camera.bottom;
+            this.camera.position
+                .add(right.multiplyScalar((cw / 2) * (factor - 1) * -this.pointer.x))
+                .add(up.multiplyScalar((ch / 2) * (factor - 1) * -this.pointer.y));
+
+            // modify camera frustum size
             this.camera.left *= factor;
             this.camera.right *= factor;
             this.camera.top *= factor;
             this.camera.bottom *= factor;
+
+            this.camera.updateProjectionMatrix();
         } else {
             const targetToCam = new Vector3().subVectors(this.camera.position, target);
             this.camera.position.copy(target).add(targetToCam.multiplyScalar(factor));
@@ -566,8 +579,12 @@ export class EarthControls {
             if (camJSON.type === "ortho" && this.camera instanceof OrthographicCamera) {
                 this.camera.left = camJSON.size[0];
                 this.camera.right = camJSON.size[1];
-                this.camera.top = camJSON.size[2];
-                this.camera.bottom = camJSON.size[3];
+                this.camera.top = camJSON.size[0] * (this.viewer.height / this.viewer.width);
+                this.camera.bottom = camJSON.size[1] * (this.viewer.height / this.viewer.width);
+                if (this.camera.bottom > this.camera.top) {
+                    this.camera.bottom = -this.camera.bottom;
+                    this.camera.top = -this.camera.top;
+                }
             }
             this.camera.updateProjectionMatrix();
 
@@ -592,13 +609,14 @@ export class EarthControls {
             const sx = this.camera.right - this.camera.left;
             const sy = this.camera.top - this.camera.bottom;
 
-            const xmult = (1.05 * maxEdge) / sy;
-            const ymult = (1.05 * maxEdge) / sx;
+            const smaller = Math.min(sx, sy);
 
-            this.camera.left *= xmult;
-            this.camera.right *= xmult;
-            this.camera.top *= ymult;
-            this.camera.bottom *= ymult;
+            const mult = (0.9 * maxEdge) / smaller;
+
+            this.camera.left *= mult;
+            this.camera.right *= mult;
+            this.camera.top *= mult;
+            this.camera.bottom *= mult;
 
             this.camera.position.copy(center).add(new Vector3(0, -1, 0.8).normalize().multiplyScalar(10_000));
             this.camera.updateProjectionMatrix();

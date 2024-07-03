@@ -166,10 +166,20 @@ export class Viewer extends EventDispatcher<TEvents> {
     createCamera(type: "ortho" | "perspective") {
         // TODO: calculate sensible values from the other type of cam
         if (type === "ortho") {
-            const camera = new OrthographicCamera(-200, 200, 200, -200, CAMERA_NEAR, CAMERA_FAR);
+            const halfSize = 200;
+            const aspect = this.width / this.height;
+            const camera = new OrthographicCamera(
+                -halfSize,
+                halfSize,
+                halfSize / aspect,
+                -halfSize / aspect,
+                CAMERA_NEAR,
+                CAMERA_FAR
+            );
             camera.up.set(0, 0, 1);
             camera.position.set(0, -5000, 2500);
             camera.lookAt(0, 0, 0);
+
             camera.updateMatrixWorld();
             return camera;
         } else {
@@ -191,7 +201,11 @@ export class Viewer extends EventDispatcher<TEvents> {
             this.debugInfo.camera =
                 printVec(this.camera.position) +
                 " " +
-                (this.camera instanceof OrthographicCamera ? (this.camera.right - this.camera.left).toFixed(1) : "");
+                (this.camera instanceof OrthographicCamera
+                    ? (this.camera.right - this.camera.left).toFixed(1) +
+                      " " +
+                      (this.camera.top - this.camera.bottom).toFixed(1)
+                    : this.camera.fov);
 
             this.loadMoreNodesThrottled();
             this.requestRender("controls " + why);
