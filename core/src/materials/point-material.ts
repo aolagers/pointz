@@ -1,4 +1,4 @@
-import { Material, ShaderMaterial } from "three";
+import { Material, ShaderMaterial, Vector2 } from "three";
 import { COLOR_MODE, LOCALSTORAGE_KEYS } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
@@ -62,6 +62,7 @@ export class PointMaterial extends ShaderMaterial {
                 ptSize: { value: DEFAULT_PT_SIZE },
                 uClassMask: { value: 0xffffffff },
                 uNodeIndex: { value: 0 },
+                uIntensityRange: { value: new Vector2(0.0, 1.0) },
             },
             vertexShader: defaultVert,
             fragmentShader: defaultFrag,
@@ -88,6 +89,10 @@ export class PointMaterial extends ShaderMaterial {
         if (uc1) {
             uc1.value = this.ptSize;
         }
+    }
+
+    updateIntensityRange(min: number, max: number) {
+        this.uniforms.uIntensityRange.value = new Vector2(min, max);
     }
 
     changeColorMode(color: keyof typeof COLOR_MODE) {

@@ -2,6 +2,8 @@ flat in int vClass;
 in vec4 vColor;
 in float vIntensity;
 
+uniform vec2 uIntensityRange;
+
 out vec4 FragColor;
 
 const uint N_CLASSES = 10u;
@@ -50,7 +52,8 @@ void main() {
 
     if (COLOR_MODE == 0) {
         // intensity
-        FragColor = vec4(vec3(vIntensity), alpha);
+        float scaledIntensity = (vIntensity - uIntensityRange.x) / (uIntensityRange.y - uIntensityRange.x);
+        FragColor = vec4(vec3(scaledIntensity), alpha);
     } else if (COLOR_MODE == 1) {
         // classification
         FragColor = vec4(CLASS_COLORS[uint(vClass) % N_CLASSES], alpha);

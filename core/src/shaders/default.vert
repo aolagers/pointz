@@ -10,9 +10,6 @@ uniform int uClassMask;
 out vec4 vColor;
 flat out int vClass;
 
-out float custom1;
-out float custom2;
-
 out float vIntensity;
 
 //out float depth;

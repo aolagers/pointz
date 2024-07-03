@@ -706,6 +706,13 @@ export class Viewer extends EventDispatcher<TEvents> {
         });
     }
 
+    updateIntensityRange(min: number, max: number) {
+        for (const ptmat of [DEFAULT_POINT_MATERIAL, ...pointMaterialPool.all]) {
+            ptmat.updateIntensityRange(min, max);
+        }
+        this.requestRender("intensity range update");
+    }
+
     async addLAZ(what: string | File, center = false) {
         try {
             const pc = await PointCloud.loadLAZ(this, what);
