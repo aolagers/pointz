@@ -34,7 +34,7 @@ type CameraPosition = {
 };
 
 const UNIT_Z = new Vector3(0, 0, 1);
-const DBLCLICK_LEN = 300;
+const DOUBLECLICK_MS = 350;
 
 // see: https://www.redblobgames.com/making-of/draggable/
 
@@ -233,7 +233,7 @@ export class EarthControls {
 
         // TODO: check for double click zoom thing
         if (e.isPrimary) {
-            if (performance.now() - this.lastClickDown < DBLCLICK_LEN && this.lastClickDown > this.lastMove) {
+            if (performance.now() - this.lastClickDown < DOUBLECLICK_MS && this.lastClickDown > this.lastMove) {
                 this.zoomPrevY = this.pointer.y;
                 this.zoomStart3D.copy(pt.position);
                 this.isZooming = true;
@@ -241,7 +241,7 @@ export class EarthControls {
         }
 
         if (e.button === 0) {
-            if (this.measure.isActive && performance.now() - this.lastClickDown > DBLCLICK_LEN) {
+            if (this.measure.isActive && performance.now() - this.lastClickDown > DOUBLECLICK_MS) {
                 this.measure.addPoint(pt.position);
             }
             this.dragging = "left";
@@ -270,7 +270,7 @@ export class EarthControls {
         if (e.isPrimary) {
             const pt = getMouseIntersection(this.pointer, this.camera, this.viewer.renderer, this.viewer);
             if (pt) {
-                if (performance.now() - this.lastClickUp < DBLCLICK_LEN && this.lastClickUp > this.lastMove) {
+                if (performance.now() - this.lastClickUp < DOUBLECLICK_MS && this.lastClickUp > this.lastMove) {
                     if (this.measure.isActive) {
                         this.measure.stop();
                     } else {
@@ -337,6 +337,8 @@ export class EarthControls {
                 this.changed("measure");
             }
         }
+
+        this.lastMove = performance.now();
 
         if (!this.dragging) {
             return;
