@@ -18,3 +18,11 @@ export const LOCALSTORAGE_KEYS = {
     CAMERA: "camera",
     COLOR_MODE: "color_mode",
 };
+
+export function getDefaultColorMode() {
+    const colorMode: keyof typeof COLOR_MODE =
+        ("localStorage" in globalThis
+            ? (localStorage.getItem(LOCALSTORAGE_KEYS.COLOR_MODE) as keyof typeof COLOR_MODE)
+            : null) || "RGB";
+    return colorMode;
+}

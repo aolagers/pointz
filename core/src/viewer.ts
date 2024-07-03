@@ -14,8 +14,8 @@ import {
     UnsignedIntType,
     Vector2,
     Vector3,
-    WebGLRenderTarget,
     WebGLRenderer,
+    WebGLRenderTarget,
 } from "three";
 import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import { EarthControls } from "./earth-controls";
@@ -24,7 +24,7 @@ import { DEFAULT_POINT_MATERIAL, pointMaterialPool } from "./materials/point-mat
 import { PointCloud } from "./pointcloud";
 import { PointCloudNode, pointsWorkerPool } from "./pointcloud-node";
 import { PriorityQueue } from "./priority-queue";
-import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, ERROR_LIMIT, POINT_BUDGET } from "./settings";
+import { ALWAYS_RENDER, CAMERA_FAR, CAMERA_NEAR, ERROR_LIMIT, getDefaultColorMode, POINT_BUDGET } from "./settings";
 import { createTightBounds, getCameraFrustum, printVec, throttle } from "./utils";
 
 export type PointCloudInfo = {
@@ -41,6 +41,7 @@ type TEvents = {
     message: { text: string };
     notice: { kind: "error" | "warn" | "info"; message: string };
     pointclouds: { pclouds: PointCloudInfo[] };
+    settings: { color: "INTENSITY" | "CLASSIFICATION" | "RGB" | "RGB_AND_CLASS" };
 };
 
 export class Viewer extends EventDispatcher<TEvents> {
@@ -248,14 +249,16 @@ export class Viewer extends EventDispatcher<TEvents> {
             }
 
             for (const ptmat of [DEFAULT_POINT_MATERIAL, ...pointMaterialPool.all]) {
-                if (ev.key === "1") {
-                    ptmat.changeColorMode("INTENSITY");
-                } else if (ev.key === "2") {
-                    ptmat.changeColorMode("CLASSIFICATION");
-                } else if (ev.key === "3") {
-                    ptmat.changeColorMode("RGB");
-                } else if (ev.key === "4") {
-                    ptmat.changeColorMode("RGB_AND_CLASS");
+                const colorModeShortcuts = {
+                    "1": "INTENSITY",
+                    "2": "CLASSIFICATION",
+                    "3": "RGB",
+                    "4": "RGB_AND_CLASS",
+                } as const;
+                if (ev.key in colorModeShortcuts) {
+                    const k = ev.key as keyof typeof colorModeShortcuts;
+                    ptmat.changeColorMode(colorModeShortcuts[k]);
+                    this.dispatchEvent({ type: "settings", color: colorModeShortcuts[k] });
                 } else if (ev.key === "+") {
                     ptmat.updatePointSize(+1);
                 } else if (ev.key === "-") {
@@ -320,6 +323,8 @@ export class Viewer extends EventDispatcher<TEvents> {
         });
 
         this.renderer.domElement.style.display = "block";
+
+        this.dispatchEvent({ type: "settings", color: getDefaultColorMode() });
     }
 
     debugMessage(text: string) {

@@ -1,6 +1,7 @@
 import { Viewer, type PointCloudInfo } from "@pointz/core";
 import { directoryOpen, fileOpen } from "browser-fs-access";
 import { createEffect, createSignal, on, onMount } from "solid-js";
+import { DoubleSlider } from "./DoubleSlider";
 import { Help } from "./Help";
 import { Loader } from "./Loader";
 
@@ -24,6 +25,7 @@ export function App() {
     const [loading, setLoading] = createSignal(0);
     const [debugMode, setDebugMode] = createSignal(false);
     const [pclouds, setPclouds] = createSignal<PointCloudInfo[]>([]);
+    const [coloring, setColoring] = createSignal("RGB");
 
     const elems: HTMLElement[] = [];
 
@@ -128,6 +130,10 @@ export function App() {
 
         viewer.addEventListener("loading", (ev) => {
             setLoading(ev.nodes);
+        });
+
+        viewer.addEventListener("settings", (ev) => {
+            setColoring(ev.color);
         });
 
         // viewer.addEventListener("message", (ev) => {
@@ -268,6 +274,18 @@ export function App() {
                 <div class="-mt-2 flex-1"></div>
 
                 <div class="pointer-events-auto flex flex-col items-end gap-2">
+                    <div
+                        class={
+                            "mb-6 flex items-center gap-2 text-xs text-white " +
+                            (coloring() === "INTENSITY" ? "" : "hidden")
+                        }
+                    >
+                        <div class="caps mt-1 font-bold">Intensity:</div>
+                        <div>
+                            <DoubleSlider onUpdate={(min, max) => theViewer()?.updateIntensityRange(min, max)} />
+                        </div>
+                    </div>
+
                     <div
                         onClick={() => setDebug(false)}
                         ref={debugEl}

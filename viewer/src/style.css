@@ -32,4 +32,10 @@ body {
     .nice {
         @apply select-none rounded-sm bg-black/30 px-2 py-0.5 text-xs text-gray-200 shadow-md outline outline-1 outline-black/50 backdrop-blur-xs;
     }
+    .range-input::-webkit-slider-thumb {
+        @apply pointer-events-auto;
+    }
+    .range-input::-moz-range-thumb {
+        @apply pointer-events-auto;
+    }
 }

@@ -30,7 +30,6 @@ if ("serviceWorker" in navigator) {
             console.log("Service Worker registered with scope:", registration.scope);
 
             registration.addEventListener("updatefound", () => {
-                alert("installing new version of service worker");
                 console.log("A new service worker is being installed:", registration.installing);
             });
         })

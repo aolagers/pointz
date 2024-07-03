@@ -1,5 +1,5 @@
 import { Material, ShaderMaterial, Vector2 } from "three";
-import { COLOR_MODE, LOCALSTORAGE_KEYS } from "../settings";
+import { COLOR_MODE, getDefaultColorMode, LOCALSTORAGE_KEYS } from "../settings";
 import defaultFrag from "../shaders/default.frag";
 import defaultVert from "../shaders/default.vert";
 
@@ -47,11 +47,7 @@ export class PointMaterial extends ShaderMaterial {
 
     ptSize = DEFAULT_PT_SIZE;
 
-    constructor(pick: boolean) {
-        const colorMode: keyof typeof COLOR_MODE =
-            ("localStorage" in globalThis
-                ? (localStorage.getItem(LOCALSTORAGE_KEYS.COLOR_MODE) as keyof typeof COLOR_MODE)
-                : null) || "RGB";
+    constructor(pick: boolean, colorMode: keyof typeof COLOR_MODE = "RGB") {
         super({
             glslVersion: "300 es",
             defines: {
@@ -102,4 +98,4 @@ export class PointMaterial extends ShaderMaterial {
     }
 }
 
-export const DEFAULT_POINT_MATERIAL = new PointMaterial(false);
+export const DEFAULT_POINT_MATERIAL = new PointMaterial(false, getDefaultColorMode());
