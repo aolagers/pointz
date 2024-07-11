@@ -1,0 +1,16 @@
+{
+    "name": "@pointz/cdk",
+    "version": "1.0.0",
+    "author": "Alex Lagerstedt <aolagers@iki.fi>",
+    "license": "AGPL-3.0-or-later",
+    "type": "module",
+    "scripts": {
+        "deploy": "cdk deploy --profile pointz"
+    },
+    "description": "",
+    "dependencies": {
+        "aws-cdk": "^2.148.0",
+        "aws-cdk-lib": "^2.148.0",
+        "typescript": "^5.5.3"
+    }
+}
